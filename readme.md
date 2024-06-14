@@ -1,4 +1,4 @@
-# ModShark - AutoMod for Shrkey instances
+# ModShark - AutoMod for Sharkey instances
 
 ModShark is a standalone moderation tool for servers running the [Sharkey fediverse server](https://activitypub.software/TransFem-org/Sharkey).
 
@@ -18,7 +18,7 @@ cd ModShark # Must run from the directory with appsettings.Development.json
 dotnet ef migrations add $name --Project ../SharkeyDB
 ```
 
-### Remove migration (but keept changes)
+### Remove migration (but keep changes)
 
 ```powershell
 cd ModShark # Must run from the directory with appsettings.Development.json
