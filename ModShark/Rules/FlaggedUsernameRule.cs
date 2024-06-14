@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using ModShark.Services;
 using SharkeyDB;
 using SharkeyDB.Entities;
 
@@ -10,7 +11,7 @@ public interface IFlaggedUsernameRule
     Task RunRule(CancellationToken stoppingToken);
 }
 
-public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedUsernameConfig config, SharkeyContext db) : IFlaggedUsernameRule
+public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
     // TODO evaluate impact of database-side regular expressions.
     // TODO use LastFlagged to re-check after config changes.
@@ -19,13 +20,19 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedU
         if (!config.Enabled)
             return;
 
-        // Run the actual rule logic
-        var reportLines = await FlagNewUsers(stoppingToken);
+        if (config.FlaggedPatterns.Count < 1)
+            return;
+
+        if (!config.IncludeLocal && !config.IncludeRemote)
+            return;
         
-        if (reportLines.Count > 0)
+        // Run the actual rule logic
+        var report = await FlagNewUsers(stoppingToken);
+        
+        if (report.Count > 0)
         {
-            WriteLog(reportLines);   
-            WriteReport(reportLines);
+            WriteLog(report);   
+            await WriteReport(report, stoppingToken);
         }
         else
         {
@@ -33,30 +40,52 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedU
         }
     }
 
-    private void WriteLog(List<string> reportLines)
+    private void WriteLog(List<User> reportLines)
     {
-        foreach (var line in reportLines)
+        foreach (var user in reportLines)
         {
-            logger.LogInformation("Flagged new {line}", line);   
+            if (user.Host == null)
+                logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
+            else
+                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
         }
     }
 
-    private void WriteReport(List<string> reportLines)
+    private async Task WriteReport(List<User> report, CancellationToken stoppingToken)
     {
-        // TODO send email
+        var items = string.Join("", report.Select(u =>
+        {
+            var type = u.Host == null
+                ? "<strong>Local</strong>"
+                : "Remote";
+
+            var name = u.Host == null
+                ? $"@{u.Username}"
+                : $"@{u.Username}@{u.Host}";
+            
+            return $"<li>{type} user {u.Id} - <code>{name}</code></li>";
+        }));
+
+        var header = report.Count > 0
+            ? "new flagged usernames"
+            : "new flagged username";
+        var body = $"<h1>ModShark AutoMod</h1><h2>{header}:</h2><ul>{items}</ul>";
+        var subject = $"ModShark: {header}";
+        
+        await sendGrid.SendReport(subject, body, stoppingToken);
     }
 
-    private async Task<List<string>> FlagNewUsers(CancellationToken stoppingToken)
+    private async Task<List<User>> FlagNewUsers(CancellationToken stoppingToken)
     {
         var now = DateTime.UtcNow;
-        var reportLines = new List<string>();
+        var report = new List<User>();
 
         // Process each user, with streaming due to potentially large size
         var flaggedUsers = FindNewUsers();
         await foreach (var user in flaggedUsers)
         {
             // Add to report
-            reportLines.Add(GetReportLine(user));
+            report.Add(user);
             
             // Mark as flagged
             db.MSUsers.Add(new MSUser
@@ -68,15 +97,11 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedU
         }
         
         // Save changes
+        // TODO move later in pipeline
         await db.SaveChangesAsync(stoppingToken);
         
-        return reportLines;
+        return report;
     }
-
-    private static string GetReportLine(User user)
-        => user.Host != null
-            ? $"remote user {user.Id} - @{user.Username}@{user.Host}"
-            : $"local user {user.Id} - @{user.Username}";
 
     private IAsyncEnumerable<User> FindNewUsers()
     {

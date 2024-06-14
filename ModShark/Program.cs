@@ -1,5 +1,6 @@
 using ModShark;
 using ModShark.Rules;
+using ModShark.Services;
 using SharkeyDB;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -37,8 +38,10 @@ var config = builder.Configuration
     ?? throw new ApplicationException("Configuration file is invalid: could not map to the config object.");
 
 builder.Services.AddSharkeyDB(config.Postgres);
-builder.Services.AddSingleton(config.Rules.FlaggedUsername);
+builder.Services.AddSingleton(config.SendGrid);
 builder.Services.AddSingleton(config.Worker);
+builder.Services.AddSingleton(config.Rules.FlaggedUsername);
+builder.Services.AddHttpClient<ISendGridService, SendGridService>();
 builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();
 builder.Services.AddHostedService<Worker>();
  
