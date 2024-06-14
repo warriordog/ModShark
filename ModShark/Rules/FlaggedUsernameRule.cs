@@ -11,7 +11,7 @@ public interface IFlaggedUsernameRule
     Task RunRule(CancellationToken stoppingToken);
 }
 
-public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
+public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
     // TODO evaluate impact of database-side regular expressions.
     // TODO use LastFlagged to re-check after config changes.
