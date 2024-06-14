@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModShark", "ModShark\ModShark.csproj", "{C5065317-F4AD-4CCC-B2FF-C1BE2454FB11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharkeyDB", "SharkeyDB\SharkeyDB.csproj", "{14A58991-1894-42B8-8696-07A8E1AAC89F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5065317-F4AD-4CCC-B2FF-C1BE2454FB11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5065317-F4AD-4CCC-B2FF-C1BE2454FB11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5065317-F4AD-4CCC-B2FF-C1BE2454FB11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5065317-F4AD-4CCC-B2FF-C1BE2454FB11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
