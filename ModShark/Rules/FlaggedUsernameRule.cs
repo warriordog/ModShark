@@ -31,23 +31,21 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameConfig> logger, FlaggedU
         
         if (report.Count > 0)
         {
-            WriteLog(report);   
+            logger.LogInformation("Flagged {count} new users", report.Count);
+        
+            foreach (var user in report)
+            {
+                if (user.Host == null)
+                    logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
+                else
+                    logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
+            }
+            
             await WriteReport(report, stoppingToken);
         }
         else
         {
             logger.LogDebug("Found no flagged usernames");
-        }
-    }
-
-    private void WriteLog(List<User> reportLines)
-    {
-        foreach (var user in reportLines)
-        {
-            if (user.Host == null)
-                logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
-            else
-                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
         }
     }
 
