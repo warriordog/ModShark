@@ -13,7 +13,6 @@ public interface IFlaggedUsernameRule
 
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
-    // TODO evaluate impact of database-side regular expressions.
     // TODO use LastFlagged to re-check after config changes.
     public async Task RunRule(CancellationToken stoppingToken)
     {
@@ -26,9 +25,19 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         if (!config.IncludeLocal && !config.IncludeRemote)
             return;
         
-        // Run the actual rule logic
-        var report = await FlagNewUsers(stoppingToken);
+        // Make sure that all timestamps are the same
+        var now = DateTime.UtcNow;
         
+        // 0. Transaction - we MUST do these together for data consistency
+        await using var transaction = await db.Database.BeginTransactionAsync(stoppingToken);
+        
+        // 1. Flag - scan "user" and insert to "ms_user" only for matches
+        var report = await FlagNewUsers(now, stoppingToken);
+        
+        // 2. Sync - bulk insert with LastChecked=now, on conflict do nothing
+        await SyncDatabase(now, stoppingToken);
+        
+        // 3. Write report
         if (report.Count > 0)
         {
             logger.LogInformation("Flagged {count} new users", report.Count);
@@ -47,21 +56,79 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         {
             logger.LogDebug("Found no flagged usernames");
         }
+        
+        // 4. Commit transaction
+        await transaction.CommitAsync(stoppingToken);
     }
 
+    private async Task<List<User>> FlagNewUsers(DateTime now, CancellationToken stoppingToken)
+    {
+        var report = new List<User>();
+        
+        // Merge patterns - postgres doesn't support ANY with regex
+        var pattern = string.Join("|", config.FlaggedPatterns.Select(p => $"({p})"));
+        
+        var query =
+            from u in db.Users
+            where
+                !db.MSUsers.Any(msu => msu.UserId == u.Id)
+                && (config.IncludeLocal || u.Host != null)
+                && (config.IncludeRemote || u.Host == null)
+                && (config.IncludeDeleted || !u.IsDeleted)
+                && (config.IncludeSuspended || !u.IsSuspended)
+                && Regex.IsMatch(u.UsernameLower, pattern)
+            select u;
+        
+        // Stream each result due to potentially large size
+        var flaggedUsers = query.AsAsyncEnumerable();
+        await foreach (var user in flaggedUsers)
+        {
+            report.Add(user);
+
+            db.MSUsers.Add(new MSUser
+            {
+                UserId = user.Id,
+                CheckedAt = now,
+                IsFlagged = true
+            });
+        }
+        
+        // Save changes
+        await db.SaveChangesAsync(stoppingToken);
+        
+        return report;
+    }
+
+    private async Task SyncDatabase(DateTime now, CancellationToken stoppingToken)
+    {
+        const string query =
+        """
+            INSERT INTO ms_user (user_id, checked_at)
+            SELECT
+                id as user_id,
+                {0} as checked_at
+            FROM "user"
+            ON CONFLICT(user_id)
+                DO NOTHING
+        """;
+        var parameters = new object[] { now };
+        
+        await db.Database.ExecuteSqlRawAsync(query, parameters, stoppingToken);
+    }
+    
     private async Task WriteReport(List<User> report, CancellationToken stoppingToken)
     {
         var items = string.Join("", report.Select(u =>
         {
             var type = u.Host == null
-                ? "<strong>Local</strong>"
-                : "Remote";
+                ? "<strong>Local user</strong>"
+                : "Remote user";
 
             var name = u.Host == null
                 ? $"@{u.Username}"
                 : $"@{u.Username}@{u.Host}";
             
-            return $"<li>{type} user {u.Id} - <code>{name}</code></li>";
+            return $"<li>{type} {u.Id} - <code>{name}</code></li>";
         }));
 
         var header = report.Count > 0
@@ -71,58 +138,6 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         var subject = $"ModShark: {header}";
         
         await sendGrid.SendReport(subject, body, stoppingToken);
-    }
-
-    private async Task<List<User>> FlagNewUsers(CancellationToken stoppingToken)
-    {
-        var now = DateTime.UtcNow;
-        var report = new List<User>();
-
-        // Process each user, with streaming due to potentially large size
-        var flaggedUsers = FindNewUsers();
-        await foreach (var user in flaggedUsers)
-        {
-            // Add to report
-            report.Add(user);
-            
-            // Mark as flagged
-            db.MSUsers.Add(new MSUser
-            {
-                UserId = user.Id,
-                LastChecked = now,
-                LastFlagged = now,
-            });
-        }
-        
-        // Save changes
-        // TODO move later in pipeline
-        await db.SaveChangesAsync(stoppingToken);
-        
-        return report;
-    }
-
-    private IAsyncEnumerable<User> FindNewUsers()
-    {
-        // Merge patterns - postgres doesn't support ANY with regex
-        var pattern = string.Join("|", config.FlaggedPatterns.Select(p => $"({p})"));
-        
-        // Find next batch of users
-        var query =
-            from su in db.Users
-            join mu in db.MSUsers
-                on su.Id equals mu.UserId
-                into j
-            from mu in j.DefaultIfEmpty()
-            where
-                mu.LastChecked == null
-                && (config.IncludeLocal || su.Host != null)
-                && (config.IncludeRemote || su.Host == null)
-                && (config.IncludeDeleted || !su.IsDeleted)
-                && (config.IncludeSuspended || !su.IsSuspended)
-                && Regex.IsMatch(su.UsernameLower, pattern)
-            select su;
-        
-        return query.AsAsyncEnumerable();
     }
 }
 

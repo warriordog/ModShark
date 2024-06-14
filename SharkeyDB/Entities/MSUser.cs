@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SharkeyDB.Entities;
@@ -16,14 +17,14 @@ public class MSUser
     public required string UserId { get; set; }
     
     /// <summary>
-    /// When the user was last checked for flags.
+    /// When the user was checked for flags.
     /// </summary>
-    [Column("last_checked")]
-    public DateTime? LastChecked { get; set; }
+    [Column("checked_at")]
+    public DateTime? CheckedAt { get; set; }
     
     /// <summary>
-    /// When the user was last flagged.
+    /// True if the user was flagged.
     /// </summary>
-    [Column("last_flagged")]
-    public DateTime? LastFlagged { get; set; } 
+    [Column("is_flagged"), DefaultValue(false)]
+    public bool IsFlagged { get; set; } 
 }
