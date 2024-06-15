@@ -7,20 +7,17 @@ ModShark is a standalone moderation tool for servers running the [Sharkey fedive
 ### Apply migrations
 
 ```powershell
-cd ModShark # Must run from the directory with appsettings.Development.json
-dotnet ef database update --project ../SharkeyDB
+dotnet ef database update --project ModShark
 ```
 
 ### Create migration
 
 ```powershell
-cd ModShark # Must run from the directory with appsettings.Development.json
-dotnet ef migrations add $name --project ../SharkeyDB
+dotnet ef migrations add $name --project ModShark
 ```
 
 ### Remove migration (but keep changes)
 
 ```powershell
-cd ModShark # Must run from the directory with appsettings.Development.json
-dotnet ef migrations remove --project ../SharkeyDB
+dotnet ef migrations remove --project ModShark
 ```
