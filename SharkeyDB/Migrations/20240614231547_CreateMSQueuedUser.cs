@@ -52,7 +52,7 @@ namespace SharkeyDB.Migrations
                 returns trigger as $$
                 begin
                     insert into ms_queued_user (user_id)
-                    VALUES (new.id);
+                    values (new.id);
                     return new;
                 end;
                 $$ language plpgsql;
