@@ -26,4 +26,6 @@ public class User
     
     [Column("isSuspended")]
     public bool IsSuspended { get; set; }
+    
+    public MSQueuedUser? MSQueuedUser { get; set; }
 }

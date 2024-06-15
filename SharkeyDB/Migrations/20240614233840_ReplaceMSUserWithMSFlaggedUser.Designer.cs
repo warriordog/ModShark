@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SharkeyDB;
@@ -11,9 +12,11 @@ using SharkeyDB;
 namespace SharkeyDB.Migrations
 {
     [DbContext(typeof(SharkeyContext))]
-    partial class SharkeyContextModelSnapshot : ModelSnapshot
+    [Migration("20240614233840_ReplaceMSUserWithMSFlaggedUser")]
+    partial class ReplaceMSUserWithMSFlaggedUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

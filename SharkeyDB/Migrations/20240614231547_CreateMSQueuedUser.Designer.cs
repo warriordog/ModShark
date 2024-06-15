@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SharkeyDB;
@@ -11,9 +12,11 @@ using SharkeyDB;
 namespace SharkeyDB.Migrations
 {
     [DbContext(typeof(SharkeyContext))]
-    partial class SharkeyContextModelSnapshot : ModelSnapshot
+    [Migration("20240614231547_CreateMSQueuedUser")]
+    partial class CreateMSQueuedUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,22 +24,6 @@ namespace SharkeyDB.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("SharkeyDB.Entities.MSFlaggedUser", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
-                        .HasColumnName("user_id");
-
-                    b.Property<DateTime>("FlaggedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("flagged_at");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("ms_flagged_user");
-                });
 
             modelBuilder.Entity("SharkeyDB.Entities.MSQueuedUser", b =>
                 {
@@ -59,6 +46,26 @@ namespace SharkeyDB.Migrations
                         .IsUnique();
 
                     b.ToTable("ms_queued_user");
+                });
+
+            modelBuilder.Entity("SharkeyDB.Entities.MSUser", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime?>("CheckedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("checked_at");
+
+                    b.Property<bool>("IsFlagged")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_flagged");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("ms_user");
                 });
 
             modelBuilder.Entity("SharkeyDB.Entities.User", b =>

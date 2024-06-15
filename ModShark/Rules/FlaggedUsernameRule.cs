@@ -13,110 +13,126 @@ public interface IFlaggedUsernameRule
 
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
-    // TODO use LastFlagged to re-check after config changes.
     public async Task RunRule(CancellationToken stoppingToken)
     {
         if (!config.Enabled)
             return;
 
         if (config.FlaggedPatterns.Count < 1)
+        {
+            logger.LogWarning("Skipping run, no patterns defined");
             return;
+        }
 
         if (!config.IncludeLocal && !config.IncludeRemote)
+        {
+            logger.LogWarning("Skipping run, all users are excluded (local & remote)");
             return;
+        }
         
         // Make sure that all timestamps are the same
         var now = DateTime.UtcNow;
         
-        // 0. Transaction - we MUST do these together for data consistency
-        await using var transaction = await db.Database.BeginTransactionAsync(stoppingToken);
-        
-        // 1. Flag - scan "user" and insert to "ms_user" only for matches
+        // Find all new flagged users
         var report = await FlagNewUsers(now, stoppingToken);
         
-        // 2. Sync - bulk insert with LastChecked=now, on conflict do nothing
-        await SyncDatabase(now, stoppingToken);
-        
-        // 3. Write report
-        if (report.Count > 0)
-        {
-            logger.LogInformation("Flagged {count} new users", report.Count);
-        
-            foreach (var user in report)
-            {
-                if (user.Host == null)
-                    logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
-                else
-                    logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
-            }
-            
-            await WriteReport(report, stoppingToken);
-        }
-        else
-        {
-            logger.LogDebug("Found no flagged usernames");
-        }
-        
-        // 4. Commit transaction
-        await transaction.CommitAsync(stoppingToken);
+        // Emit all configured reports
+        if (report != null)
+            await WriteReport(now, report, stoppingToken);
     }
 
-    private async Task<List<User>> FlagNewUsers(DateTime now, CancellationToken stoppingToken)
+    private async Task<List<User>?> FlagNewUsers(DateTime now, CancellationToken stoppingToken)
     {
+        // Cap at this number to ensure that we don't mistakenly clobber new inserts.
+        // This is nullable to prevent System.InvalidOperationException - https://stackoverflow.com/a/54117075
+        var maxId = await db.MSQueuedUsers
+            .MaxAsync(q => (int?)q.Id, stoppingToken);
+
+        // Stop early if the queue is empty
+        if (maxId is null or < 1)
+        {
+            logger.LogDebug("Nothing to do, user queue is empty");
+            return null;
+        }
+        
         var report = new List<User>();
         
-        // Merge patterns - postgres doesn't support ANY with regex
-        var pattern = string.Join("|", config.FlaggedPatterns.Select(p => $"({p})"));
-        
+        // Query for all new users that match the given flags
         var query =
-            from u in db.Users
+            from q in db.MSQueuedUsers
+            join u in db.Users
+                on q.UserId equals u.Id
             where
-                !db.MSUsers.Any(msu => msu.UserId == u.Id)
+                q.Id <= maxId
                 && (config.IncludeLocal || u.Host != null)
                 && (config.IncludeRemote || u.Host == null)
-                && (config.IncludeDeleted || !u.IsDeleted)
                 && (config.IncludeSuspended || !u.IsSuspended)
-                && Regex.IsMatch(u.UsernameLower, pattern)
+                && (config.IncludeDeleted || !u.IsDeleted)
+                && !db.MSFlaggedUsers.Any(f => f.UserId == q.UserId)
+            orderby q.Id
             select u;
         
         // Stream each result due to potentially large size
-        var flaggedUsers = query.AsAsyncEnumerable();
-        await foreach (var user in flaggedUsers)
+        var newUsers = query.AsAsyncEnumerable();
+        await foreach (var user in newUsers)
         {
+            // For better use of database resources, we handle pattern matching in application code.
+            // This also gives us .NET's faster and more powerful regex engine.
+            if (!IsFlaggedUsername(user.UsernameLower))
+                continue;
+            
             report.Add(user);
 
-            db.MSUsers.Add(new MSUser
+            db.MSFlaggedUsers.Add(new MSFlaggedUser
             {
                 UserId = user.Id,
-                CheckedAt = now,
-                IsFlagged = true
+                FlaggedAt = now
             });
         }
+        
+        // Delete all processed queue items
+        await db.MSQueuedUsers
+            .Where(q => q.Id <= maxId)
+            .ExecuteDeleteAsync(stoppingToken);
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);
         
         return report;
     }
-
-    private async Task SyncDatabase(DateTime now, CancellationToken stoppingToken)
-    {
-        const string query =
-        """
-            INSERT INTO ms_user (user_id, checked_at)
-            SELECT
-                id as user_id,
-                {0} as checked_at
-            FROM "user"
-            ON CONFLICT(user_id)
-                DO NOTHING
-        """;
-        var parameters = new object[] { now };
-        
-        await db.Database.ExecuteSqlRawAsync(query, parameters, stoppingToken);
-    }
     
-    private async Task WriteReport(List<User> report, CancellationToken stoppingToken)
+    private bool IsFlaggedUsername(string username)
+        => config.FlaggedPatterns.Any(pattern
+            // TODO pre-compile the regular expressions
+            => Regex.IsMatch(username, pattern)
+        );
+
+    private async Task WriteReport(DateTime now, List<User> report, CancellationToken stoppingToken)
+    {
+        if (report.Count <= 0)
+        {
+            logger.LogDebug("Skipping report - found no flagged usernames");
+            return;
+        }
+        
+        WriteConsoleReport(report);
+        await WriteEmailReport(now, report, stoppingToken);
+    }
+
+    private void WriteConsoleReport(List<User> report)
+    {
+        logger.LogInformation("Flagged {count} new users", report.Count);
+
+        foreach (var user in report)
+        {
+            if (user.Host == null)
+                logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
+            else
+                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
+        }
+    }
+
+    private async Task WriteEmailReport(DateTime now, List<User> report, CancellationToken stoppingToken)
     {
         var items = string.Join("", report.Select(u =>
         {
@@ -131,10 +147,11 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
             return $"<li>{type} {u.Id} - <code>{name}</code></li>";
         }));
 
-        var header = report.Count > 0
-            ? "new flagged usernames"
-            : "new flagged username";
-        var body = $"<h1>ModShark AutoMod</h1><h2>{header}:</h2><ul>{items}</ul>";
+        var count = report.Count;
+        var header = count == 1
+            ? "1 new flagged username"
+            : $"{count} new flagged usernames";
+        var body = $"<h1>ModShark auto-moderator</h1><h2>Found {header} at {now}:</h2><ul>{items}</ul>";
         var subject = $"ModShark: {header}";
         
         await sendGrid.SendReport(subject, body, stoppingToken);

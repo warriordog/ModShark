@@ -7,8 +7,8 @@ namespace SharkeyDB.Entities;
 /// <summary>
 /// ModShark user
 /// </summary>
-[Table("ms_user")]
-public class MSUser
+[Table("ms_flagged_user")]
+public class MSFlaggedUser
 {
     /// <summary>
     /// ID of the user - will map to <see cref="User.Id"/> unless the user has been deleted. 
@@ -19,12 +19,6 @@ public class MSUser
     /// <summary>
     /// When the user was checked for flags.
     /// </summary>
-    [Column("checked_at")]
-    public DateTime? CheckedAt { get; set; }
-    
-    /// <summary>
-    /// True if the user was flagged.
-    /// </summary>
-    [Column("is_flagged"), DefaultValue(false)]
-    public bool IsFlagged { get; set; } 
+    [Column("flagged_at")]
+    public DateTime FlaggedAt { get; set; }
 }
