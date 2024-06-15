@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
 using SharkeyDB;
@@ -158,6 +159,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
     }
 }
 
+[PublicAPI]
 public class FlaggedUsernameConfig
 {
     public bool Enabled { get; set; }

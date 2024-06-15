@@ -2,6 +2,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace ModShark.Services;
 
@@ -10,6 +11,7 @@ public interface ISendGridService
     Task SendReport(string subject, string body, CancellationToken stoppingToken);
 }
 
+[PublicAPI]
 public class SendGridConfig
 {
     public bool Enabled { get; set; }
@@ -74,6 +76,7 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
     }
 }
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 internal class SendGridSend
 {
     [JsonPropertyName("personalizations")]
@@ -89,12 +92,14 @@ internal class SendGridSend
     public List<SendGridContent> Content { get; set; } = [];
 }
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 internal class SendGridPersonalization
 {
     [JsonPropertyName("to")]
     public required List<SendGridAddress> To { get; set; } = [];
 }
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 internal class SendGridAddress
 {
     [JsonPropertyName("email")]
@@ -104,6 +109,7 @@ internal class SendGridAddress
     public string? Name { get; set; }
 }
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 internal class SendGridContent
 {
     [JsonPropertyName("type")]

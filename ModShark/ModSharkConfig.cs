@@ -1,9 +1,11 @@
-﻿using ModShark.Rules;
+﻿using JetBrains.Annotations;
+using ModShark.Rules;
 using ModShark.Services;
 using SharkeyDB;
 
 namespace ModShark;
 
+[PublicAPI]
 public class ModSharkConfig
 {
     public required SendGridConfig SendGrid { get; set; }
@@ -12,6 +14,7 @@ public class ModSharkConfig
     public required SharkeyDBConfig Postgres { get; set; }
 }
 
+[PublicAPI]
 public class RulesConfig
 {
     public required FlaggedUsernameConfig FlaggedUsername { get; set; }
