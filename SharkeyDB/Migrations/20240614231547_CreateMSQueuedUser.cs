@@ -41,7 +41,8 @@ namespace SharkeyDB.Migrations
                 """
                 insert into ms_queued_user (user_id)
                 select id as user_id
-                from "user";
+                from "user"
+                on conflict do nothing
                 """
             );
             

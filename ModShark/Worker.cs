@@ -29,6 +29,10 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
             await scope.ServiceProvider
                 .GetRequiredService<IFlaggedUsernameRule>()
                 .RunRule(stoppingToken);
+            
+            await scope.ServiceProvider
+                .GetRequiredService<IFlaggedHostnameRule>()
+                .RunRule(stoppingToken);
         } 
         catch (Exception ex)
         {

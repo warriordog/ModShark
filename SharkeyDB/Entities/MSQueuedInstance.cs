@@ -5,26 +5,26 @@ using Microsoft.EntityFrameworkCore;
 namespace SharkeyDB.Entities;
 
 /// <summary>
-/// Queue of new users pending a check
+/// Queue of new instances pending a check
 /// </summary>
-[Table("ms_queued_user"), Index(nameof(UserId), IsUnique = true)]
-public class MSQueuedUser
+[Table("ms_queued_instance"), Index(nameof(InstanceId), IsUnique = true)]
+public class MSQueuedInstance
 {
     /// <summary>
-    /// Unique ID of the queue entry.
+    /// Unique ID of the queued instance.
     /// Can be used for pagination and transaction-free sync.
     /// </summary>
     [Column("id"), Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
     
     /// <summary>
-    /// ID of the user - FK to <see cref="User.Id"/>.
+    /// Sharkey instance ID
     /// </summary>
-    [Column("user_id"), MaxLength(32)]
-    public required string UserId { get; set; }
+    [Column("instance_id"), MaxLength(32)]
+    public required string InstanceId { get; set; }
     
     /// <summary>
-    /// User who is queued
+    /// Instance that is queued
     /// </summary>
-    public required User User { get; set; }
+    public required Instance Instance { get; set; }
 }

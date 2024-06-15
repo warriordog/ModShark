@@ -9,6 +9,10 @@ public class SharkeyContext(DbContextOptions options) : DbContext(options)
     public DbSet<MSFlaggedUser> MSFlaggedUsers { get; set; }
     public DbSet<MSQueuedUser> MSQueuedUsers { get; set; }
     
+    public DbSet<Instance> Instances { get; set; }
+    public DbSet<MSFlaggedInstance> MSFlaggedInstances { get; set; }
+    public DbSet<MSQueuedInstance> MSQueuedInstances { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Disable migrations for Sharkey tables
@@ -16,12 +20,22 @@ public class SharkeyContext(DbContextOptions options) : DbContext(options)
         modelBuilder
             .Entity<User>()
             .ToTable("user", t => t.ExcludeFromMigrations());
+        modelBuilder
+            .Entity<Instance>()
+            .ToTable("instance", t => t.ExcludeFromMigrations());
 
         modelBuilder
             .Entity<User>()
             .HasOne(u => u.MSQueuedUser)
             .WithOne(q => q.User)
             .HasForeignKey<MSQueuedUser>(q => q.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder
+            .Entity<Instance>()
+            .HasOne(i => i.MSQueuedInstance)
+            .WithOne(q => q.Instance)
+            .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

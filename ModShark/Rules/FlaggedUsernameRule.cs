@@ -152,7 +152,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         var header = count == 1
             ? "1 new flagged username"
             : $"{count} new flagged usernames";
-        var body = $"<h1>ModShark auto-moderator</h1><h2>Found {header} at {now}:</h2><ul>{items}</ul>";
+        var body = $"<h1>ModShark auto-moderator</h1><h2>Found {header} at {now}</h2><ul>{items}</ul>";
         var subject = $"ModShark: {header}";
         
         await sendGrid.SendReport(subject, body, stoppingToken);

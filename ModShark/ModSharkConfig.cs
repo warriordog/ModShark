@@ -18,4 +18,5 @@ public class ModSharkConfig
 public class RulesConfig
 {
     public required FlaggedUsernameConfig FlaggedUsername { get; set; }
+    public required FlaggedHostnameConfig FlaggedHostname { get; set; }
 }

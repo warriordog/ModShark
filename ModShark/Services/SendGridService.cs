@@ -56,7 +56,7 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
             Subject = subject,
             Content =
             [
-                new SendGridContent()
+                new SendGridContent
                 {
                     Type = "text/html",
                     Value = body
