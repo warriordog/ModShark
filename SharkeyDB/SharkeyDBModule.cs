@@ -1,6 +1,5 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SharkeyDB;
@@ -12,7 +11,8 @@ public static class SharkeyDBModule
     {
         // https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings#aspnet-core
         services.AddDbContext<SharkeyContext>(options =>
-            options.UseNpgsql(config.Connection));
+            options.UseNpgsql(config.Connection)
+        );
 
         return services;
     }

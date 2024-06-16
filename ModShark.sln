@@ -4,6 +4,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModShark", "ModShark\ModSha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharkeyDB", "SharkeyDB\SharkeyDB.csproj", "{14A58991-1894-42B8-8696-07A8E1AAC89F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModShark.Tests", "ModShark.Tests\ModShark.Tests.csproj", "{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14A58991-1894-42B8-8696-07A8E1AAC89F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

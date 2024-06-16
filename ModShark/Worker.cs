@@ -1,4 +1,4 @@
-using ModShark.Rules;
+using ModShark.Services;
 
 namespace ModShark;
 
@@ -22,22 +22,11 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
 
     private async Task RunTick(CancellationToken stoppingToken)
     {
-        try
-        {
-            await using var scope = scopeFactory.CreateAsyncScope();
+        await using var scope = scopeFactory.CreateAsyncScope();
 
-            await scope.ServiceProvider
-                .GetRequiredService<IFlaggedUsernameRule>()
-                .RunRule(stoppingToken);
-            
-            await scope.ServiceProvider
-                .GetRequiredService<IFlaggedHostnameRule>()
-                .RunRule(stoppingToken);
-        } 
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Exception thrown during poll");
-        }
+        await scope.ServiceProvider
+            .GetRequiredService<IRuleService>()
+            .RunRules(stoppingToken);
     }
 }
 

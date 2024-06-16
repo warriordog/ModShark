@@ -7,10 +7,7 @@ using SharkeyDB.Entities;
 
 namespace ModShark.Rules;
 
-public interface IFlaggedHostnameRule
-{
-    Task RunRule(CancellationToken stoppingToken);
-}
+public interface IFlaggedHostnameRule : IRule;
 
 [PublicAPI]
 public class FlaggedHostnameConfig

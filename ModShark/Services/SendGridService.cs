@@ -1,6 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
@@ -8,7 +6,7 @@ namespace ModShark.Services;
 
 public interface ISendGridService
 {
-    Task SendReport(string subject, string body, CancellationToken stoppingToken);
+    Task SendReport(string subject, string message, CancellationToken stoppingToken);
 }
 
 [PublicAPI]
@@ -21,9 +19,9 @@ public class SendGridConfig
     public List<string> ToAddresses { get; set; } = [];
 }
 
-public class SendGridService(ILogger<SendGridService> logger, SendGridConfig config, HttpClient httpClient) : ISendGridService
+public class SendGridService(ILogger<SendGridService> logger, SendGridConfig config, IHttpService http) : ISendGridService
 {
-    public async Task SendReport(string subject, string body, CancellationToken stoppingToken)
+    public async Task SendReport(string subject, string message, CancellationToken stoppingToken)
     {
         if (!config.Enabled)
         {
@@ -45,14 +43,14 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
 
         if (config.ToAddresses.Count < 1)
         {
-            logger.LogWarning("Skipping email - to recipients specified");
+            logger.LogWarning("Skipping email - no recipients specified");
             return;
         }
         
-        logger.LogInformation("Sending message {subject}: {body}", subject, body);
+        logger.LogInformation("Sending message {subject}: {body}", subject, message);
 
         // https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
-        var request = new SendGridSend
+        var body = new SendGridSend
         {
             Personalizations = config.ToAddresses
                 .Select(to => new SendGridPersonalization
@@ -77,14 +75,17 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
                 new SendGridContent
                 {
                     Type = "text/html",
-                    Value = body
+                    Value = message
                 }
             ]
         };
-        var message = new HttpRequestMessage(HttpMethod.Post, "https://api.sendgrid.com/v3/mail/send");
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", config.ApiKey);
-        message.Content = JsonContent.Create(request);
-        var response = await httpClient.SendAsync(message, stoppingToken);
+
+        var headers = new Dictionary<string, string>
+        {
+            ["Authorization"] = $"Bearer {config.ApiKey}"
+        };
+
+        var response = await http.PostAsync("https://api.sendgrid.com/v3/mail/send", body, headers, stoppingToken);
 
         if (response.StatusCode != HttpStatusCode.Accepted)
         {

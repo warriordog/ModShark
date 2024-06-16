@@ -7,10 +7,7 @@ using SharkeyDB.Entities;
 
 namespace ModShark.Rules;
 
-public interface IFlaggedUsernameRule
-{
-    Task RunRule(CancellationToken stoppingToken);
-}
+public interface IFlaggedUsernameRule : IRule;
 
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
