@@ -17,14 +17,24 @@ public class FlaggedHostnameConfig
 {
     public bool Enabled { get; set; }
     public List<string> FlaggedPatterns { get; set; } = [];
+    public int Timeout { get; set; }
 }
 
 public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedHostnameRule
 {
+    // Merge and pre-compile the pattern for efficiency
+    private Regex Pattern { get; } = new(
+        string.Join("|", config.FlaggedPatterns.Select(p => $"({p})")),
+        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
+    );
+    
     public async Task RunRule(CancellationToken stoppingToken)
     {
         if (!config.Enabled)
+        {
+            logger.LogDebug("Skipping run, rule is disabled");
             return;
+        }
 
         if (config.FlaggedPatterns.Count < 1)
         {
@@ -61,8 +71,8 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         
         // Query for all new instances that match the given flags
         var query =
-            from q in db.MSQueuedInstances
-            join i in db.Instances
+            from q in db.MSQueuedInstances.AsNoTracking()
+            join i in db.Instances.AsNoTracking()
                 on q.InstanceId equals i.Id
             where
                 q.Id <= maxId
@@ -76,12 +86,12 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         {
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlaggedHostname(instance.Host))
+            if (!Pattern.IsMatch(instance.Host))
                 continue;
             
             report.Add(instance);
 
-            db.MSFlaggedInstances.Add(new MSFlaggedInstance()
+            db.MSFlaggedInstances.Add(new MSFlaggedInstance
             {
                 InstanceId = instance.Id,
                 FlaggedAt = now
@@ -98,12 +108,6 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         
         return report;
     }
-    
-    private bool IsFlaggedHostname(string username)
-        => config.FlaggedPatterns.Any(pattern
-            // TODO pre-compile the regular expressions
-            => Regex.IsMatch(username, pattern, RegexOptions.IgnoreCase)
-        );
     
     
     private async Task WriteReport(DateTime now, List<Instance> report, CancellationToken stoppingToken)

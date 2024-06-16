@@ -30,6 +30,24 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
             logger.LogDebug("Skipping email - SendGrid is disabled in config");
             return;
         }
+
+        if (string.IsNullOrEmpty(config.ApiKey))
+        {
+            logger.LogWarning("Skipping email - API key is missing");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(config.FromAddress))
+        {
+            logger.LogWarning("Skipping email - sender address is missing");
+            return;
+        }
+
+        if (config.ToAddresses.Count < 1)
+        {
+            logger.LogWarning("Skipping email - to recipients specified");
+            return;
+        }
         
         logger.LogInformation("Sending message {subject}: {body}", subject, body);
 
@@ -71,7 +89,10 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
         if (response.StatusCode != HttpStatusCode.Accepted)
         {
             var details = await response.Content.ReadAsStringAsync(stoppingToken);
-            logger.LogWarning("Failed to send notification email: got HTTP/{code} {details}", response.StatusCode, details);
+            logger.LogError("Failed to send notification email: got HTTP/{code} {details}", response.StatusCode, details);
+            
+            // We intentionally don't throw any errors, since email send can fail for various transient reasons.
+            // This may change if we ever want to add retry logic, or handle the error in upstream code.
         }
     }
 }

@@ -3,7 +3,7 @@ using SharkeyDB.Entities;
 
 namespace SharkeyDB;
 
-public class SharkeyContext(DbContextOptions options) : DbContext(options)
+public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
     public DbSet<MSFlaggedUser> MSFlaggedUsers { get; set; }

@@ -14,10 +14,19 @@ public interface IFlaggedUsernameRule
 
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
+    // Merge and pre-compile the pattern for efficiency
+    private Regex Pattern { get; } = new(
+        string.Join("|", config.FlaggedPatterns.Select(p => $"({p})")),
+        RegexOptions.Compiled | RegexOptions.ExplicitCapture
+    );
+    
     public async Task RunRule(CancellationToken stoppingToken)
     {
         if (!config.Enabled)
+        {
+            logger.LogDebug("Skipping run, rule is disabled");
             return;
+        }
 
         if (config.FlaggedPatterns.Count < 1)
         {
@@ -60,8 +69,8 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         
         // Query for all new users that match the given flags
         var query =
-            from q in db.MSQueuedUsers
-            join u in db.Users
+            from q in db.MSQueuedUsers.AsNoTracking()
+            join u in db.Users.AsNoTracking()
                 on q.UserId equals u.Id
             where
                 q.Id <= maxId
@@ -79,7 +88,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         {
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlaggedUsername(user.UsernameLower))
+            if (!Pattern.IsMatch(user.UsernameLower))
                 continue;
             
             report.Add(user);
@@ -101,12 +110,6 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         
         return report;
     }
-    
-    private bool IsFlaggedUsername(string username)
-        => config.FlaggedPatterns.Any(pattern
-            // TODO pre-compile the regular expressions
-            => Regex.IsMatch(username, pattern)
-        );
 
     private async Task WriteReport(DateTime now, List<User> report, CancellationToken stoppingToken)
     {
