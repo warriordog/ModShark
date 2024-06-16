@@ -10,10 +10,22 @@ namespace ModShark.Rules;
 
 public interface IFlaggedUsernameRule : IRule;
 
+[PublicAPI]
+public class FlaggedUsernameConfig
+{
+    public bool Enabled { get; set; }
+    public bool IncludeLocal { get; set; }
+    public bool IncludeRemote { get; set; }
+    public bool IncludeDeleted { get; set; }
+    public bool IncludeSuspended { get; set; }
+    public List<string> FlaggedPatterns { get; set; } = [];
+    public int Timeout { get; set; }
+}
+
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns);
+    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout);
     
     public async Task RunRule(CancellationToken stoppingToken)
     {
@@ -155,15 +167,4 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         
         await sendGrid.SendReport(subject, body, stoppingToken);
     }
-}
-
-[PublicAPI]
-public class FlaggedUsernameConfig
-{
-    public bool Enabled { get; set; }
-    public bool IncludeLocal { get; set; }
-    public bool IncludeRemote { get; set; }
-    public bool IncludeDeleted { get; set; }
-    public bool IncludeSuspended { get; set; }
-    public List<string> FlaggedPatterns { get; set; } = [];
 }

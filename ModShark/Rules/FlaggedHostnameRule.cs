@@ -21,7 +21,7 @@ public class FlaggedHostnameConfig
 public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedHostnameRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, true);
+    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout, true);
     
     public async Task RunRule(CancellationToken stoppingToken)
     {

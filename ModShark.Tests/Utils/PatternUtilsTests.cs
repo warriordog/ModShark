@@ -36,7 +36,7 @@ public class PatternUtilsTests
     [TestCase("plum", false)]
     public void CreateMatcher_ShouldMatchSolePattern(string input, bool isMatch)
     {
-        var matcher = PatternUtils.CreateMatcher(new[] { "a" });
+        var matcher = PatternUtils.CreateMatcher(new[] { "a" }, 1000);
         var result = matcher.IsMatch(input);
 
         result.Should().Be(isMatch);
@@ -48,7 +48,7 @@ public class PatternUtilsTests
     [TestCase("plum", true)]
     public void CreateMatcher_ShouldMatchAnyPattern(string input, bool isMatch)
     {
-        var matcher = PatternUtils.CreateMatcher(new[] { "b", "lum" });
+        var matcher = PatternUtils.CreateMatcher(new[] { "b", "lum" }, 1000);
         var result = matcher.IsMatch(input);
 
         result.Should().Be(isMatch);
@@ -58,9 +58,28 @@ public class PatternUtilsTests
     [TestCase(false, false)]
     public void CreateMatcher_ShouldMatchDifferentCase_WhenIgnoreCaseIsTrue(bool ignoreCase, bool isMatch)
     {
-        var matcher = PatternUtils.CreateMatcher(new[] { "A" }, ignoreCase);
+        var matcher = PatternUtils.CreateMatcher(new[] { "A" }, 1000, ignoreCase);
         var result = matcher.IsMatch("apple");
-
+        
         result.Should().Be(isMatch);
+    }
+
+    [Test]
+    public void CreateMatcher_ShouldSetTimeout()
+    {
+        const int expectedMS = 1234;
+        
+        var matcher = PatternUtils.CreateMatcher(Array.Empty<string>(), expectedMS);
+
+        matcher.MatchTimeout.TotalMilliseconds.Should().Be(expectedMS);
+    }
+
+    [Test]
+    public void CreateMatcher_ShouldThrow_WhenTimeoutIsNegative()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+        {
+            PatternUtils.CreateMatcher(Array.Empty<string>(), -1);
+        });
     }
 }

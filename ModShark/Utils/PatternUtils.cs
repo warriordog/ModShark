@@ -21,9 +21,16 @@ public static class PatternUtils
     /// Creates a regular expression that matches any of the provided patterns.
     /// Anonymous capturing groups will be disabled.
     /// </summary>
-    public static Regex CreateMatcher(ICollection<string> patterns, bool ignoreCase = false)
+    /// <param name="patterns">Zero or more patterns to compile</param>
+    /// <param name="timeout">Match timeout in milliseconds</param>
+    /// <param name="ignoreCase">If true, then case will be ignored</param>
+    public static Regex CreateMatcher(ICollection<string> patterns, int timeout, bool ignoreCase = false)
     {
+        if (timeout < 0)
+            throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "Timeout cannot be negative");
+        
         var pattern = AnyOf(patterns);
+        var timespan = TimeSpan.FromMilliseconds(timeout);
         var options = RegexOptions.Compiled | RegexOptions.ExplicitCapture;
         
         if (ignoreCase)
@@ -31,6 +38,6 @@ public static class PatternUtils
             options |= RegexOptions.IgnoreCase;
         }
 
-        return new Regex(pattern, options);
+        return new Regex(pattern, options, timespan);
     }
 }
