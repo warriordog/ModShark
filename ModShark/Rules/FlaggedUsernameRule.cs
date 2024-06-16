@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
+using ModShark.Utils;
 using SharkeyDB;
 using SharkeyDB.Entities;
 
@@ -12,10 +13,7 @@ public interface IFlaggedUsernameRule : IRule;
 public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = new(
-        string.Join("|", config.FlaggedPatterns.Select(p => $"({p})")),
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture
-    );
+    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns);
     
     public async Task RunRule(CancellationToken stoppingToken)
     {

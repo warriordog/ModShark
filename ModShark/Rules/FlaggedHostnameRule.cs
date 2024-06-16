@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
+using ModShark.Utils;
 using SharkeyDB;
 using SharkeyDB.Entities;
 
@@ -20,10 +21,7 @@ public class FlaggedHostnameConfig
 public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedHostnameRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = new(
-        string.Join("|", config.FlaggedPatterns.Select(p => $"({p})")),
-        RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnoreCase
-    );
+    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, true);
     
     public async Task RunRule(CancellationToken stoppingToken)
     {
