@@ -94,9 +94,10 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         }
         
         // Delete all processed queue items
-        await db.MSQueuedInstances
+        var numChecked = await db.MSQueuedInstances
             .Where(q => q.Id <= maxId)
             .ExecuteDeleteAsync(stoppingToken);
+        logger.LogDebug("Checked {numChecked} new users", numChecked);
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);

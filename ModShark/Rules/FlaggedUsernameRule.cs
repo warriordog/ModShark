@@ -108,9 +108,11 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         }
         
         // Delete all processed queue items
-        await db.MSQueuedUsers
+        var numChecked = await db.MSQueuedUsers
             .Where(q => q.Id <= maxId)
             .ExecuteDeleteAsync(stoppingToken);
+        logger.LogDebug("Checked {numChecked} new users", numChecked);
+        
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);
