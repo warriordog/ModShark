@@ -97,7 +97,7 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         var numChecked = await db.MSQueuedInstances
             .Where(q => q.Id <= maxId)
             .ExecuteDeleteAsync(stoppingToken);
-        logger.LogDebug("Checked {numChecked} new users", numChecked);
+        logger.LogDebug("Checked {numChecked} new instances", numChecked);
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);
