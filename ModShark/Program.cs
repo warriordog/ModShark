@@ -41,6 +41,7 @@ var config = builder.Configuration
 
 builder.Services.AddSharkeyDB(config.Postgres);
 builder.Services.AddSingleton(config.SendGrid);
+builder.Services.AddSingleton(config.Console);
 builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);

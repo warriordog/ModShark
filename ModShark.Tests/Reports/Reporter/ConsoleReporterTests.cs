@@ -9,13 +9,28 @@ namespace ModShark.Tests.Reports.Reporter;
 public class ConsoleReporterTests
 {
     private ConsoleReporter ReporterUnderTest { get; set; } = null!;
+    private ConsoleConfig FakeConfig { get; set; } = null!;
     private Mock<ILogger<ConsoleReporter>> MockLogger { get; set; } = null!;
+    
 
     [SetUp]
     public void Setup()
     {
         MockLogger = new Mock<ILogger<ConsoleReporter>>();
-        ReporterUnderTest = new ConsoleReporter(MockLogger.Object);
+        FakeConfig = new ConsoleConfig();
+        
+        ReporterUnderTest = new ConsoleReporter(MockLogger.Object, FakeConfig);
+    }
+    
+    [Test]
+    public async Task MakeReport_ShouldSkip_WhenDisabled()
+    {
+        FakeConfig.Enabled = false;
+        
+        await ReporterUnderTest.MakeReport(new Report(), default);
+        
+        MockLogger.VerifyLog(LogLevel.Information, Times.Never());
+        MockLogger.VerifyLog(LogLevel.Debug, "Skipping console - disabled in config", Times.Once());
     }
     
     [Test]

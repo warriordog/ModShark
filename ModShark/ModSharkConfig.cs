@@ -9,6 +9,7 @@ namespace ModShark;
 public class ModSharkConfig
 {
     public required SendGridConfig SendGrid { get; set; }
+    public required ConsoleConfig Console { get; set; }
     public required WorkerConfig Worker { get; set; }
     public required RulesConfig Rules { get; set; }
     public required SharkeyDBConfig Postgres { get; set; }

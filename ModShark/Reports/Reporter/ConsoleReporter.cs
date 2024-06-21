@@ -1,8 +1,16 @@
-﻿namespace ModShark.Reports.Reporter;
+﻿using JetBrains.Annotations;
+
+namespace ModShark.Reports.Reporter;
 
 public interface IConsoleReporter : IReporter;
 
-public class ConsoleReporter(ILogger<ConsoleReporter> logger) : IConsoleReporter
+[PublicAPI]
+public class ConsoleConfig
+{
+    public bool Enabled { get; set; } = true;
+}
+
+public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleConfig config) : IConsoleReporter
 {
     public Task MakeReport(Report report, CancellationToken _)
     {
@@ -14,6 +22,12 @@ public class ConsoleReporter(ILogger<ConsoleReporter> logger) : IConsoleReporter
 
     private void LogUserReports(Report report)
     {
+        if (!config.Enabled)
+        {
+            logger.LogDebug("Skipping console - disabled in config");
+            return;
+        }
+        
         if (!report.HasUserReports)
         {
             logger.LogDebug("Skipping console - report is empty");

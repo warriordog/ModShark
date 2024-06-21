@@ -15,7 +15,7 @@ namespace ModShark.Tests.Reports.Reporter;
 public class SendGridReporterTests
 {
     private SendGridReporter ServiceUnderTest { get; set; } = null!;
-    private SendGridConfig Config { get; set; } = null!;
+    private SendGridConfig FakeConfig { get; set; } = null!;
 
     private Mock<ILogger<SendGridReporter>> MockLogger { get; set; } = null!;
     private Mock<IHttpService> MockHttpService { get; set; } = null!;
@@ -29,7 +29,7 @@ public class SendGridReporterTests
             .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<SendGridSend>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
 
-        Config = new SendGridConfig
+        FakeConfig = new SendGridConfig
         {
             Enabled = true,
             ApiKey = "1234",
@@ -39,14 +39,14 @@ public class SendGridReporterTests
                 "to@example.com"
             ]
         };
-        ServiceUnderTest = new SendGridReporter(MockLogger.Object, Config, MockHttpService.Object);
+        ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeConfig, MockHttpService.Object);
     }
     
     
     [Test]
     public async Task MakeReport_ShouldBail_WhenDisabled()
     {
-        Config.Enabled = false;
+        FakeConfig.Enabled = false;
 
         await ServiceUnderTest.MakeReport(new Report(), default);
 
@@ -63,7 +63,7 @@ public class SendGridReporterTests
     [Test]
     public async Task MakeReport_ShouldBail_WhenApiKeyIsMissing()
     {
-        Config.ApiKey = "";
+        FakeConfig.ApiKey = "";
 
         await ServiceUnderTest.MakeReport(new Report(), default);
         
@@ -80,7 +80,7 @@ public class SendGridReporterTests
     [Test]
     public async Task MakeReport_ShouldBail_WhenFromAddressIsMissing()
     {
-        Config.FromAddress = "";
+        FakeConfig.FromAddress = "";
 
         await ServiceUnderTest.MakeReport(new Report(), default);
         
@@ -97,7 +97,7 @@ public class SendGridReporterTests
     [Test]
     public async Task MakeReport_ShouldBail_WhenToAddressesIsMissing()
     {
-        Config.ToAddresses = [];
+        FakeConfig.ToAddresses = [];
         
         await ServiceUnderTest.MakeReport(new Report(), default);
         
@@ -140,10 +140,10 @@ public class SendGridReporterTests
             {
                 u.Should().Be("https://api.sendgrid.com/v3/mail/send");
 
-                foreach (var to in Config.ToAddresses)
+                foreach (var to in FakeConfig.ToAddresses)
                     b.Personalizations.Should().Contain(p => p.To.Any(a => a.Email == to));
 
-                h.Should().Contain("Authorization", $"Bearer {Config.ApiKey}");
+                h.Should().Contain("Authorization", $"Bearer {FakeConfig.ApiKey}");
 
             })
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted))
