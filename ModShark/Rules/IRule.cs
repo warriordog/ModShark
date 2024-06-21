@@ -1,6 +1,8 @@
-﻿namespace ModShark.Rules;
+﻿using ModShark.Reports;
+
+namespace ModShark.Rules;
 
 public interface IRule
 {
-    Task RunRule(CancellationToken stoppingToken);
+    Task RunRule(Report report, CancellationToken stoppingToken);
 }

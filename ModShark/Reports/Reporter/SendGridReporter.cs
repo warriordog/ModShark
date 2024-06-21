@@ -1,13 +1,12 @@
 ﻿using System.Net;
+using System.Text;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
+using ModShark.Services;
 
-namespace ModShark.Services;
+namespace ModShark.Reports.Reporter;
 
-public interface ISendGridService
-{
-    Task SendReport(string subject, string message, CancellationToken stoppingToken);
-}
+public interface ISendGridReporter : IReporter;
 
 [PublicAPI]
 public class SendGridConfig
@@ -19,38 +18,108 @@ public class SendGridConfig
     public List<string> ToAddresses { get; set; } = [];
 }
 
-public class SendGridService(ILogger<SendGridService> logger, SendGridConfig config, IHttpService http) : ISendGridService
+public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridConfig config, IHttpService httpService) : ISendGridReporter
 {
-    public async Task SendReport(string subject, string message, CancellationToken stoppingToken)
+    public async Task MakeReport(Report report, CancellationToken stoppingToken)
     {
         if (!config.Enabled)
         {
-            logger.LogDebug("Skipping email - SendGrid is disabled in config");
+            logger.LogDebug("Skipping SendGrid - disabled in config");
             return;
         }
 
         if (string.IsNullOrEmpty(config.ApiKey))
         {
-            logger.LogWarning("Skipping email - API key is missing");
+            logger.LogWarning("Skipping SendGrid - API key is missing");
             return;
         }
         
         if (string.IsNullOrEmpty(config.FromAddress))
         {
-            logger.LogWarning("Skipping email - sender address is missing");
+            logger.LogWarning("Skipping SendGrid - sender address is missing");
             return;
         }
 
         if (config.ToAddresses.Count < 1)
         {
-            logger.LogWarning("Skipping email - no recipients specified");
+            logger.LogWarning("Skipping SendGrid - no recipients specified");
             return;
         }
         
+        if (!report.HasReports)
+        {
+            logger.LogDebug("Skipping SendGrid - report is empty");
+            return;
+        }
+        
+        var (subject, message) = RenderReport(report);
         logger.LogInformation("Sending message {subject}: {body}", subject, message);
 
+        var body = CreateSend(subject, message);
+        await SendEmail(body, stoppingToken);
+    }
+
+    private static (string subject, string message) RenderReport(Report report)
+    {
+        var subject = "ModShark auto-moderator";
+        var message = RenderReportMessage(report, subject);
+
+        return (subject, message);
+    }
+
+    private static string RenderReportMessage(Report report, string subject)
+    {
+        var messageBuilder = new StringBuilder();
+        
+        messageBuilder.Append($"<h1>{subject}</h1>");
+        RenderUserReports(report, messageBuilder);
+        RenderInstanceReports(report, messageBuilder);
+        
+        return messageBuilder.ToString();
+    }
+
+    private static void RenderUserReports(Report report, StringBuilder messageBuilder)
+    {
+        if (!report.HasUserReports)
+            return;
+
+        var count = report.UserReports.Count;
+        messageBuilder.Append($"<h2>Found {count} new flagged username(s)</h2>");
+        
+        messageBuilder.Append("<ul>");
+        foreach (var entry in report.UserReports)
+        {
+            messageBuilder.Append("<li>");
+            
+            if (entry.IsLocal)
+                messageBuilder.Append($"<strong>Local user {entry.UserId}</strong> - <code>@{entry.Username}</code>");
+            else
+                messageBuilder.Append($"Remote user {entry.UserId} - <code>@{entry.Username}@{entry.Hostname}</code>");
+            
+            messageBuilder.Append("</li>");
+        }
+        messageBuilder.Append("</ul>");
+    }
+
+    private static void RenderInstanceReports(Report report, StringBuilder messageBuilder)
+    {
+        if (!report.HasInstanceReports)
+            return;
+
+        var count = report.InstanceReports.Count;
+        messageBuilder.Append($"<h2>Found {count} new flagged instance(s)</h2>");
+        
+        messageBuilder.Append("<ul>");
+        foreach (var entry in report.InstanceReports)
+        {
+            messageBuilder.Append($"<li>{entry.InstanceId} - <code>{entry.Hostname}</code></li>");
+        }
+        messageBuilder.Append("</ul>");
+    }
+
+    private SendGridSend CreateSend(string subject, string message)
         // https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
-        var body = new SendGridSend
+        => new()
         {
             Personalizations = config.ToAddresses
                 .Select(to => new SendGridPersonalization
@@ -80,13 +149,15 @@ public class SendGridService(ILogger<SendGridService> logger, SendGridConfig con
             ]
         };
 
+    private async Task SendEmail(SendGridSend send, CancellationToken stoppingToken)
+    {
         var headers = new Dictionary<string, string>
         {
             ["Authorization"] = $"Bearer {config.ApiKey}"
         };
 
-        var response = await http.PostAsync("https://api.sendgrid.com/v3/mail/send", body, headers, stoppingToken);
-
+        var response = await httpService.PostAsync("https://api.sendgrid.com/v3/mail/send", send, headers, stoppingToken);
+        
         if (response.StatusCode != HttpStatusCode.Accepted)
         {
             var details = await response.Content.ReadAsStringAsync(stoppingToken);

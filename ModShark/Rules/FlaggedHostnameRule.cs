@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using ModShark.Services;
+using ModShark.Reports;
 using ModShark.Utils;
 using SharkeyDB;
 using SharkeyDB.Entities;
@@ -18,12 +18,12 @@ public class FlaggedHostnameConfig
     public int Timeout { get; set; }
 }
 
-public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedHostnameRule
+public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db) : IFlaggedHostnameRule
 {
     // Merge and pre-compile the pattern for efficiency
     private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout, true);
     
-    public async Task RunRule(CancellationToken stoppingToken)
+    public async Task RunRule(Report report, CancellationToken stoppingToken)
     {
         if (!config.Enabled)
         {
@@ -37,18 +37,11 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
             return;
         }
         
-        // Make sure that all timestamps are the same
-        var now = DateTime.UtcNow;
-        
         // Find all new flagged instances
-        var report = await FlagNewInstances(now, stoppingToken);
-        
-        // Emit all configured reports
-        if (report != null)
-            await WriteReport(now, report, stoppingToken);
+        await FlagNewInstances(report, stoppingToken);
     }
     
-    private async Task<List<Instance>?> FlagNewInstances(DateTime now, CancellationToken stoppingToken)
+    private async Task FlagNewInstances(Report report, CancellationToken stoppingToken)
     {
         // Cap at this number to ensure that we don't mistakenly clobber new inserts.
         // This is nullable to prevent System.InvalidOperationException - https://stackoverflow.com/a/54117075
@@ -59,10 +52,8 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         if (maxId is null or < 1)
         {
             logger.LogDebug("Nothing to do, instance queue is empty");
-            return null;
+            return;
         }
-        
-        var report = new List<Instance>();
         
         // Query for all new instances that match the given flags
         var query =
@@ -84,12 +75,16 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
             if (!Pattern.IsMatch(instance.Host))
                 continue;
             
-            report.Add(instance);
+            report.InstanceReports.Add(new InstanceReport
+            {
+                InstanceId = instance.Id,
+                Hostname = instance.Host
+            });
 
             db.MSFlaggedInstances.Add(new MSFlaggedInstance
             {
                 InstanceId = instance.Id,
-                FlaggedAt = now
+                FlaggedAt = report.ReportDate
             });
         }
         
@@ -101,45 +96,5 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);
-        
-        return report;
-    }
-    
-    
-    private async Task WriteReport(DateTime now, List<Instance> report, CancellationToken stoppingToken)
-    {
-        if (report.Count <= 0)
-        {
-            logger.LogDebug("Skipping report - found no flagged hostnames");
-            return;
-        }
-        
-        WriteConsoleReport(report);
-        await WriteEmailReport(now, report, stoppingToken);
-    }
-
-    private void WriteConsoleReport(List<Instance> report)
-    {
-        logger.LogInformation("Flagged {count} new instances", report.Count);
-
-        foreach (var instance in report)
-        {
-            logger.LogInformation("Flagged new instance {id} - {host}", instance.Id, instance.Host);
-        }
-    }
-
-    private async Task WriteEmailReport(DateTime now, List<Instance> report, CancellationToken stoppingToken)
-    {
-        
-        var items = string.Join("", report.Select(u => $"<li>{u.Id} - <code>{u.Host}</code></li>"));
-
-        var count = report.Count;
-        var header = count == 1
-            ? "1 new flagged hostname"
-            : $"{count} new flagged hostnames";
-        var body = $"<h1>ModShark auto-moderator</h1><h2>Found {header} at {now}</h2><ul>{items}</ul>";
-        var subject = $"ModShark: {header}";
-        
-        await sendGrid.SendReport(subject, body, stoppingToken);
     }
 }

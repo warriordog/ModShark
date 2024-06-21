@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using ModShark.Reports;
 using ModShark.Rules;
 using ModShark.Services;
 using Moq;
@@ -27,33 +28,39 @@ public class RuleServiceTests
     [Test]
     public async Task RunRules_ShouldRunFlaggedUsernameRule()
     {
-        await ServiceUnderTest.RunRules(default);
+        var report = new Report();
         
-        MockFlaggedUsernameRule.Verify(r => r.RunRule(It.IsAny<CancellationToken>()), Times.Once);
+        await ServiceUnderTest.RunRules(report, default);
+        
+        MockFlaggedUsernameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task RunRules_ShouldRunFlaggedHostnameRule()
     {
-        await ServiceUnderTest.RunRules(default);
+        var report = new Report();
         
-        MockFlaggedHostnameRule.Verify(r => r.RunRule(It.IsAny<CancellationToken>()), Times.Once);
+        await ServiceUnderTest.RunRules(report, default);
+        
+        MockFlaggedHostnameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task RunRules_ShouldHandleExceptions()
     {
+        var report = new Report();
+
         MockFlaggedUsernameRule
-            .Setup(r => r.RunRule(It.IsAny<CancellationToken>()))
+            .Setup(r => r.RunRule(report, It.IsAny<CancellationToken>()))
             .Throws<ApplicationException>();
         MockFlaggedHostnameRule
-            .Setup(r => r.RunRule(It.IsAny<CancellationToken>()))
+            .Setup(r => r.RunRule(report, It.IsAny<CancellationToken>()))
             .Throws<ApplicationException>();
         
-        await ServiceUnderTest.RunRules(default);
+        await ServiceUnderTest.RunRules(report, default);
         
-        MockFlaggedUsernameRule.Verify(r => r.RunRule(It.IsAny<CancellationToken>()), Times.Once);
-        MockFlaggedHostnameRule.Verify(r => r.RunRule(It.IsAny<CancellationToken>()), Times.Once);
+        MockFlaggedUsernameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
+        MockFlaggedHostnameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
         MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
 
     }

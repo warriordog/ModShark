@@ -1,3 +1,4 @@
+using ModShark.Reports;
 using ModShark.Services;
 
 namespace ModShark;
@@ -24,9 +25,17 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
     {
         await using var scope = scopeFactory.CreateAsyncScope();
 
+        var report = new Report();
+        
+        // Run rules to build report
         await scope.ServiceProvider
             .GetRequiredService<IRuleService>()
-            .RunRules(stoppingToken);
+            .RunRules(report, stoppingToken);
+        
+        // Save the report
+        await scope.ServiceProvider
+            .GetRequiredService<IReportService>()
+            .MakeReports(report, stoppingToken);
     }
 }
 

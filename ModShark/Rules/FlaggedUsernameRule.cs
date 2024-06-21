@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
-using ModShark.Services;
+using ModShark.Reports;
 using ModShark.Utils;
 using SharkeyDB;
 using SharkeyDB.Entities;
@@ -22,12 +22,12 @@ public class FlaggedUsernameConfig
     public int Timeout { get; set; }
 }
 
-public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db, ISendGridService sendGrid) : IFlaggedUsernameRule
+public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db) : IFlaggedUsernameRule
 {
     // Merge and pre-compile the pattern for efficiency
     private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout);
     
-    public async Task RunRule(CancellationToken stoppingToken)
+    public async Task RunRule(Report report, CancellationToken stoppingToken)
     {
         if (!config.Enabled)
         {
@@ -47,18 +47,11 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
             return;
         }
         
-        // Make sure that all timestamps are the same
-        var now = DateTime.UtcNow;
-        
         // Find all new flagged users
-        var report = await FlagNewUsers(now, stoppingToken);
-        
-        // Emit all configured reports
-        if (report != null)
-            await WriteReport(now, report, stoppingToken);
+        await FlagNewUsers(report, stoppingToken);
     }
 
-    private async Task<List<User>?> FlagNewUsers(DateTime now, CancellationToken stoppingToken)
+    private async Task FlagNewUsers(Report report, CancellationToken stoppingToken)
     {
         // Cap at this number to ensure that we don't mistakenly clobber new inserts.
         // This is nullable to prevent System.InvalidOperationException - https://stackoverflow.com/a/54117075
@@ -69,10 +62,8 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         if (maxId is null or < 1)
         {
             logger.LogDebug("Nothing to do, user queue is empty");
-            return null;
+            return;
         }
-        
-        var report = new List<User>();
         
         // Query for all new users that match the given flags
         var query =
@@ -98,12 +89,17 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
             if (!Pattern.IsMatch(user.UsernameLower))
                 continue;
             
-            report.Add(user);
+            report.UserReports.Add(new UserReport
+            {
+                UserId = user.Id,
+                Username = user.Username,
+                Hostname = user.Host
+            });
 
             db.MSFlaggedUsers.Add(new MSFlaggedUser
             {
                 UserId = user.Id,
-                FlaggedAt = now
+                FlaggedAt = report.ReportDate
             });
         }
         
@@ -116,57 +112,5 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         
         // Save changes
         await db.SaveChangesAsync(stoppingToken);
-        
-        return report;
-    }
-
-    private async Task WriteReport(DateTime now, List<User> report, CancellationToken stoppingToken)
-    {
-        if (report.Count <= 0)
-        {
-            logger.LogDebug("Skipping report - found no flagged usernames");
-            return;
-        }
-        
-        WriteConsoleReport(report);
-        await WriteEmailReport(now, report, stoppingToken);
-    }
-
-    private void WriteConsoleReport(List<User> report)
-    {
-        logger.LogInformation("Flagged {count} new users", report.Count);
-
-        foreach (var user in report)
-        {
-            if (user.Host == null)
-                logger.LogInformation("Flagged new user {id} - local @{username}", user.Id, user.Username);
-            else
-                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.Id, user.Username, user.Host);
-        }
-    }
-
-    private async Task WriteEmailReport(DateTime now, List<User> report, CancellationToken stoppingToken)
-    {
-        var items = string.Join("", report.Select(u =>
-        {
-            var type = u.Host == null
-                ? "<strong>Local user</strong>"
-                : "Remote user";
-
-            var name = u.Host == null
-                ? $"@{u.Username}"
-                : $"@{u.Username}@{u.Host}";
-            
-            return $"<li>{type} {u.Id} - <code>{name}</code></li>";
-        }));
-
-        var count = report.Count;
-        var header = count == 1
-            ? "1 new flagged username"
-            : $"{count} new flagged usernames";
-        var body = $"<h1>ModShark auto-moderator</h1><h2>Found {header} at {now}</h2><ul>{items}</ul>";
-        var subject = $"ModShark: {header}";
-        
-        await sendGrid.SendReport(subject, body, stoppingToken);
     }
 }

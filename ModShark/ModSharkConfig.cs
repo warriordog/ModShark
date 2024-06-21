@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
+using ModShark.Reports.Reporter;
 using ModShark.Rules;
-using ModShark.Services;
 using SharkeyDB;
 
 namespace ModShark;

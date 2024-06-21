@@ -1,4 +1,6 @@
 using ModShark;
+using ModShark.Reports;
+using ModShark.Reports.Reporter;
 using ModShark.Rules;
 using ModShark.Services;
 using SharkeyDB;
@@ -42,11 +44,17 @@ builder.Services.AddSingleton(config.SendGrid);
 builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);
+
 builder.Services.AddHttpClient<IHttpService, HttpService>();
-builder.Services.AddScoped<ISendGridService, SendGridService>();
+
+builder.Services.AddScoped<ISendGridReporter, SendGridReporter>();
+builder.Services.AddScoped<IConsoleReporter, ConsoleReporter>();
+builder.Services.AddScoped<IReportService, ReportService>();
+
 builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();
 builder.Services.AddScoped<IFlaggedHostnameRule, FlaggedHostnameRule>();
 builder.Services.AddScoped<IRuleService, RuleService>();
+
 builder.Services.AddHostedService<Worker>();
  
 var host = builder.Build();
