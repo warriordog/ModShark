@@ -40,8 +40,8 @@ var config = builder.Configuration
     ?? throw new ApplicationException("Configuration file is invalid: could not map to the config object.");
 
 builder.Services.AddSharkeyDB(config.Postgres);
-builder.Services.AddSingleton(config.SendGrid);
-builder.Services.AddSingleton(config.Console);
+builder.Services.AddSingleton(config.Reporters.SendGrid);
+builder.Services.AddSingleton(config.Reporters.Console);
 builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);
