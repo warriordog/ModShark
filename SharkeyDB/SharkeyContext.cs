@@ -26,6 +26,9 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
         modelBuilder
             .Entity<Instance>()
             .ToTable("instance", t => t.ExcludeFromMigrations());
+        modelBuilder
+            .Entity<AbuseUserReport>()
+            .ToTable("abuse_user_report", t => t.ExcludeFromMigrations());
 
         modelBuilder
             .Entity<User>()
