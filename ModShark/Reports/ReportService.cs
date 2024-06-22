@@ -7,7 +7,7 @@ public interface IReportService
     Task MakeReports(Report report, CancellationToken stoppingToken);
 }
 
-public class ReportService(ILogger<ReportService> logger, ISendGridReporter sendGridReporter, IConsoleReporter consoleReporter) : IReportService
+public class ReportService(ILogger<ReportService> logger, ISendGridReporter sendGridReporter, IConsoleReporter consoleReporter, INativeReporter nativeReporter) : IReportService
 {
     public async Task MakeReports(Report report, CancellationToken stoppingToken)
     {
@@ -17,8 +17,9 @@ public class ReportService(ILogger<ReportService> logger, ISendGridReporter send
             return;
         }
         
-        await MakeReport(report, sendGridReporter, stoppingToken);
         await MakeReport(report, consoleReporter, stoppingToken);
+        await MakeReport(report, nativeReporter, stoppingToken);
+        await MakeReport(report, sendGridReporter, stoppingToken);
     }
 
     private async Task MakeReport(Report report, IReporter reporter, CancellationToken stoppingToken)

@@ -5,15 +5,27 @@ namespace ModShark.Reports.Reporter;
 public interface IConsoleReporter : IReporter;
 
 [PublicAPI]
-public class ConsoleConfig
+public class ConsoleReporterConfig
 {
     public bool Enabled { get; set; } = true;
 }
 
-public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleConfig config) : IConsoleReporter
+public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleReporterConfig reporterConfig) : IConsoleReporter
 {
     public Task MakeReport(Report report, CancellationToken _)
     {
+        if (!reporterConfig.Enabled)
+        {
+            logger.LogDebug("Skipping console - disabled in config");
+            return Task.CompletedTask;
+        }
+        
+        if (!report.HasReports)
+        {
+            logger.LogDebug("Skipping console - report is empty");
+            return Task.CompletedTask;
+        }
+        
         LogUserReports(report);
         LogInstanceReports(report);
         
@@ -22,17 +34,8 @@ public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleConfig conf
 
     private void LogUserReports(Report report)
     {
-        if (!config.Enabled)
-        {
-            logger.LogDebug("Skipping console - disabled in config");
-            return;
-        }
-        
         if (!report.HasUserReports)
-        {
-            logger.LogDebug("Skipping console - report is empty");
             return;
-        }
 
         logger.LogInformation("Flagged {count} new user(s)", report.UserReports.Count);
 

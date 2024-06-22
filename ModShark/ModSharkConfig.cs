@@ -1,6 +1,8 @@
-﻿using JetBrains.Annotations;
+﻿using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 using ModShark.Reports.Reporter;
 using ModShark.Rules;
+using ModShark.Services;
 using SharkeyDB;
 
 namespace ModShark;
@@ -8,17 +10,26 @@ namespace ModShark;
 [PublicAPI]
 public class ModSharkConfig
 {
-    public required ReportersConfig Reporters { get; set; }
-    public required WorkerConfig Worker { get; set; }
-    public required RulesConfig Rules { get; set; }
+    public required SharkeyConfig Sharkey { get; set; }
     public required SharkeyDBConfig Postgres { get; set; }
+    public required WorkerConfig Worker { get; set; }
+    public required ReportersConfig Reporters { get; set; }
+    public required RulesConfig Rules { get; set; }
+}
+
+[PublicAPI]
+public class SharkeyConfig
+{
+    [JsonConverter(typeof(JsonStringEnumConverter<IdFormat>))]
+    public IdFormat IdFormat { get; set; } = IdFormat.AidX;
 }
 
 [PublicAPI]
 public class ReportersConfig
 {
-    public required SendGridConfig SendGrid { get; set; }
-    public required ConsoleConfig Console { get; set; }
+    public required SendGridReporterConfig SendGrid { get; set; }
+    public required ConsoleReporterConfig Console { get; set; }
+    public required NativeReporterConfig Native { get; set; }
 }
 
 [PublicAPI]

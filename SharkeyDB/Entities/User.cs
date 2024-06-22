@@ -28,4 +28,8 @@ public class User
     public bool IsSuspended { get; set; }
     
     public MSQueuedUser? MSQueuedUser { get; set; }
+
+    public ICollection<AbuseUserReport> ReportsBy { get; set; } = new List<AbuseUserReport>();
+    public ICollection<AbuseUserReport> ReportsAgainst { get; set; } = new List<AbuseUserReport>();
+    public ICollection<AbuseUserReport> ReportsAssignedTo { get; set; } = new List<AbuseUserReport>();
 }

@@ -40,16 +40,22 @@ var config = builder.Configuration
     ?? throw new ApplicationException("Configuration file is invalid: could not map to the config object.");
 
 builder.Services.AddSharkeyDB(config.Postgres);
+builder.Services.AddSingleton(config.Sharkey);
+builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Reporters.SendGrid);
 builder.Services.AddSingleton(config.Reporters.Console);
-builder.Services.AddSingleton(config.Worker);
+builder.Services.AddSingleton(config.Reporters.Native);
 builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);
 
 builder.Services.AddHttpClient<IHttpService, HttpService>();
+builder.Services.AddSingleton<IRandomService, RandomService>();
+builder.Services.AddSingleton<ITimeService, TimeService>();
+builder.Services.AddSingleton<ISharkeyIdService, SharkeyIdService>();
 
+builder.Services.AddSingleton<IConsoleReporter, ConsoleReporter>();
 builder.Services.AddScoped<ISendGridReporter, SendGridReporter>();
-builder.Services.AddScoped<IConsoleReporter, ConsoleReporter>();
+builder.Services.AddScoped<INativeReporter, NativeReporter>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();

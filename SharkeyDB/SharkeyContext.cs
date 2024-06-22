@@ -3,6 +3,7 @@ using SharkeyDB.Entities;
 
 namespace SharkeyDB;
 
+
 public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContext(options)
 {
     public DbSet<User> Users { get; set; }
@@ -12,6 +13,8 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
     public DbSet<Instance> Instances { get; set; }
     public DbSet<MSFlaggedInstance> MSFlaggedInstances { get; set; }
     public DbSet<MSQueuedInstance> MSQueuedInstances { get; set; }
+    
+    public DbSet<AbuseUserReport> AbuseUserReports { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +33,23 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
             .WithOne(q => q.User)
             .HasForeignKey<MSQueuedUser>(q => q.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder
+            .Entity<User>()
+            .HasMany(u => u.ReportsBy)
+            .WithOne(r => r.Reporter)
+            .HasForeignKey(r => r.ReporterId)
+            .IsRequired();
+        modelBuilder
+            .Entity<User>()
+            .HasMany(u => u.ReportsAgainst)
+            .WithOne(r => r.TargetUser)
+            .HasForeignKey(r => r.TargetUserId)
+            .IsRequired();
+        modelBuilder
+            .Entity<User>()
+            .HasMany(u => u.ReportsAssignedTo)
+            .WithOne(r => r.Assignee)
+            .HasForeignKey(r => r.AssigneeId);
         
         modelBuilder
             .Entity<Instance>()
@@ -37,5 +57,6 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
             .WithOne(q => q.Instance)
             .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
             .OnDelete(DeleteBehavior.Cascade);
+        
     }
 }

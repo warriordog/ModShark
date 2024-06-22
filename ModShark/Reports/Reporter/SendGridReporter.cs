@@ -9,7 +9,7 @@ namespace ModShark.Reports.Reporter;
 public interface ISendGridReporter : IReporter;
 
 [PublicAPI]
-public class SendGridConfig
+public class SendGridReporterConfig
 {
     public bool Enabled { get; set; }
     public string ApiKey { get; set; } = "";
@@ -18,29 +18,29 @@ public class SendGridConfig
     public List<string> ToAddresses { get; set; } = [];
 }
 
-public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridConfig config, IHttpService httpService) : ISendGridReporter
+public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporterConfig reporterConfig, IHttpService httpService) : ISendGridReporter
 {
     public async Task MakeReport(Report report, CancellationToken stoppingToken)
     {
-        if (!config.Enabled)
+        if (!reporterConfig.Enabled)
         {
             logger.LogDebug("Skipping SendGrid - disabled in config");
             return;
         }
 
-        if (string.IsNullOrEmpty(config.ApiKey))
+        if (string.IsNullOrEmpty(reporterConfig.ApiKey))
         {
             logger.LogWarning("Skipping SendGrid - API key is missing");
             return;
         }
         
-        if (string.IsNullOrEmpty(config.FromAddress))
+        if (string.IsNullOrEmpty(reporterConfig.FromAddress))
         {
             logger.LogWarning("Skipping SendGrid - sender address is missing");
             return;
         }
 
-        if (config.ToAddresses.Count < 1)
+        if (reporterConfig.ToAddresses.Count < 1)
         {
             logger.LogWarning("Skipping SendGrid - no recipients specified");
             return;
@@ -121,7 +121,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridConfig c
         // https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
         => new()
         {
-            Personalizations = config.ToAddresses
+            Personalizations = reporterConfig.ToAddresses
                 .Select(to => new SendGridPersonalization
                 {
                     To =
@@ -135,8 +135,8 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridConfig c
                 .ToList(),
             From = new SendGridAddress
             {
-                Email = config.FromAddress,
-                Name = config.FromName
+                Email = reporterConfig.FromAddress,
+                Name = reporterConfig.FromName
             },
             Subject = subject,
             Content =
@@ -153,7 +153,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridConfig c
     {
         var headers = new Dictionary<string, string>
         {
-            ["Authorization"] = $"Bearer {config.ApiKey}"
+            ["Authorization"] = $"Bearer {reporterConfig.ApiKey}"
         };
 
         var response = await httpService.PostAsync("https://api.sendgrid.com/v3/mail/send", send, headers, stoppingToken);

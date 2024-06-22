@@ -9,7 +9,7 @@ namespace ModShark.Tests.Reports.Reporter;
 public class ConsoleReporterTests
 {
     private ConsoleReporter ReporterUnderTest { get; set; } = null!;
-    private ConsoleConfig FakeConfig { get; set; } = null!;
+    private ConsoleReporterConfig FakeReporterConfig { get; set; } = null!;
     private Mock<ILogger<ConsoleReporter>> MockLogger { get; set; } = null!;
     
 
@@ -17,15 +17,15 @@ public class ConsoleReporterTests
     public void Setup()
     {
         MockLogger = new Mock<ILogger<ConsoleReporter>>();
-        FakeConfig = new ConsoleConfig();
+        FakeReporterConfig = new ConsoleReporterConfig();
         
-        ReporterUnderTest = new ConsoleReporter(MockLogger.Object, FakeConfig);
+        ReporterUnderTest = new ConsoleReporter(MockLogger.Object, FakeReporterConfig);
     }
     
     [Test]
     public async Task MakeReport_ShouldSkip_WhenDisabled()
     {
-        FakeConfig.Enabled = false;
+        FakeReporterConfig.Enabled = false;
         
         await ReporterUnderTest.MakeReport(new Report(), default);
         

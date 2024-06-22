@@ -12,6 +12,7 @@ public class ReportServiceTests
     private Mock<ILogger<ReportService>> MockLogger { get; set; } = null!;
     private Mock<ISendGridReporter> MockSendGridReporter { get; set; } = null!;
     private Mock<IConsoleReporter> MockConsoleReporter { get; set; } = null!;
+    private Mock<INativeReporter> MockNativeReporter { get; set; } = null!;
 
     private Report FakeReport { get; set; } = null!;
     
@@ -33,8 +34,9 @@ public class ReportServiceTests
         MockLogger = new Mock<ILogger<ReportService>>();
         MockSendGridReporter = new Mock<ISendGridReporter>();
         MockConsoleReporter = new Mock<IConsoleReporter>();
+        MockNativeReporter = new Mock<INativeReporter>();
         
-        ServiceUnderTest = new ReportService(MockLogger.Object, MockSendGridReporter.Object, MockConsoleReporter.Object);
+        ServiceUnderTest = new ReportService(MockLogger.Object, MockSendGridReporter.Object, MockConsoleReporter.Object, MockNativeReporter.Object);
     }
     
     [Test]
@@ -44,6 +46,7 @@ public class ReportServiceTests
         
         MockSendGridReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
         MockConsoleReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
+        MockNativeReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
     }
     
     [Test]
@@ -63,6 +66,14 @@ public class ReportServiceTests
     }
     
     [Test]
+    public async Task MakeReports_ShouldRunNativeReporter()
+    {
+        await ServiceUnderTest.MakeReports(FakeReport, default);
+        
+        MockNativeReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
+    }
+    
+    [Test]
     public async Task MakeReports_ShouldHandleExceptions()
     {
         MockSendGridReporter
@@ -76,6 +87,7 @@ public class ReportServiceTests
         
         MockSendGridReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
         MockConsoleReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
+        MockNativeReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
         MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
     }
 }
