@@ -19,7 +19,7 @@ public class TimeServiceTests
         var actualTime = ServiceUnderTest.Now;
         var expectedTime = DateTime.Now;
 
-        actualTime.Should().Be(expectedTime);
+        actualTime.Should().BeCloseTo(expectedTime, TimeSpan.FromSeconds(10));
     }
 
     [Test]
@@ -28,6 +28,6 @@ public class TimeServiceTests
         var actualTime = ServiceUnderTest.UtcNow;
         var expectedTime = DateTime.UtcNow;
 
-        actualTime.Should().Be(expectedTime);
+        actualTime.Should().BeCloseTo(expectedTime, TimeSpan.FromSeconds(10));
     }
 }
