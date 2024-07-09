@@ -62,6 +62,7 @@ builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();
 builder.Services.AddScoped<IFlaggedHostnameRule, FlaggedHostnameRule>();
 builder.Services.AddScoped<IRuleService, RuleService>();
 
+builder.Services.AddScoped<IServiceAccountService, ServiceAccountService>();
 builder.Services.AddHostedService<Worker>();
  
 var host = builder.Build();
