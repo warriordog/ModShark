@@ -19,7 +19,9 @@ public class SharkeyIdServiceTests
     {
         FakeConfig = new SharkeyConfig
         {
-            IdFormat = IdFormat.AidX
+            IdFormat = IdFormat.AidX,
+            ServiceAccount = "instance.actor",
+            ApiEndpoint = "http://127.0.0.1:3000"
         };
         FakeUtcNow = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Utc);
         FakeLocalNow = new DateTime(2024, 6, 1, 0, 0, 0, DateTimeKind.Local);

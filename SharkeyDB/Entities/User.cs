@@ -27,6 +27,9 @@ public class User
     [Column("isSuspended")]
     public bool IsSuspended { get; set; }
     
+    [Column("token"), MaxLength(16)]
+    public string? Token { get; set; }
+    
     public MSQueuedUser? MSQueuedUser { get; set; }
 
     public ICollection<AbuseUserReport> ReportsBy { get; set; } = new List<AbuseUserReport>();

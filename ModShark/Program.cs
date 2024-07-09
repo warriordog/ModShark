@@ -49,6 +49,8 @@ builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);
 
 builder.Services.AddHttpClient<IHttpService, HttpService>();
+builder.Services.AddScoped<ISharkeyHttpService, SharkeyHttpService>();
+
 builder.Services.AddSingleton<IRandomService, RandomService>();
 builder.Services.AddSingleton<ITimeService, TimeService>();
 builder.Services.AddSingleton<ISharkeyIdService, SharkeyIdService>();

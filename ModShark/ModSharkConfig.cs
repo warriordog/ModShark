@@ -23,6 +23,7 @@ public class SharkeyConfig
     [JsonConverter(typeof(JsonStringEnumConverter<IdFormat>))]
     public IdFormat IdFormat { get; set; } = IdFormat.AidX;
     public required string ServiceAccount { get; set; }
+    public required string ApiEndpoint { get; set; } 
 }
 
 [PublicAPI]
