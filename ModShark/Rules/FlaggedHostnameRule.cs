@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Reports;
+using ModShark.Services;
 using ModShark.Utils;
 using SharkeyDB;
 using SharkeyDB.Entities;
@@ -14,11 +15,16 @@ public interface IFlaggedHostnameRule : IRule;
 public class FlaggedHostnameConfig
 {
     public bool Enabled { get; set; }
+    
+    public bool IncludeSuspended { get; set; }
+    public bool IncludeSilenced { get; set; }
+    public bool IncludeBlocked { get; set; }
+    
     public List<string> FlaggedPatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
-public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db) : IFlaggedHostnameRule
+public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, IMetaService metaService) : IFlaggedHostnameRule
 {
     // Merge and pre-compile the pattern for efficiency
     private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout, true);
@@ -55,6 +61,11 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
             return;
         }
         
+        // Get the list of blocked / silenced instances from metadata
+        var meta = await metaService.GetInstanceMeta(stoppingToken);
+        var extendedBlockedHosts = meta.BlockedHosts.Select(h => $".{h.ToLower()}").ToList();
+        var extendedSilencedHosts = meta.SilencedHosts.Select(h => $".{h.ToLower()}").ToList();
+        
         // Query for all new instances that match the given flags
         var query =
             from q in db.MSQueuedInstances.AsNoTracking()
@@ -62,6 +73,9 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
                 on q.InstanceId equals i.Id
             where
                 q.Id <= maxId
+                && (config.IncludeSuspended || i.SuspensionState == "none")
+                && (config.IncludeBlocked || !meta.BlockedHosts.Contains(i.Host))
+                && (config.IncludeSilenced || !meta.SilencedHosts.Contains(i.Host))
                 && !db.MSFlaggedInstances.Any(f => f.InstanceId == q.InstanceId)
             orderby q.Id
             select i;
@@ -70,6 +84,14 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
         var newInstances = query.AsAsyncEnumerable();
         await foreach (var instance in newInstances)
         {
+            // Check for base domain and alternate-case matches.
+            // This cannot be done efficiently in-database.
+            var lowerHost = instance.Host.ToLower();
+            if (!config.IncludeBlocked && extendedBlockedHosts.Any(h => lowerHost.EndsWith(h)))
+                continue;
+            if (!config.IncludeSilenced && extendedSilencedHosts.Any(h => lowerHost.EndsWith(h)))
+                continue;
+            
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
             if (!Pattern.IsMatch(instance.Host))

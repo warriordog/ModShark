@@ -6,6 +6,8 @@ namespace SharkeyDB;
 
 public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContext(options)
 {
+    public DbSet<Meta> Metas { get; set; }
+    
     public DbSet<User> Users { get; set; }
     public DbSet<MSFlaggedUser> MSFlaggedUsers { get; set; }
     public DbSet<MSQueuedUser> MSQueuedUsers { get; set; }
@@ -29,6 +31,9 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
         modelBuilder
             .Entity<AbuseUserReport>()
             .ToTable("abuse_user_report", t => t.ExcludeFromMigrations());
+        modelBuilder
+            .Entity<Meta>()
+            .ToTable("meta", t => t.ExcludeFromMigrations());
 
         modelBuilder
             .Entity<User>()

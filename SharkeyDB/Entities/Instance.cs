@@ -21,5 +21,12 @@ public class Instance
     [Column("host"), MaxLength(512)]
     public required string Host { get; set; }
     
+    /// <summary>
+    /// Status and/or reason of the instance suspension.
+    /// This is actually an enum, but we are *not* dealing with that.
+    /// </summary>
+    [Column("suspensionState"), MaxLength(256)]
+    public required string SuspensionState { get; set; }
+    
     public MSQueuedInstance? MSQueuedInstance { get; set; }
 }
