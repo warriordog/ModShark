@@ -12,10 +12,8 @@ namespace ModShark.Rules;
 public interface IFlaggedInstanceRule : IRule;
 
 [PublicAPI]
-public class FlaggedInstanceConfig
+public class FlaggedInstanceConfig : RuleConfig
 {
-    public bool Enabled { get; set; }
-    
     public bool IncludeSuspended { get; set; }
     public bool IncludeSilenced { get; set; }
     public bool IncludeBlocked { get; set; }
@@ -24,43 +22,24 @@ public class FlaggedInstanceConfig
     public int Timeout { get; set; }
 }
 
-public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedInstanceConfig config, SharkeyContext db, IMetaService metaService) : IFlaggedInstanceRule
+public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedInstanceConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedInstance>(logger, config, db, db.MSQueuedInstances), IFlaggedInstanceRule
 {
     // Merge and pre-compile the pattern for efficiency
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, true);
-    
-    public async Task RunRule(Report report, CancellationToken stoppingToken)
-    {
-        if (!config.Enabled)
-        {
-            logger.LogDebug("Skipping run, rule is disabled");
-            return;
-        }
 
+    public override async Task RunRule(Report report, CancellationToken stoppingToken)
+    {
         if (config.HostnamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return;
         }
-        
-        // Find all new flagged instances
-        await FlagNewInstances(report, stoppingToken);
-    }
-    
-    private async Task FlagNewInstances(Report report, CancellationToken stoppingToken)
-    {
-        // Cap at this number to ensure that we don't mistakenly clobber new inserts.
-        // This is nullable to prevent System.InvalidOperationException - https://stackoverflow.com/a/54117075
-        var maxId = await db.MSQueuedInstances
-            .MaxAsync(q => (int?)q.Id, stoppingToken);
 
-        // Stop early if the queue is empty
-        if (maxId is null or < 1)
-        {
-            logger.LogDebug("Nothing to do, instance queue is empty");
-            return;
-        }
-        
+        await base.RunRule(report, stoppingToken);
+    }
+
+    protected override async Task RunQueuedRule(Report report, int maxId, CancellationToken stoppingToken)
+    {
         // Get the list of blocked / silenced instances from metadata
         var meta = await metaService.GetInstanceMeta(stoppingToken);
         var extendedBlockedHosts = meta.BlockedHosts.Select(h => $".{h.ToLower()}").ToList();
@@ -109,14 +88,5 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
                 FlaggedAt = report.ReportDate
             });
         }
-        
-        // Delete all processed queue items
-        var numChecked = await db.MSQueuedInstances
-            .Where(q => q.Id <= maxId)
-            .ExecuteDeleteAsync(stoppingToken);
-        logger.LogDebug("Checked {numChecked} new instances", numChecked);
-        
-        // Save changes
-        await db.SaveChangesAsync(stoppingToken);
     }
 }

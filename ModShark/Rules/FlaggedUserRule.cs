@@ -11,9 +11,8 @@ namespace ModShark.Rules;
 public interface IFlaggedUserRule : IRule;
 
 [PublicAPI]
-public class FlaggedUserConfig
+public class FlaggedUserConfig : RuleConfig
 {
-    public bool Enabled { get; set; }
     public bool IncludeLocal { get; set; }
     public bool IncludeRemote { get; set; }
     public bool IncludeDeleted { get; set; }
@@ -23,19 +22,13 @@ public class FlaggedUserConfig
     public int Timeout { get; set; }
 }
 
-public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db) : IFlaggedUserRule
+public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db) : QueuedRule<MSQueuedUser>(logger, config, db, db.MSQueuedUsers), IFlaggedUserRule
 {
     // Merge and pre-compile the pattern for efficiency
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
     
-    public async Task RunRule(Report report, CancellationToken stoppingToken)
+    public override async Task RunRule(Report report, CancellationToken stoppingToken)
     {
-        if (!config.Enabled)
-        {
-            logger.LogDebug("Skipping run, rule is disabled");
-            return;
-        }
-
         if (config.UsernamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
@@ -47,25 +40,12 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             logger.LogWarning("Skipping run, all users are excluded (local & remote)");
             return;
         }
-        
-        // Find all new flagged users
-        await FlagNewUsers(report, stoppingToken);
+
+        await base.RunRule(report, stoppingToken);
     }
 
-    private async Task FlagNewUsers(Report report, CancellationToken stoppingToken)
+    protected override async Task RunQueuedRule(Report report, int maxId, CancellationToken stoppingToken)
     {
-        // Cap at this number to ensure that we don't mistakenly clobber new inserts.
-        // This is nullable to prevent System.InvalidOperationException - https://stackoverflow.com/a/54117075
-        var maxId = await db.MSQueuedUsers
-            .MaxAsync(q => (int?)q.Id, stoppingToken);
-
-        // Stop early if the queue is empty
-        if (maxId is null or < 1)
-        {
-            logger.LogDebug("Nothing to do, user queue is empty");
-            return;
-        }
-        
         // Query for all new users that match the given flags
         var query =
             from q in db.MSQueuedUsers.AsNoTracking()
@@ -104,15 +84,5 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
                 FlaggedAt = report.ReportDate
             });
         }
-        
-        // Delete all processed queue items
-        var numChecked = await db.MSQueuedUsers
-            .Where(q => q.Id <= maxId)
-            .ExecuteDeleteAsync(stoppingToken);
-        logger.LogDebug("Checked {numChecked} new users", numChecked);
-        
-        
-        // Save changes
-        await db.SaveChangesAsync(stoppingToken);
     }
 }

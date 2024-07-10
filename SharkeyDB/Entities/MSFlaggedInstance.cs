@@ -8,7 +8,7 @@ namespace SharkeyDB.Entities;
 /// An instance that has been flagged for reporting
 /// </summary>
 [Table("ms_flagged_instance"), Index(nameof(InstanceId), IsUnique = true)]
-public class MSFlaggedInstance
+public class MSFlaggedInstance : IEntity<int>
 {
     /// <summary>
     /// Unique ID of the flagged instance.

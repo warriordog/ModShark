@@ -7,7 +7,7 @@ namespace SharkeyDB.Entities;
 /// Instance configuration / metadata
 /// </summary>
 [Table("meta")]
-public class Meta
+public class Meta : IEntity<string>
 {
     /// <summary>
     /// Meaningless - there is only ever one row

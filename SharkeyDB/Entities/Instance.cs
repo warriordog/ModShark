@@ -7,7 +7,7 @@ namespace SharkeyDB.Entities;
 /// Sharkey instance
 /// </summary>
 [Table("instance")]
-public class Instance
+public class Instance : IEntity<string>
 {
     /// <summary>
     /// Unique ID of the instance

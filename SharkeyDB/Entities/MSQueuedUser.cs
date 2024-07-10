@@ -8,7 +8,7 @@ namespace SharkeyDB.Entities;
 /// Queue of new users pending a check
 /// </summary>
 [Table("ms_queued_user"), Index(nameof(UserId), IsUnique = true)]
-public class MSQueuedUser
+public class MSQueuedUser : IEntity<int>
 {
     /// <summary>
     /// Unique ID of the queue entry.

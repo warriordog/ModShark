@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +8,7 @@ namespace SharkeyDB.Entities;
 /// ModShark user
 /// </summary>
 [Table("ms_flagged_user"), Index(nameof(UserId), IsUnique = true)]
-public class MSFlaggedUser
+public class MSFlaggedUser : IEntity<int>
 {
     /// <summary>
     /// Unique ID of the flagged user.

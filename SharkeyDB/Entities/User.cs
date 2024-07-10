@@ -7,7 +7,7 @@ namespace SharkeyDB.Entities;
 /// Sharkey user
 /// </summary>
 [Table("user")]
-public class User
+public class User : IEntity<string>
 {
     [Column("id"), MaxLength(32), Key]
     public required string Id { get; set; }

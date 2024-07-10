@@ -7,7 +7,7 @@ namespace SharkeyDB.Entities;
 /// Sharkey report
 /// </summary>
 [Table("abuse_user_report")]
-public class AbuseUserReport
+public class AbuseUserReport : IEntity<string>
 {
     /// <summary>
     /// ID of the report - must follow a specific format!
