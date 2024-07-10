@@ -27,6 +27,9 @@ public class User
     [Column("isSuspended")]
     public bool IsSuspended { get; set; }
     
+    [Column("isSilenced")]
+    public bool IsSilenced { get; set; }
+    
     [Column("token"), MaxLength(16)]
     public string? Token { get; set; }
     

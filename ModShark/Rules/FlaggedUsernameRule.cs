@@ -18,6 +18,7 @@ public class FlaggedUsernameConfig
     public bool IncludeRemote { get; set; }
     public bool IncludeDeleted { get; set; }
     public bool IncludeSuspended { get; set; }
+    public bool IncludeSilenced { get; set; }
     public List<string> FlaggedPatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
@@ -75,6 +76,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
                 && (config.IncludeLocal || u.Host != null)
                 && (config.IncludeRemote || u.Host == null)
                 && (config.IncludeSuspended || !u.IsSuspended)
+                && (config.IncludeSilenced || !u.IsSilenced)
                 && (config.IncludeDeleted || !u.IsDeleted)
                 && !db.MSFlaggedUsers.Any(f => f.UserId == q.UserId)
             orderby q.Id
