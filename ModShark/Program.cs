@@ -39,7 +39,9 @@ var config = builder.Configuration
     .Get<ModSharkConfig>()
     ?? throw new ApplicationException("Configuration file is invalid: could not map to the config object.");
 
-builder.Services.AddSharkeyDB(config.Postgres);
+builder.Services.UseSharkeyDB();
+
+builder.Services.AddSingleton(config.Postgres);
 builder.Services.AddSingleton(config.Sharkey);
 builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Reporters.SendGrid);

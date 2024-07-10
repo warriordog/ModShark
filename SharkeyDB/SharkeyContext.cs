@@ -4,7 +4,7 @@ using SharkeyDB.Entities;
 namespace SharkeyDB;
 
 
-public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContext(options)
+public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBConfig config) : DbContext(options)
 {
     public DbSet<Meta> Metas { get; set; }
     
@@ -65,6 +65,9 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options) : DbContex
             .WithOne(q => q.Instance)
             .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
             .OnDelete(DeleteBehavior.Cascade);
-        
     }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder options)
+        // https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings#aspnet-core
+        => options.UseNpgsql(config.Connection);
 }
