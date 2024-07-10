@@ -45,6 +45,7 @@ builder.Services.AddSingleton(config.Worker);
 builder.Services.AddSingleton(config.Reporters.SendGrid);
 builder.Services.AddSingleton(config.Reporters.Console);
 builder.Services.AddSingleton(config.Reporters.Native);
+builder.Services.AddSingleton(config.Reporters.Post);
 builder.Services.AddSingleton(config.Rules.FlaggedUsername);
 builder.Services.AddSingleton(config.Rules.FlaggedHostname);
 
@@ -58,6 +59,7 @@ builder.Services.AddSingleton<ISharkeyIdService, SharkeyIdService>();
 builder.Services.AddSingleton<IConsoleReporter, ConsoleReporter>();
 builder.Services.AddScoped<ISendGridReporter, SendGridReporter>();
 builder.Services.AddScoped<INativeReporter, NativeReporter>();
+builder.Services.AddScoped<IPostReporter, PostReporter>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();

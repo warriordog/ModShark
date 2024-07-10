@@ -13,6 +13,7 @@ public class ReportServiceTests
     private Mock<ISendGridReporter> MockSendGridReporter { get; set; } = null!;
     private Mock<IConsoleReporter> MockConsoleReporter { get; set; } = null!;
     private Mock<INativeReporter> MockNativeReporter { get; set; } = null!;
+    private Mock<IPostReporter> MockPostReporter { get; set; } = null!;
 
     private Report FakeReport { get; set; } = null!;
     
@@ -35,8 +36,9 @@ public class ReportServiceTests
         MockSendGridReporter = new Mock<ISendGridReporter>();
         MockConsoleReporter = new Mock<IConsoleReporter>();
         MockNativeReporter = new Mock<INativeReporter>();
+        MockPostReporter = new Mock<IPostReporter>();
         
-        ServiceUnderTest = new ReportService(MockLogger.Object, MockSendGridReporter.Object, MockConsoleReporter.Object, MockNativeReporter.Object);
+        ServiceUnderTest = new ReportService(MockLogger.Object, MockSendGridReporter.Object, MockConsoleReporter.Object, MockNativeReporter.Object, MockPostReporter.Object);
     }
     
     [Test]
@@ -47,6 +49,7 @@ public class ReportServiceTests
         MockSendGridReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
         MockConsoleReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
         MockNativeReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
+        MockPostReporter.Verify(r => r.MakeReport(It.IsAny<Report>(), It.IsAny<CancellationToken>()), Times.Never);
     }
     
     [Test]
@@ -74,6 +77,14 @@ public class ReportServiceTests
     }
     
     [Test]
+    public async Task MakeReports_ShouldRunPostReporter()
+    {
+        await ServiceUnderTest.MakeReports(FakeReport, default);
+        
+        MockPostReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
+    }
+    
+    [Test]
     public async Task MakeReports_ShouldHandleExceptions()
     {
         MockSendGridReporter
@@ -82,12 +93,19 @@ public class ReportServiceTests
         MockConsoleReporter
             .Setup(r => r.MakeReport(FakeReport, default))
             .Throws<ApplicationException>();
+        MockNativeReporter
+            .Setup(r => r.MakeReport(FakeReport, default))
+            .Throws<ApplicationException>();
+        MockPostReporter
+            .Setup(r => r.MakeReport(FakeReport, default))
+            .Throws<ApplicationException>();
 
         await ServiceUnderTest.MakeReports(FakeReport, default);
         
         MockSendGridReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
         MockConsoleReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
         MockNativeReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
-        MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
+        MockPostReporter.Verify(r => r.MakeReport(FakeReport, default), Times.Once);
+        MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(4));
     }
 }

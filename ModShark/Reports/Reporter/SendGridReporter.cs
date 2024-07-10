@@ -53,7 +53,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         }
         
         var (subject, message) = RenderReport(report);
-        logger.LogInformation("Sending message {subject}: {body}", subject, message);
+        logger.LogInformation("Sending email via SendGrid {subject}: {body}", subject, message);
 
         var body = CreateSend(subject, message);
         await SendEmail(body, stoppingToken);

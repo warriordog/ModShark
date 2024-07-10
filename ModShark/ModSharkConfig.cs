@@ -32,6 +32,7 @@ public class ReportersConfig
     public required SendGridReporterConfig SendGrid { get; set; }
     public required ConsoleReporterConfig Console { get; set; }
     public required NativeReporterConfig Native { get; set; }
+    public required PostReporterConfig Post { get; set; }
 }
 
 [PublicAPI]

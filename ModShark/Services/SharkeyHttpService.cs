@@ -6,15 +6,36 @@ public interface ISharkeyHttpService
 {
     Task ReportAbuse(string userId, string comment, CancellationToken stoppingToken);
     Task ReportAbuse(ReportAbuseRequest request, CancellationToken stoppingToken);
+
+    Task CreateNote(string text, string visibility, CancellationToken stoppingToken, bool localOnly = false, string? cw = null, IEnumerable<string>? visibleUserIds = null);
+    Task CreateNote(CreateNoteRequest request, CancellationToken stoppingToken);
 }
 
 public class SharkeyHttpService(ILogger<SharkeyHttpService> logger, SharkeyConfig config, IHttpService http, IServiceAccountService serviceAccountService) : ISharkeyHttpService
 {
     public async Task ReportAbuse(string userId, string comment, CancellationToken stoppingToken)
-        => await ReportAbuse(new ReportAbuseRequest { UserId = userId, Comment = comment }, stoppingToken);
+        => await ReportAbuse(new ReportAbuseRequest
+        {
+            UserId = userId,
+            Comment = comment
+        }, stoppingToken);
 
     public async Task ReportAbuse(ReportAbuseRequest request, CancellationToken stoppingToken)
         => await PostAuthenticatedAsync("api/users/report-abuse", request, stoppingToken);
+
+    public async Task CreateNote(string text, string visibility, CancellationToken stoppingToken, bool localOnly = false, string? cw = null, IEnumerable<string>? visibleUserIds = null)
+        => await CreateNote(new CreateNoteRequest
+        {
+            Text = text,
+            Visibility = visibility,
+            LocalOnly = localOnly,
+            ContentWarning = cw,
+            VisibleUserIds = visibleUserIds
+        }, stoppingToken);
+
+    public async Task CreateNote(CreateNoteRequest request, CancellationToken stoppingToken)
+        => await PostAuthenticatedAsync("api/notes/create", request, stoppingToken);
+
 
     private async Task PostAuthenticatedAsync<TRequest>(string action, TRequest request, CancellationToken stoppingToken)
         where TRequest : AuthenticatedRequestBase
@@ -62,4 +83,22 @@ public class ReportAbuseRequest : AuthenticatedRequestBase
 
     [JsonPropertyName("comment")]
     public string Comment { get; set; } = "";
+}
+
+public class CreateNoteRequest : AuthenticatedRequestBase
+{
+    [JsonPropertyName("cw")]
+    public string? ContentWarning { get; set; }
+    
+    [JsonPropertyName("localOnly")]
+    public bool LocalOnly { get; set; }
+    
+    [JsonPropertyName("text")]
+    public required string Text { get; set; }
+    
+    [JsonPropertyName("visibility")]
+    public required string Visibility { get; set; }
+    
+    [JsonPropertyName("visibleUserIds")]
+    public IEnumerable<string>? VisibleUserIds { get; set; }
 }
