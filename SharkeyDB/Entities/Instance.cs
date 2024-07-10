@@ -29,4 +29,6 @@ public class Instance : IEntity<string>
     public required string SuspensionState { get; set; }
     
     public MSQueuedInstance? MSQueuedInstance { get; set; }
+    
+    public ICollection<User> Users { get; set; } = new List<User>();
 }

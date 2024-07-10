@@ -35,35 +35,54 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .Entity<Meta>()
             .ToTable("meta", t => t.ExcludeFromMigrations());
 
+        // FK ms_queued_user(user_id) -> user(id)  
         modelBuilder
             .Entity<User>()
             .HasOne(u => u.MSQueuedUser)
             .WithOne(q => q.User)
             .HasForeignKey<MSQueuedUser>(q => q.UserId)
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+        
+        // FK abuse_user_report(reporter_id)* -> user(id)  
         modelBuilder
             .Entity<User>()
             .HasMany(u => u.ReportsBy)
             .WithOne(r => r.Reporter)
             .HasForeignKey(r => r.ReporterId)
             .IsRequired();
+        
+        // FK abuse_user_report(target_user_id)* -> user(id)  
         modelBuilder
             .Entity<User>()
             .HasMany(u => u.ReportsAgainst)
             .WithOne(r => r.TargetUser)
             .HasForeignKey(r => r.TargetUserId)
             .IsRequired();
+        
+        // FK abuse_user_report(assignee_id)* -> ?user(id)  
         modelBuilder
             .Entity<User>()
             .HasMany(u => u.ReportsAssignedTo)
             .WithOne(r => r.Assignee)
-            .HasForeignKey(r => r.AssigneeId);
+            .HasForeignKey(r => r.AssigneeId)
+            .IsRequired(false);
         
+        // FK user(host)* -> ?instance(host)
+        modelBuilder
+            .Entity<User>()
+            .HasOne(u => u.Instance)
+            .WithMany(i => i.Users)
+            .HasForeignKey(u => u.Host)
+            .IsRequired(false);
+        
+        // FK ms_queued_instance(instance_id) -> instance(id)  
         modelBuilder
             .Entity<Instance>()
             .HasOne(i => i.MSQueuedInstance)
             .WithOne(q => q.Instance)
             .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
+            .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
     }
 

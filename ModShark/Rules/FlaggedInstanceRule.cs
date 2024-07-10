@@ -42,8 +42,6 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
     {
         // Get the list of blocked / silenced instances from metadata
         var meta = await metaService.GetInstanceMeta(stoppingToken);
-        var extendedBlockedHosts = meta.BlockedHosts.Select(h => $".{h.ToLower()}").ToList();
-        var extendedSilencedHosts = meta.SilencedHosts.Select(h => $".{h.ToLower()}").ToList();
         
         // Query for all new instances that match the given flags
         var query =
@@ -63,12 +61,10 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         var newInstances = query.AsAsyncEnumerable();
         await foreach (var instance in newInstances)
         {
-            // Check for base domain and alternate-case matches.
-            // This cannot be done efficiently in-database.
-            var lowerHost = instance.Host.ToLower();
-            if (!config.IncludeBlocked && extendedBlockedHosts.Any(h => lowerHost.EndsWith(h)))
+            // The query only excludes exact matches, so check for base domains here
+            if (!config.IncludeBlocked && HostUtils.Matches(instance.Host, meta.BlockedHosts))
                 continue;
-            if (!config.IncludeSilenced && extendedSilencedHosts.Any(h => lowerHost.EndsWith(h)))
+            if (!config.IncludeSilenced && HostUtils.Matches(instance.Host, meta.SilencedHosts))
                 continue;
             
             // For better use of database resources, we handle pattern matching in application code.
