@@ -9,13 +9,17 @@ ModShark is a standalone moderation tool for servers running the [Sharkey fedive
 Rules detect flagged behavior according to user-configured parameters.
 See each subsection for detailed instructions.
 
-### Flagged Usernames - detect and alert when any username matches a pattern
+### Flagged User - detect and alert when any new user matches a flag
 
-Documentation TBD.
+Currently, the only supported flag is Regular Expression matching against username.
+Filters and exclusions are supported.
+Complete documentation TBD.
 
-### Flagged Hostnames - detect and alert when any instance hostname matches a pattern
+### Flagged Instance - detect and alert when any new instance matches a flag
 
-Documentation TBD.
+Currently, the only supported flag is Regular Expression matching against hostname.
+Filters and exclusions are supported.
+Complete documentation TBD.
 
 ## Reporters
 

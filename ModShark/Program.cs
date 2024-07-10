@@ -48,8 +48,8 @@ builder.Services.AddSingleton(config.Reporters.SendGrid);
 builder.Services.AddSingleton(config.Reporters.Console);
 builder.Services.AddSingleton(config.Reporters.Native);
 builder.Services.AddSingleton(config.Reporters.Post);
-builder.Services.AddSingleton(config.Rules.FlaggedUsername);
-builder.Services.AddSingleton(config.Rules.FlaggedHostname);
+builder.Services.AddSingleton(config.Rules.FlaggedUser);
+builder.Services.AddSingleton(config.Rules.FlaggedInstance);
 
 builder.Services.AddHttpClient<IHttpService, HttpService>();
 builder.Services.AddScoped<ISharkeyHttpService, SharkeyHttpService>();
@@ -64,8 +64,8 @@ builder.Services.AddScoped<INativeReporter, NativeReporter>();
 builder.Services.AddScoped<IPostReporter, PostReporter>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
-builder.Services.AddScoped<IFlaggedUsernameRule, FlaggedUsernameRule>();
-builder.Services.AddScoped<IFlaggedHostnameRule, FlaggedHostnameRule>();
+builder.Services.AddScoped<IFlaggedUserRule, FlaggedUserRule>();
+builder.Services.AddScoped<IFlaggedInstanceRule, FlaggedInstanceRule>();
 builder.Services.AddScoped<IRuleService, RuleService>();
 
 builder.Services.AddScoped<IMetaService, MetaService>();

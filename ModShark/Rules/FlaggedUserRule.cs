@@ -8,10 +8,10 @@ using SharkeyDB.Entities;
 
 namespace ModShark.Rules;
 
-public interface IFlaggedUsernameRule : IRule;
+public interface IFlaggedUserRule : IRule;
 
 [PublicAPI]
-public class FlaggedUsernameConfig
+public class FlaggedUserConfig
 {
     public bool Enabled { get; set; }
     public bool IncludeLocal { get; set; }
@@ -19,14 +19,14 @@ public class FlaggedUsernameConfig
     public bool IncludeDeleted { get; set; }
     public bool IncludeSuspended { get; set; }
     public bool IncludeSilenced { get; set; }
-    public List<string> FlaggedPatterns { get; set; } = [];
+    public List<string> UsernamePatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
-public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUsernameConfig config, SharkeyContext db) : IFlaggedUsernameRule
+public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db) : IFlaggedUserRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout);
+    private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
     
     public async Task RunRule(Report report, CancellationToken stoppingToken)
     {
@@ -36,7 +36,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
             return;
         }
 
-        if (config.FlaggedPatterns.Count < 1)
+        if (config.UsernamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return;
@@ -88,7 +88,7 @@ public class FlaggedUsernameRule(ILogger<FlaggedUsernameRule> logger, FlaggedUse
         {
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!Pattern.IsMatch(user.UsernameLower))
+            if (!UsernamePattern.IsMatch(user.UsernameLower))
                 continue;
             
             report.UserReports.Add(new UserReport

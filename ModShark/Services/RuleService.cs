@@ -8,12 +8,12 @@ public interface IRuleService
     Task RunRules(Report report, CancellationToken stoppingToken);
 }
 
-public class RuleService(ILogger<RuleService> logger, IFlaggedUsernameRule flaggedUsernameRule, IFlaggedHostnameRule flaggedHostnameRule) : IRuleService
+public class RuleService(ILogger<RuleService> logger, IFlaggedUserRule flaggedUserRule, IFlaggedInstanceRule flaggedInstanceRule) : IRuleService
 {
     public async Task RunRules(Report report, CancellationToken stoppingToken)
     {
-        await RunRule(report, flaggedUsernameRule, stoppingToken);
-        await RunRule(report, flaggedHostnameRule, stoppingToken);
+        await RunRule(report, flaggedUserRule, stoppingToken);
+        await RunRule(report, flaggedInstanceRule, stoppingToken);
     }
 
     private async Task RunRule(Report report, IRule rule, CancellationToken stoppingToken)

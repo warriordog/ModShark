@@ -12,15 +12,15 @@ public class RuleServiceTests
     private RuleService ServiceUnderTest { get; set; } = null!;
 
     private Mock<ILogger<RuleService>> MockLogger { get; set; } = null!;
-    private Mock<IFlaggedUsernameRule> MockFlaggedUsernameRule { get; set; } = null!;
-    private Mock<IFlaggedHostnameRule> MockFlaggedHostnameRule { get; set; } = null!;
+    private Mock<IFlaggedUserRule> MockFlaggedUsernameRule { get; set; } = null!;
+    private Mock<IFlaggedInstanceRule> MockFlaggedHostnameRule { get; set; } = null!;
     
     [SetUp]
     public void Setup()
     {
         MockLogger = new Mock<ILogger<RuleService>>();
-        MockFlaggedUsernameRule = new Mock<IFlaggedUsernameRule>();
-        MockFlaggedHostnameRule = new Mock<IFlaggedHostnameRule>();
+        MockFlaggedUsernameRule = new Mock<IFlaggedUserRule>();
+        MockFlaggedHostnameRule = new Mock<IFlaggedInstanceRule>();
 
         ServiceUnderTest = new RuleService(MockLogger.Object, MockFlaggedUsernameRule.Object, MockFlaggedHostnameRule.Object);
     }

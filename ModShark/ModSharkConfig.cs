@@ -38,6 +38,6 @@ public class ReportersConfig
 [PublicAPI]
 public class RulesConfig
 {
-    public required FlaggedUsernameConfig FlaggedUsername { get; set; }
-    public required FlaggedHostnameConfig FlaggedHostname { get; set; }
+    public required FlaggedUserConfig FlaggedUser { get; set; }
+    public required FlaggedInstanceConfig FlaggedInstance { get; set; }
 }

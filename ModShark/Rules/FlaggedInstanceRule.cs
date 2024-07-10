@@ -9,10 +9,10 @@ using SharkeyDB.Entities;
 
 namespace ModShark.Rules;
 
-public interface IFlaggedHostnameRule : IRule;
+public interface IFlaggedInstanceRule : IRule;
 
 [PublicAPI]
-public class FlaggedHostnameConfig
+public class FlaggedInstanceConfig
 {
     public bool Enabled { get; set; }
     
@@ -20,14 +20,14 @@ public class FlaggedHostnameConfig
     public bool IncludeSilenced { get; set; }
     public bool IncludeBlocked { get; set; }
     
-    public List<string> FlaggedPatterns { get; set; } = [];
+    public List<string> HostnamePatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
-public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHostnameConfig config, SharkeyContext db, IMetaService metaService) : IFlaggedHostnameRule
+public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedInstanceConfig config, SharkeyContext db, IMetaService metaService) : IFlaggedInstanceRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex Pattern { get; } = PatternUtils.CreateMatcher(config.FlaggedPatterns, config.Timeout, true);
+    private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, true);
     
     public async Task RunRule(Report report, CancellationToken stoppingToken)
     {
@@ -37,7 +37,7 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
             return;
         }
 
-        if (config.FlaggedPatterns.Count < 1)
+        if (config.HostnamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return;
@@ -94,7 +94,7 @@ public class FlaggedHostnameRule(ILogger<FlaggedHostnameRule> logger, FlaggedHos
             
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!Pattern.IsMatch(instance.Host))
+            if (!HostnamePattern.IsMatch(instance.Host))
                 continue;
             
             report.InstanceReports.Add(new InstanceReport
