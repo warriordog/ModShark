@@ -26,5 +26,5 @@ public class MSQueuedNote : IEntity<int>
     /// <summary>
     /// Note that is queued
     /// </summary>
-    public required Note Note { get; set; }
+    public Note? Note { get; set; }
 }

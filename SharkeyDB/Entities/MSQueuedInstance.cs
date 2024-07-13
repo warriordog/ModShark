@@ -26,5 +26,5 @@ public class MSQueuedInstance : IEntity<int>
     /// <summary>
     /// Instance that is queued
     /// </summary>
-    public required Instance Instance { get; set; }
+    public Instance? Instance { get; set; }
 }

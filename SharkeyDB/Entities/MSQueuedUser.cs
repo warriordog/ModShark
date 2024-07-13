@@ -26,5 +26,5 @@ public class MSQueuedUser : IEntity<int>
     /// <summary>
     /// User who is queued
     /// </summary>
-    public required User User { get; set; }
+    public User? User { get; set; }
 }

@@ -25,7 +25,7 @@ public class Note : IEntity<string>
     /// <summary>
     /// Author of the note
     /// </summary>
-    public required User User { get; set; }
+    public User? User { get; set; }
     
     /// <summary>
     /// Visibility of the note.
