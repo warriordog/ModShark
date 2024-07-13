@@ -103,9 +103,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             
             report.UserReports.Add(new UserReport
             {
-                UserId = user.Id,
-                Username = user.Username,
-                Hostname = user.Host
+                User = user
             });
 
             db.MSFlaggedUsers.Add(new MSFlaggedUser

@@ -136,6 +136,7 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
         messageBuilder.Append("**ModShark Report**\n\n");
         RenderUserReports(report, messageBuilder);
         RenderInstanceReports(report, messageBuilder);
+        RenderNoteReports(report, messageBuilder);
         
         return messageBuilder.ToString();
     }
@@ -148,12 +149,12 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
         var count = report.UserReports.Count;
         messageBuilder.Append($"**Found {count} new flagged username(s):**\n");
         
-        foreach (var entry in report.UserReports)
+        foreach (var userReport in report.UserReports)
         {
-            if (entry.IsLocal)
-                messageBuilder.Append($"- **Local user {entry.UserId}** - `@{entry.Username}`\n");
+            if (userReport.IsLocal)
+                messageBuilder.Append($"- **Local user {userReport.User.Id}** - `@{userReport.User.Username}`\n");
             else
-                messageBuilder.Append($"- Remote user {entry.UserId} - `@{entry.Username}@{entry.Hostname}`\n");
+                messageBuilder.Append($"- Remote user {userReport.User.Id} - `@{userReport.User.Username}@{userReport.User.Host}`\n");
         }
 
         messageBuilder.Append('\n');
@@ -167,10 +168,29 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
         var count = report.InstanceReports.Count;
         messageBuilder.Append($"**Found {count} new flagged instance(s):**\n");
         
-        foreach (var entry in report.InstanceReports)
+        foreach (var instanceReport in report.InstanceReports)
         {
-            messageBuilder.Append($"- {entry.InstanceId} - `{entry.Hostname}`\n");
+            messageBuilder.Append($"- {instanceReport.Instance.Id} - `{instanceReport.Instance.Host}`\n");
         }
+    }
+
+    private static void RenderNoteReports(Report report, StringBuilder messageBuilder)
+    {
+        if (!report.HasNoteReports)
+            return;
+
+        var count = report.UserReports.Count;
+        messageBuilder.Append($"**Found {count} new flagged notes(s):**\n");
+        
+        foreach (var noteReport in report.NoteReports)
+        {
+            if (noteReport.IsLocal)
+                messageBuilder.Append($"- **Local note {noteReport.Note.Id}** by user {noteReport.User.Id} - `@{noteReport.User.Username}`\n");
+            else
+                messageBuilder.Append($"- Remote note {noteReport.Note.Id} by user {noteReport.User.Id} - `@{noteReport.User.Username}@{noteReport.User.Host}`\n");
+        }
+
+        messageBuilder.Append('\n');
     }
 
     // Can be simplified once this is implemented: https://github.com/dotnet/efcore/issues/11799

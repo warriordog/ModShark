@@ -15,7 +15,7 @@ public class NativeReporterConfig
     public bool UseApi { get; set; }
 }
 
-public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IServiceAccountService serviceAccountService, ISharkeyHttpService http) : INativeReporter
+public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IServiceAccountService serviceAccountService, ISharkeyHttpService http, ILinkService linkService) : INativeReporter
 {
     private const string UserReportComment = "ModShark: username matched one or more flagged patterns";
     private const string InstanceReportComment = "ModShark: instance hostname matched one or more flagged patterns";
@@ -43,6 +43,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
 
         await SaveUserReports(report, reporterId, stoppingToken);
         await SaveInstanceReports(report, reporterId, stoppingToken);
+        await SaveNoteReports(report, reporterId, stoppingToken);
 
         await db.SaveChangesAsync(stoppingToken);
     }
@@ -54,7 +55,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
 
         foreach (var userReport in report.UserReports)
         {
-            await MakeReport(userReport.UserId, userReport.Hostname, reporterId, UserReportComment, report.ReportDate, stoppingToken);
+            await MakeReport(userReport.User.Id, userReport.User.Host, reporterId, UserReportComment, report.ReportDate, stoppingToken);
         }
     }
 
@@ -69,19 +70,19 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
         foreach (var instanceReport in report.InstanceReports)
         {
             // Lookup the target account ID from the table we just produced
-            if (!reportedIds.TryGetValue(instanceReport.Hostname, out var reportedId))
+            if (!reportedIds.TryGetValue(instanceReport.Instance.Host, out var reportedId))
             {
-                logger.LogWarning("Could not issue native report against instance {instanceId} ({instanceHost}) because no reportable users were found.", instanceReport.InstanceId, instanceReport.Hostname);
+                logger.LogWarning("Could not issue native report against instance {instanceId} ({instanceHost}) because no reportable users were found.", instanceReport.Instance.Id, instanceReport.Instance.Host);
                 continue;
             }
 
-            await MakeReport(reportedId, instanceReport.Hostname, reporterId, InstanceReportComment, report.ReportDate, stoppingToken);
+            await MakeReport(reportedId, instanceReport.Instance.Host, reporterId, InstanceReportComment, report.ReportDate, stoppingToken);
         }
     }
 
     private async Task<Dictionary<string, string>> GetReportableInstanceUsers(Report report, CancellationToken stoppingToken)
     {
-        var reportedHostnames = report.InstanceReports.Select(r => r.Hostname).ToHashSet();
+        var reportedHostnames = report.InstanceReports.Select(r => r.Instance.Host).ToHashSet();
         var reportedIds = await db.Users
             // All users from any of the reported hosts
             .Where(u => u.Host != null && reportedHostnames.Contains(u.Host))
@@ -103,6 +104,22 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
                 stoppingToken
             );
         return reportedIds;
+    }
+    
+    private async Task SaveNoteReports(Report report, string reporterId, CancellationToken stoppingToken)
+    {
+        if (!report.HasNoteReports)
+            return;
+
+        foreach (var noteReport in report.NoteReports)
+        {
+            var comment = $"Local Note: {linkService.GetLocalLinkToNote(noteReport.Note)}\n-----\n{UserReportComment}";
+            
+            if (noteReport.IsLocal)
+                comment = $"Note: {linkService.GetLinkToNote(noteReport.Note)}\n" + comment;
+            
+            await MakeReport(noteReport.User.Id, noteReport.User.Host, reporterId, comment, report.ReportDate, stoppingToken);
+        }
     }
 
     private async Task MakeReport(string reportedId, string? reportedHost, string reporterId, string comment, DateTime reportDate, CancellationToken stoppingToken)

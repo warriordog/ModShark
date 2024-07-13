@@ -1,8 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using SharkeyDB.Entities;
 
 namespace SharkeyDB;
 
+[PublicAPI]
+public class SharkeyDBConfig
+{
+    public required string Connection { get; set; }
+    public int Timeout { get; set; } = 30;
+}
 
 public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBConfig config) : DbContext(options)
 {
@@ -16,6 +23,10 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
     public DbSet<MSFlaggedInstance> MSFlaggedInstances { get; set; }
     public DbSet<MSQueuedInstance> MSQueuedInstances { get; set; }
     
+    public DbSet<Note> Notes { get; set; }
+    public DbSet<MSFlaggedNote> MSFlaggedNotes { get; set; }
+    public DbSet<MSQueuedNote> MSQueuedNotes { get; set; }
+    
     public DbSet<AbuseUserReport> AbuseUserReports { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -24,16 +35,19 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
         // https://devblogs.microsoft.com/dotnet/announcing-entity-framework-core-efcore-5-0-rc1/#exclude-tables-from-migrations
         modelBuilder
             .Entity<User>()
-            .ToTable("user", t => t.ExcludeFromMigrations());
+            .ToTable(t => t.ExcludeFromMigrations());
         modelBuilder
             .Entity<Instance>()
-            .ToTable("instance", t => t.ExcludeFromMigrations());
+            .ToTable(t => t.ExcludeFromMigrations());
         modelBuilder
             .Entity<AbuseUserReport>()
-            .ToTable("abuse_user_report", t => t.ExcludeFromMigrations());
+            .ToTable(t => t.ExcludeFromMigrations());
         modelBuilder
             .Entity<Meta>()
-            .ToTable("meta", t => t.ExcludeFromMigrations());
+            .ToTable(t => t.ExcludeFromMigrations());
+        modelBuilder
+            .Entity<Note>()
+            .ToTable(t => t.ExcludeFromMigrations());
 
         // FK ms_queued_user(user_id) -> user(id)  
         modelBuilder
@@ -84,9 +98,34 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+        
+        // FK ms_queued_note(note_id) -> note(id)  
+        modelBuilder
+            .Entity<Note>()
+            .HasOne(n => n.MSQueuedNote)
+            .WithOne(q => q.Note)
+            .HasForeignKey<MSQueuedNote>(q => q.NoteId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // FK note(userId)* -> user(id)  
+        modelBuilder
+            .Entity<Note>()
+            .HasOne(n => n.User)
+            .WithMany(u => u.Notes)
+            .HasForeignKey(n => n.UserId)
+            .IsRequired();
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
+    {
+        // We have to set a long timeout for migrations, due to the data backfill operation.
+        // https://stackoverflow.com/a/78015946
+        var timeout = EF.IsDesignTime
+            ? 600 // 10 minutes
+            : config.Timeout;
+        
         // https://learn.microsoft.com/en-us/ef/core/miscellaneous/connection-strings#aspnet-core
-        => options.UseNpgsql(config.Connection);
+        options.UseNpgsql(config.Connection, o => o.CommandTimeout(timeout));
+    }
 }

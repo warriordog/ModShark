@@ -74,8 +74,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             
             report.InstanceReports.Add(new InstanceReport
             {
-                InstanceId = instance.Id,
-                Hostname = instance.Host
+                Instance = instance
             });
 
             db.MSFlaggedInstances.Add(new MSFlaggedInstance

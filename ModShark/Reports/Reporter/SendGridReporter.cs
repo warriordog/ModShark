@@ -74,6 +74,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         messageBuilder.Append($"<h1>{subject}</h1>");
         RenderUserReports(report, messageBuilder);
         RenderInstanceReports(report, messageBuilder);
+        RenderNoteReports(report, messageBuilder);
         
         return messageBuilder.ToString();
     }
@@ -87,14 +88,14 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         messageBuilder.Append($"<h2>Found {count} new flagged username(s)</h2>");
         
         messageBuilder.Append("<ul>");
-        foreach (var entry in report.UserReports)
+        foreach (var userReport in report.UserReports)
         {
             messageBuilder.Append("<li>");
             
-            if (entry.IsLocal)
-                messageBuilder.Append($"<strong>Local user {entry.UserId}</strong> - <code>@{entry.Username}</code>");
+            if (userReport.IsLocal)
+                messageBuilder.Append($"<strong>Local user {userReport.User.Id}</strong> - <code>@{userReport.User.Username}</code>");
             else
-                messageBuilder.Append($"Remote user {entry.UserId} - <code>@{entry.Username}@{entry.Hostname}</code>");
+                messageBuilder.Append($"Remote user {userReport.User.Id} - <code>@{userReport.User.Username}@{userReport.User.Host}</code>");
             
             messageBuilder.Append("</li>");
         }
@@ -110,13 +111,36 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         messageBuilder.Append($"<h2>Found {count} new flagged instance(s)</h2>");
         
         messageBuilder.Append("<ul>");
-        foreach (var entry in report.InstanceReports)
+        foreach (var instanceReport in report.InstanceReports)
         {
-            messageBuilder.Append($"<li>{entry.InstanceId} - <code>{entry.Hostname}</code></li>");
+            messageBuilder.Append($"<li>{instanceReport.Instance.Id} - <code>{instanceReport.Instance.Host}</code></li>");
         }
         messageBuilder.Append("</ul>");
     }
+    
+    private static void RenderNoteReports(Report report, StringBuilder messageBuilder)
+    {
+        if (!report.HasNoteReports)
+            return;
 
+        var count = report.NoteReports.Count;
+        messageBuilder.Append($"<h2>Found {count} new flagged note(s)</h2>");
+        
+        messageBuilder.Append("<ul>");
+        foreach (var noteReport in report.NoteReports)
+        {
+            messageBuilder.Append("<li>");
+            
+            if (noteReport.IsLocal)
+                messageBuilder.Append($"<strong>Local note {noteReport.Note.Id}</strong> by user {noteReport.User.Id} - <code>@{noteReport.User.Username}</code>");
+            else
+                messageBuilder.Append($"Remote note {noteReport.Note.Id} by user {noteReport.User.Id} - <code>@{noteReport.User.Username}@{noteReport.User.Host}</code>");
+            
+            messageBuilder.Append("</li>");
+        }
+        messageBuilder.Append("</ul>");
+    }
+    
     private SendGridSend CreateSend(string subject, string message)
         // https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
         => new()

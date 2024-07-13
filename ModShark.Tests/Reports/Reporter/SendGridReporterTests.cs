@@ -6,6 +6,7 @@ using ModShark.Reports.Reporter;
 using ModShark.Services;
 using ModShark.Tests._Utils;
 using Moq;
+using SharkeyDB.Entities;
 
 // This inspection gets confused by the moqs
 // ReSharper disable StructuredMessageTemplateProblem
@@ -154,8 +155,12 @@ public class SendGridReporterTests
             {
                 new InstanceReport
                 {
-                    InstanceId = "abc123",
-                    Hostname = "example.com"
+                    Instance = new Instance
+                    {
+                        Id = "abc123",
+                        Host = "example.com"  ,
+                        SuspensionState = "none"
+                    }
                 }
             }
         };
