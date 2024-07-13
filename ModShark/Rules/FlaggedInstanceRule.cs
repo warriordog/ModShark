@@ -12,7 +12,7 @@ namespace ModShark.Rules;
 public interface IFlaggedInstanceRule : IRule;
 
 [PublicAPI]
-public class FlaggedInstanceConfig : RuleConfig
+public class FlaggedInstanceConfig : QueuedRuleConfig
 {
     public bool IncludeSuspended { get; set; }
     public bool IncludeSilenced { get; set; }
@@ -27,15 +27,15 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
     // Merge and pre-compile the pattern for efficiency
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, true);
 
-    public override async Task RunRule(Report report, CancellationToken stoppingToken)
+    protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
         if (config.HostnamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
-            return;
+            return Task.FromResult(false);
         }
 
-        await base.RunRule(report, stoppingToken);
+        return Task.FromResult(true);
     }
 
     protected override async Task RunQueuedRule(Report report, int maxId, CancellationToken stoppingToken)

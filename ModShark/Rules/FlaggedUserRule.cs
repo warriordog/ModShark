@@ -12,7 +12,7 @@ namespace ModShark.Rules;
 public interface IFlaggedUserRule : IRule;
 
 [PublicAPI]
-public class FlaggedUserConfig : RuleConfig
+public class FlaggedUserConfig : QueuedRuleConfig
 {
     public bool IncludeLocal { get; set; }
     public bool IncludeRemote { get; set; }
@@ -31,18 +31,18 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
     // Merge and pre-compile the pattern for efficiency
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
     
-    public override async Task RunRule(Report report, CancellationToken stoppingToken)
+    protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
         if (config.UsernamePatterns.Count < 1)
         {
             logger.LogWarning("Skipping run, no patterns defined");
-            return;
+            return Task.FromResult(false);
         }
 
         if (!config.IncludeLocal && !config.IncludeRemote)
         {
             logger.LogWarning("Skipping run, all users are excluded (local & remote)");
-            return;
+            return Task.FromResult(false);
         }
 
         if (!config.IncludeRemote && config.IncludeBlockedInstance)
@@ -55,7 +55,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             logger.LogWarning($"Configuration error: {nameof(FlaggedUserConfig.IncludeSilencedInstance)} has no effect when {nameof(FlaggedUserConfig.IncludeRemote)} is false");
         }
 
-        await base.RunRule(report, stoppingToken);
+        return Task.FromResult(true);
     }
 
     protected override async Task RunQueuedRule(Report report, int maxId, CancellationToken stoppingToken)
