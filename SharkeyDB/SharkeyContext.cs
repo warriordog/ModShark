@@ -88,6 +88,7 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .HasOne(u => u.Instance)
             .WithMany(i => i.Users)
             .HasForeignKey(u => u.Host)
+            .HasPrincipalKey(i => i.Host)
             .IsRequired(false);
         
         // FK ms_queued_instance(instance_id) -> instance(id)  
