@@ -63,11 +63,19 @@ public class LinkServiceTests
     }
 
     [Test]
-    public void GetLinkToInstance_ShouldProduceCorrectLink()
+    public void GetLinkToInstance_ShouldProduceRemoteLink()
     {
         var result = ServiceUnderTest.GetLinkToInstance(FakeInstance);
 
         result.Should().Be("https://fake.example.com");
+    }
+
+    [Test]
+    public void GetLocalLinkToInstance_ShouldProduceLocalLink()
+    {
+        var result = ServiceUnderTest.GetLocalLinkToInstance(FakeInstance);
+
+        result.Should().Be("https://example.com/instance-info/fake.example.com");
     }
 
     [Test]

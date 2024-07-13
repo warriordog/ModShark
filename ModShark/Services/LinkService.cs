@@ -10,6 +10,7 @@ public interface ILinkService
 
     public string GetLocalLinkToNote(Note note);
     public string GetLocalLinkToUser(User user);
+    public string GetLocalLinkToInstance(Instance instance);
 }
 
 public class LinkService(SharkeyConfig config) : ILinkService
@@ -30,4 +31,7 @@ public class LinkService(SharkeyConfig config) : ILinkService
         => user.IsLocal
             ? $"https://{config.PublicHost}/@{user.Username}"
             : $"https://{config.PublicHost}/@{user.Username}@{user.Host}";
+
+    public string GetLocalLinkToInstance(Instance instance)
+        => $"https://{config.PublicHost}/instance-info/{instance.Host}";
 }
