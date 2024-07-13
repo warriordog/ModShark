@@ -82,31 +82,6 @@ public abstract class QueuedRule<TQueueEntity>(ILogger logger, QueuedRuleConfig 
     protected virtual Task<bool> CanRun(CancellationToken stoppingToken)
         => Task.FromResult(true);
 
-    // private async Task RunQueueBatches(Report report, int maxId, CancellationToken stoppingToken)
-    // {
-    //     while (true)
-    //     {
-    //                     
-    //     }
-    // }
-    //
-    // private async Task<int> RunQueueBatch(Report report, int? maxId, CancellationToken stoppingToken)
-    // {
-    //     // Call the actual rule implementation
-    //     var maxProcessedId = await RunQueuedRule(report, maxId.Value, stoppingToken);
-    //     if (maxProcessedId < maxId)
-    //     {
-    //         
-    //     }
-    //     
-    //     // Delete all processed queue items
-    //     var numChecked = await queue
-    //         .Where(q => q.Id <= maxId)
-    //         .ExecuteDeleteAsync(stoppingToken);
-    //     logger.LogDebug("Checked {numChecked} new instances", numChecked);
-    // }
-
-
     /// <summary>
     /// Run a single cycle of the rule.
     /// This method can assume that all prerequisite checks have passed.
