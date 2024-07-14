@@ -3,6 +3,7 @@ using ModShark.Reports;
 using ModShark.Reports.Reporter;
 using ModShark.Tests._Utils;
 using Moq;
+using SharkeyDB.Entities;
 
 namespace ModShark.Tests.Reports.Reporter;
 
@@ -51,15 +52,23 @@ public class ConsoleReporterTests
             {
                 new UserReport
                 {
-                    UserId = "0001",
-                    Username = "User1",
-                    Hostname = "example.com"
+                    User = new User
+                    {
+                        Id = "0001",
+                        Username = "User1",
+                        UsernameLower = "user1",
+                        Host = "example.com"   
+                    }
                 },
                 new UserReport
                 {
-                    UserId = "0002",
-                    Username = "User2",
-                    Hostname = null
+                    User = new User
+                    {
+                        Id = "0002",
+                        Username = "User2",
+                        UsernameLower = "user2",
+                        Host = null 
+                    }
                 }
             }
         };
@@ -78,8 +87,12 @@ public class ConsoleReporterTests
             {
                 new InstanceReport
                 {
-                    InstanceId = "abc123",
-                    Hostname = "example.com"
+                    Instance = new Instance
+                    {
+                        Id = "abc123",
+                        Host = "example.com"  ,
+                        SuspensionState = "none"
+                    }
                 }
             }
         };

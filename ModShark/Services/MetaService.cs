@@ -25,7 +25,9 @@ public class MetaService(ILogger<MetaService> logger, SharkeyContext db) : IMeta
 
     private async Task<Meta> FetchInstanceMeta(CancellationToken stoppingToken)
     {
-        var meta = await db.Metas.FirstOrDefaultAsync(stoppingToken);
+        var meta = await db.Metas
+            .OrderBy(m => m.Id)
+            .FirstOrDefaultAsync(stoppingToken);
         
         if (meta == null)
         {

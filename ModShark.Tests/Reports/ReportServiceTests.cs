@@ -2,6 +2,7 @@
 using ModShark.Reports;
 using ModShark.Reports.Reporter;
 using Moq;
+using SharkeyDB.Entities;
 
 namespace ModShark.Tests.Reports;
 
@@ -26,8 +27,12 @@ public class ReportServiceTests
             {
                 new InstanceReport
                 {
-                    InstanceId = "abc123",
-                    Hostname = "example.com"
+                    Instance = new Instance
+                    {
+                        Id = "abc123",
+                        Host = "example.com"  ,
+                        SuspensionState = "none"
+                    }
                 }
             }
         };

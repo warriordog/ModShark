@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
+using ModShark.Utils;
 using SharkeyDB;
 
 namespace ModShark.Reports.Reporter;
@@ -50,7 +51,7 @@ public enum PostVisibility
     Private
 }
 
-public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConfig reporterConfig, SharkeyContext db, ISharkeyHttpService http) : IPostReporter
+public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConfig reporterConfig, SharkeyContext db, ISharkeyHttpService http, ILinkService linkService) : IPostReporter
 {
     // Parse the audience list from handle[] into (handle, username, host?)[].
     // For performance, we do this only once.
@@ -129,48 +130,201 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
     }
 
     // Adapted from SendGridReporter.RenderReport()
-    private static string RenderReport(Report report)
+    private string RenderReport(Report report)
     {
         var messageBuilder = new StringBuilder();
 
         messageBuilder.Append("**ModShark Report**\n\n");
-        RenderUserReports(report, messageBuilder);
         RenderInstanceReports(report, messageBuilder);
+        RenderUserReports(report, messageBuilder);
+        RenderNoteReports(report, messageBuilder);
         
         return messageBuilder.ToString();
     }
 
-    private static void RenderUserReports(Report report, StringBuilder messageBuilder)
-    {
-        if (!report.HasUserReports)
-            return;
-
-        var count = report.UserReports.Count;
-        messageBuilder.Append($"**Found {count} new flagged username(s):**\n");
-        
-        foreach (var entry in report.UserReports)
-        {
-            if (entry.IsLocal)
-                messageBuilder.Append($"- **Local user {entry.UserId}** - `@{entry.Username}`\n");
-            else
-                messageBuilder.Append($"- Remote user {entry.UserId} - `@{entry.Username}@{entry.Hostname}`\n");
-        }
-
-        messageBuilder.Append('\n');
-    }
-
-    private static void RenderInstanceReports(Report report, StringBuilder messageBuilder)
+    private void RenderInstanceReports(Report report, StringBuilder message)
     {
         if (!report.HasInstanceReports)
             return;
 
         var count = report.InstanceReports.Count;
-        messageBuilder.Append($"**Found {count} new flagged instance(s):**\n");
+        if (count == 1)
+            message.Append("Found 1 new flagged instance:\n");
+        else
+            message.Append($"**Found {count} new flagged instances:**\n");
         
-        foreach (var entry in report.InstanceReports)
+        foreach (var instanceReport in report.InstanceReports)
         {
-            messageBuilder.Append($"- {entry.InstanceId} - `{entry.Hostname}`\n");
+            var instanceLink = linkService.GetLinkToInstance(instanceReport.Instance);
+            var localInstanceLink = linkService.GetLocalLinkToInstance(instanceReport.Instance);
+            
+            // Instance remote link
+            message
+                .Append("- Remote instance ")
+                .AppendMarkdownLink(instanceLink, () => message
+                    .AppendMarkdownCode(instanceReport.Instance.Id)
+                    .Append($" ({instanceReport.Instance.Host})"));
+
+            // instance local link
+            message
+                .Append(' ')
+                .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
+                    .AppendMarkdownItalics("local mirror"));
+            
+            message.Append('\n');
         }
+
+        message.Append('\n');
+    }
+
+    private void RenderUserReports(Report report, StringBuilder message)
+    {
+        if (!report.HasUserReports)
+            return;
+
+        var count = report.UserReports.Count;
+        if (count == 1)
+            message.Append("Found 1 new flagged username:\n");
+        else
+            message.Append($"**Found {count} new flagged usernames:**\n");
+        
+        foreach (var userReport in report.UserReports)
+        {
+            var userLink = linkService.GetLinkToUser(userReport.User);
+            
+            if (userReport.IsLocal)
+            {
+                // User local link
+                message
+                    .Append("- ")
+                    .AppendMarkdownBold(() => message
+                        .Append("Local user ")
+                        .AppendMarkdownLink(userLink, () => message
+                            .AppendMarkdownCode(userReport.User.Id)
+                            .Append($" ({userReport.User.Username})")));
+            }
+            else
+            {
+                var instanceLink = linkService.GetLinkToInstance(userReport.Instance);
+                var localInstanceLink = linkService.GetLocalLinkToInstance(userReport.Instance);
+                var localUserLink = linkService.GetLocalLinkToUser(userReport.User);
+                
+                // User remote link
+                message
+                    .Append("- Remote user ")
+                    .AppendMarkdownLink(userLink, () => message
+                        .AppendMarkdownCode(userReport.User.Id)
+                        .Append($" ({userReport.User.Username}@{userReport.User.Host})"));
+                
+                // User local link
+                message
+                    .Append(' ')
+                    .AppendMarkdownLinkWithBrackets(localUserLink, () => message
+                        .AppendMarkdownItalics("local mirror"));
+                
+                // Instance remote link
+                message
+                    .Append("\n   from instance ")
+                    .AppendMarkdownLink(instanceLink, () => message
+                        .AppendMarkdownCode(userReport.Instance.Id)
+                        .Append($" ({userReport.Instance.Host})"));
+
+                // instance local link
+                message
+                    .Append(' ')
+                    .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
+                        .AppendMarkdownItalics("local mirror"));
+            }
+            
+            message.Append('\n');
+        }
+
+        message.Append('\n');
+    }
+
+    private void RenderNoteReports(Report report, StringBuilder message)
+    {
+        if (!report.HasNoteReports)
+            return;
+
+        var count = report.NoteReports.Count;
+        if (count == 1)
+            message.Append("Found 1 new flagged note:\n");
+        else
+            message.Append($"**Found {count} new flagged notes:**\n");
+        
+        foreach (var noteReport in report.NoteReports)
+        {
+            var noteLink = linkService.GetLinkToNote(noteReport.Note);
+            var userLink = linkService.GetLinkToUser(noteReport.User);
+            
+            if (noteReport.IsLocal) 
+            {
+                // note local link
+                message
+                    .Append("- ")
+                    .AppendMarkdownBold(() => message
+                        .Append("Local note ")
+                        .AppendMarkdownLink(noteLink, () => message
+                            .AppendMarkdownCode(noteReport.Note.Id)));
+                
+                // user local link
+                message
+                    .Append("\n   by user ")
+                    .AppendMarkdownLink(userLink, () => message
+                        .AppendMarkdownCode(noteReport.User.Id)
+                        .Append($" ({noteReport.User.Username})"));
+            }
+            else 
+            {
+                var instanceLink = linkService.GetLinkToInstance(noteReport.Instance);
+                var localInstanceLink = linkService.GetLocalLinkToInstance(noteReport.Instance);
+                var localNoteLink = linkService.GetLocalLinkToNote(noteReport.Note);
+                var localUserLink = linkService.GetLocalLinkToUser(noteReport.User);
+                
+                // Note remote link
+                message
+                    .Append("- Remote note ")
+                    .AppendMarkdownLink(noteLink, () => message
+                        .AppendMarkdownCode(noteReport.Note.Id));
+                
+                // Note local link
+                message
+                    .Append(' ')
+                    .AppendMarkdownLinkWithBrackets(localNoteLink, () => message
+                        .AppendMarkdownItalics("local mirror"));
+                
+                // User remote link
+                message
+                    .Append("\n   by user ")
+                    .AppendMarkdownLink(userLink, () => message
+                        .AppendMarkdownCode(noteReport.User.Id)
+                        .Append($" ({noteReport.User.Username}@{noteReport.User.Host})"));
+                
+                // User local link
+                message
+                    .Append(' ')
+                    .AppendMarkdownLinkWithBrackets(localUserLink, () => message
+                        .AppendMarkdownItalics("local mirror"));
+                
+                // Instance remote link
+                message
+                    .Append("\n   from instance ")
+                    .AppendMarkdownLink(instanceLink, () => message
+                        .AppendMarkdownCode(noteReport.Instance.Id)
+                        .Append($" ({noteReport.Instance.Host})"));
+
+                // instance local link
+                message
+                    .Append(' ')
+                    .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
+                        .AppendMarkdownItalics("local mirror"));
+            }
+            
+            message.Append('\n');
+        }
+
+        message.Append('\n');
     }
 
     // Can be simplified once this is implemented: https://github.com/dotnet/efcore/issues/11799

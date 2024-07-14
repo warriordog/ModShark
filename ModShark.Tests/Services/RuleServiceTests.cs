@@ -14,6 +14,7 @@ public class RuleServiceTests
     private Mock<ILogger<RuleService>> MockLogger { get; set; } = null!;
     private Mock<IFlaggedUserRule> MockFlaggedUsernameRule { get; set; } = null!;
     private Mock<IFlaggedInstanceRule> MockFlaggedHostnameRule { get; set; } = null!;
+    private Mock<IFlaggedNoteRule> MockFlaggedNoteRule { get; set; } = null!;
     
     [SetUp]
     public void Setup()
@@ -21,8 +22,9 @@ public class RuleServiceTests
         MockLogger = new Mock<ILogger<RuleService>>();
         MockFlaggedUsernameRule = new Mock<IFlaggedUserRule>();
         MockFlaggedHostnameRule = new Mock<IFlaggedInstanceRule>();
+        MockFlaggedNoteRule = new Mock<IFlaggedNoteRule>();
 
-        ServiceUnderTest = new RuleService(MockLogger.Object, MockFlaggedUsernameRule.Object, MockFlaggedHostnameRule.Object);
+        ServiceUnderTest = new RuleService(MockLogger.Object, MockFlaggedUsernameRule.Object, MockFlaggedHostnameRule.Object, MockFlaggedNoteRule.Object);
     }
 
     [Test]
@@ -46,6 +48,16 @@ public class RuleServiceTests
     }
 
     [Test]
+    public async Task RunRules_ShouldRunFlaggedNoteRule()
+    {
+        var report = new Report();
+        
+        await ServiceUnderTest.RunRules(report, default);
+        
+        MockFlaggedNoteRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
     public async Task RunRules_ShouldHandleExceptions()
     {
         var report = new Report();
@@ -56,12 +68,16 @@ public class RuleServiceTests
         MockFlaggedHostnameRule
             .Setup(r => r.RunRule(report, It.IsAny<CancellationToken>()))
             .Throws<ApplicationException>();
+        MockFlaggedNoteRule
+            .Setup(r => r.RunRule(report, It.IsAny<CancellationToken>()))
+            .Throws<ApplicationException>();
         
         await ServiceUnderTest.RunRules(report, default);
         
         MockFlaggedUsernameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
         MockFlaggedHostnameRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
-        MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
+        MockFlaggedNoteRule.Verify(r => r.RunRule(report, It.IsAny<CancellationToken>()), Times.Once);
+        MockLogger.Verify(l => l.Log(LogLevel.Error, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<ApplicationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(3));
 
     }
 }

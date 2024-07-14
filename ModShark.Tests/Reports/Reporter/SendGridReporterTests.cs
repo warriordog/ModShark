@@ -6,6 +6,7 @@ using ModShark.Reports.Reporter;
 using ModShark.Services;
 using ModShark.Tests._Utils;
 using Moq;
+using SharkeyDB.Entities;
 
 // This inspection gets confused by the moqs
 // ReSharper disable StructuredMessageTemplateProblem
@@ -19,6 +20,7 @@ public class SendGridReporterTests
 
     private Mock<ILogger<SendGridReporter>> MockLogger { get; set; } = null!;
     private Mock<IHttpService> MockHttpService { get; set; } = null!;
+    private Mock<ILinkService> MockLinkService { get; set; } = null!;
 
     [SetUp]
     public void Setup()
@@ -28,6 +30,7 @@ public class SendGridReporterTests
         MockHttpService
             .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<SendGridSend>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
+        MockLinkService = new Mock<ILinkService>();
 
         FakeReporterConfig = new SendGridReporterConfig
         {
@@ -39,7 +42,7 @@ public class SendGridReporterTests
                 "to@example.com"
             ]
         };
-        ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeReporterConfig, MockHttpService.Object);
+        ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeReporterConfig, MockHttpService.Object, MockLinkService.Object);
     }
     
     
@@ -154,8 +157,12 @@ public class SendGridReporterTests
             {
                 new InstanceReport
                 {
-                    InstanceId = "abc123",
-                    Hostname = "example.com"
+                    Instance = new Instance
+                    {
+                        Id = "abc123",
+                        Host = "example.com"  ,
+                        SuspensionState = "none"
+                    }
                 }
             }
         };

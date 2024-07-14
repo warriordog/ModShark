@@ -28,7 +28,8 @@ public class Instance : IEntity<string>
     [Column("suspensionState"), MaxLength(256)]
     public required string SuspensionState { get; set; }
     
-    public MSQueuedInstance? MSQueuedInstance { get; set; }
+    public MSQueuedInstance? QueuedInstance { get; set; }
+    public MSFlaggedInstance? FlaggedInstance { get; set; }
     
     public ICollection<User> Users { get; set; } = new List<User>();
 }

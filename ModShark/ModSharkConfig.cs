@@ -23,7 +23,8 @@ public class SharkeyConfig
     [JsonConverter(typeof(JsonStringEnumConverter<IdFormat>))]
     public IdFormat IdFormat { get; set; } = IdFormat.AidX;
     public required string ServiceAccount { get; set; }
-    public required string ApiEndpoint { get; set; } 
+    public required string ApiEndpoint { get; set; }
+    public required string PublicHost { get; set; }
 }
 
 [PublicAPI]
@@ -40,4 +41,5 @@ public class RulesConfig
 {
     public required FlaggedUserConfig FlaggedUser { get; set; }
     public required FlaggedInstanceConfig FlaggedInstance { get; set; }
+    public required FlaggedNoteConfig FlaggedNote { get; set; }
 }

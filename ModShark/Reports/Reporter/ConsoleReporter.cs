@@ -28,6 +28,7 @@ public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleReporterCon
         
         LogUserReports(report);
         LogInstanceReports(report);
+        LogNoteReports(report);
         
         return Task.CompletedTask;
     }
@@ -39,12 +40,12 @@ public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleReporterCon
 
         logger.LogInformation("Flagged {count} new user(s)", report.UserReports.Count);
 
-        foreach (var user in report.UserReports)
+        foreach (var userReport in report.UserReports)
         {
-            if (user.IsLocal)
-                logger.LogInformation("Flagged new user {id} - local @{username}", user.UserId, user.Username);
+            if (userReport.IsLocal)
+                logger.LogInformation("Flagged new user {id} - local @{username}", userReport.User.Id, userReport.User.Username);
             else
-                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", user.UserId, user.Username, user.Hostname);
+                logger.LogInformation("Flagged new user {id} - remote @{username}@{host}", userReport.User.Id, userReport.User.Username, userReport.User.Host);
         }
     }
 
@@ -55,9 +56,25 @@ public class ConsoleReporter(ILogger<ConsoleReporter> logger, ConsoleReporterCon
         
         logger.LogInformation("Flagged {count} new instance(s)", report.InstanceReports.Count);
 
-        foreach (var instance in report.InstanceReports)
+        foreach (var instanceReport in report.InstanceReports)
         {
-            logger.LogInformation("Flagged new instance {id} - {host}", instance.InstanceId, instance.Hostname);
+            logger.LogInformation("Flagged new instance {id} - {host}", instanceReport.Instance.Id, instanceReport.Instance.Host);
+        }
+    }
+
+    private void LogNoteReports(Report report)
+    {
+        if (!report.HasNoteReports)
+            return;
+        
+        logger.LogInformation("Flagged {count} new note(s)", report.NoteReports.Count);
+        
+        foreach (var noteReport in report.NoteReports)
+        {
+            if (noteReport.IsLocal)
+                logger.LogInformation("Flagged new note {id} by user {userId} - local @{username}", noteReport.Note.Id, noteReport.User.Id, noteReport.User.Username);
+            else
+                logger.LogInformation("Flagged new note {id} by user {userId} - remote @{username}@{host}", noteReport.Note.Id, noteReport.User.Id, noteReport.User.Username, noteReport.User.Host);
         }
     }
 }

@@ -50,6 +50,7 @@ builder.Services.AddSingleton(config.Reporters.Native);
 builder.Services.AddSingleton(config.Reporters.Post);
 builder.Services.AddSingleton(config.Rules.FlaggedUser);
 builder.Services.AddSingleton(config.Rules.FlaggedInstance);
+builder.Services.AddSingleton(config.Rules.FlaggedNote);
 
 builder.Services.AddHttpClient<IHttpService, HttpService>();
 builder.Services.AddScoped<ISharkeyHttpService, SharkeyHttpService>();
@@ -66,8 +67,10 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddScoped<IFlaggedUserRule, FlaggedUserRule>();
 builder.Services.AddScoped<IFlaggedInstanceRule, FlaggedInstanceRule>();
+builder.Services.AddScoped<IFlaggedNoteRule, FlaggedNoteRule>();
 builder.Services.AddScoped<IRuleService, RuleService>();
 
+builder.Services.AddSingleton<ILinkService, LinkService>();
 builder.Services.AddScoped<IMetaService, MetaService>();
 builder.Services.AddScoped<IServiceAccountService, ServiceAccountService>();
 builder.Services.AddHostedService<Worker>();

@@ -64,25 +64,26 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         var meta = await metaService.GetInstanceMeta(stoppingToken);
         
         // Query for all new users that match the given flags
-        var query =
-            from q in db.MSQueuedUsers.AsNoTracking()
-            join u in db.Users.AsNoTracking()
-                on q.UserId equals u.Id
-            where
+        var newUsers = db.MSQueuedUsers
+            .AsNoTracking()
+            .Include(q => q.FlaggedUser)
+            .Include(q => q.User!)  // database constraints ensure that "User" cannot be null
+                .ThenInclude(u => u.Instance)
+            .Where(q => 
                 q.Id <= maxId
-                && (config.IncludeLocal || u.Host != null)
-                && (config.IncludeRemote || u.Host == null)
-                && (config.IncludeSuspended || !u.IsSuspended)
-                && (config.IncludeSilenced || !u.IsSilenced)
-                && (config.IncludeDeleted || !u.IsDeleted)
-                && (config.IncludeBlockedInstance || u.Host == null || !meta.BlockedHosts.Contains(u.Host))
-                && (config.IncludeSilencedInstance || u.Host == null || !meta.SilencedHosts.Contains(u.Host))
-                && !db.MSFlaggedUsers.Any(f => f.UserId == q.UserId)
-            orderby q.Id
-            select u;
+                && (config.IncludeLocal || q.User!.Host != null)
+                && (config.IncludeRemote || q.User!.Host == null)
+                && (config.IncludeSuspended || !q.User!.IsSuspended)
+                && (config.IncludeSilenced || !q.User!.IsSilenced)
+                && (config.IncludeDeleted || !q.User!.IsDeleted)
+                && (config.IncludeBlockedInstance || q.User!.Host == null || !meta.BlockedHosts.Contains(q.User!.Host))
+                && (config.IncludeSilencedInstance || q.User!.Host == null || !meta.SilencedHosts.Contains(q.User!.Host))
+                && !db.MSFlaggedUsers.Any(f => f.UserId == q.UserId))
+            .OrderBy(q => q.Id)
+            .Select(q => q.User!)
+            .AsAsyncEnumerable();
         
         // Stream each result due to potentially large size
-        var newUsers = query.AsAsyncEnumerable();
         await foreach (var user in newUsers)
         {
             // Check for base domain and alternate-case matches.
@@ -103,9 +104,8 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             
             report.UserReports.Add(new UserReport
             {
-                UserId = user.Id,
-                Username = user.Username,
-                Hostname = user.Host
+                Instance = user.Instance,
+                User = user
             });
 
             db.MSFlaggedUsers.Add(new MSFlaggedUser

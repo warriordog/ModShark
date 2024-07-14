@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using ModShark.Services;
+using ModShark.Utils;
 
 namespace ModShark.Reports.Reporter;
 
@@ -18,7 +19,7 @@ public class SendGridReporterConfig
     public List<string> ToAddresses { get; set; } = [];
 }
 
-public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporterConfig reporterConfig, IHttpService httpService) : ISendGridReporter
+public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporterConfig reporterConfig, IHttpService httpService, ILinkService linkService) : ISendGridReporter
 {
     public async Task MakeReport(Report report, CancellationToken stoppingToken)
     {
@@ -59,7 +60,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         await SendEmail(body, stoppingToken);
     }
 
-    private static (string subject, string message) RenderReport(Report report)
+    private (string subject, string message) RenderReport(Report report)
     {
         var subject = "ModShark auto-moderator";
         var message = RenderReportMessage(report, subject);
@@ -67,56 +68,187 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         return (subject, message);
     }
 
-    private static string RenderReportMessage(Report report, string subject)
+    private string RenderReportMessage(Report report, string subject)
     {
         var messageBuilder = new StringBuilder();
         
         messageBuilder.Append($"<h1>{subject}</h1>");
-        RenderUserReports(report, messageBuilder);
         RenderInstanceReports(report, messageBuilder);
+        RenderUserReports(report, messageBuilder);
+        RenderNoteReports(report, messageBuilder);
         
         return messageBuilder.ToString();
     }
 
-    private static void RenderUserReports(Report report, StringBuilder messageBuilder)
-    {
-        if (!report.HasUserReports)
-            return;
-
-        var count = report.UserReports.Count;
-        messageBuilder.Append($"<h2>Found {count} new flagged username(s)</h2>");
-        
-        messageBuilder.Append("<ul>");
-        foreach (var entry in report.UserReports)
-        {
-            messageBuilder.Append("<li>");
-            
-            if (entry.IsLocal)
-                messageBuilder.Append($"<strong>Local user {entry.UserId}</strong> - <code>@{entry.Username}</code>");
-            else
-                messageBuilder.Append($"Remote user {entry.UserId} - <code>@{entry.Username}@{entry.Hostname}</code>");
-            
-            messageBuilder.Append("</li>");
-        }
-        messageBuilder.Append("</ul>");
-    }
-
-    private static void RenderInstanceReports(Report report, StringBuilder messageBuilder)
+    private void RenderInstanceReports(Report report, StringBuilder message)
     {
         if (!report.HasInstanceReports)
             return;
 
         var count = report.InstanceReports.Count;
-        messageBuilder.Append($"<h2>Found {count} new flagged instance(s)</h2>");
+        if (count == 1)
+            message.Append("<h2>Found 1 new flagged instance</h2>");
+        else
+            message.Append($"<h2>Found {count} new flagged instances</h2>");
         
-        messageBuilder.Append("<ul>");
-        foreach (var entry in report.InstanceReports)
+        message.Append("<ul>");
+        foreach (var instanceReport in report.InstanceReports)
         {
-            messageBuilder.Append($"<li>{entry.InstanceId} - <code>{entry.Hostname}</code></li>");
+            var instanceLink = linkService.GetLinkToInstance(instanceReport.Instance);
+            var localInstanceLink = linkService.GetLocalLinkToInstance(instanceReport.Instance);
+
+            message
+                .AppendHtml("li", () => message
+                    // Instance remote link
+                    .Append("Remote instance ")
+                    .AppendHtmlAnchor(instanceLink, $"<code>{instanceReport.Instance.Id}</code> ({instanceReport.Instance.Host})")
+
+                    // instance local link
+                    .Append(' ')
+                    .AppendHtmlAnchor(localInstanceLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]")));
         }
-        messageBuilder.Append("</ul>");
+        message.Append("</ul>");
     }
 
+    private void RenderUserReports(Report report, StringBuilder message)
+    {
+        if (!report.HasUserReports)
+            return;
+
+        var count = report.UserReports.Count;
+        if (count == 1)
+            message.Append("<h2>Found 1 new flagged username</h2>");
+        else
+            message.Append($"<h2>Found {count} new flagged usernames</h2>");
+        
+        message.Append("<ul>");
+        foreach (var userReport in report.UserReports)
+        {
+            message.Append("<li>");
+            
+            var userLink = linkService.GetLinkToUser(userReport.User);
+            
+            if (userReport.IsLocal)
+            {
+                // User local link
+                message
+                    .AppendHtml("strong", () => message
+                        .Append("Local user ")
+                        .AppendHtmlAnchor(userLink, $"<code>{userReport.User.Id}</code> ({userReport.User.Username})"));
+            }
+            else
+            {
+                var instanceLink = linkService.GetLinkToInstance(userReport.Instance);
+                var localInstanceLink = linkService.GetLocalLinkToInstance(userReport.Instance);
+                var localUserLink = linkService.GetLocalLinkToUser(userReport.User);
+                
+                // User remote link
+                message
+                    .Append("Remote user ")
+                    .AppendHtmlAnchor(userLink, $"<code>{userReport.User.Id}</code> ({userReport.User.Username}@{userReport.User.Host})");
+                
+                // User local link
+                message
+                    .Append(' ')
+                    .AppendHtmlAnchor(localUserLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
+                
+                // Instance remote link
+                message
+                    .Append(" from instance ")
+                    .AppendHtmlAnchor(instanceLink, $"<code>{userReport.Instance.Id}</code> ({userReport.Instance.Host})");
+                
+                // Instance local link
+                message
+                    .Append(' ')
+                    .AppendHtmlAnchor(localInstanceLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
+            }
+            
+            message.Append("</li>");
+        }
+        message.Append("</ul>");
+    }
+    
+    private void RenderNoteReports(Report report, StringBuilder message)
+    {
+        if (!report.HasNoteReports)
+            return;
+
+        var count = report.NoteReports.Count;
+        if (count == 1)
+            message.Append("<h2>Found 1 new flagged note</h2>");
+        else
+            message.Append($"<h2>Found {count} new flagged notes</h2>");
+        
+        message.Append("<ul>");
+        foreach (var noteReport in report.NoteReports)
+        {
+            var noteLink = linkService.GetLinkToNote(noteReport.Note);
+            var userLink = linkService.GetLinkToUser(noteReport.User);
+            
+            message.Append("<li>");
+            
+            if (noteReport.IsLocal) 
+            {
+                // note local link
+                message
+                    .AppendHtml("strong", () => message
+                        .Append("Local note ")
+                        .AppendHtmlAnchor(noteLink, $"<code>{noteReport.Note.Id}</code>"));
+                
+                // user local link
+                message
+                    .Append(" by user ")
+                    .AppendHtmlAnchor(userLink, $"<code>{noteReport.User.Id}</code> ({noteReport.User.Username})");
+            }
+            else 
+            {
+                var instanceLink = linkService.GetLinkToInstance(noteReport.Instance);
+                var localInstanceLink = linkService.GetLocalLinkToInstance(noteReport.Instance);
+                var localNoteLink = linkService.GetLocalLinkToNote(noteReport.Note);
+                var localUserLink = linkService.GetLocalLinkToUser(noteReport.User);
+                
+                // Note remote link
+                message
+                    .Append("Remote note ")
+                    .AppendHtmlAnchor(noteLink, $"<code>{noteReport.Note.Id}</code>");
+                
+                // Note local link
+                message
+                    .Append(' ')
+                    .AppendHtmlAnchor(localNoteLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
+                
+                // User remote link
+                message
+                    .Append(" by user ")
+                    .AppendHtmlAnchor(userLink, $"<code>{noteReport.User.Id}</code> ({noteReport.User.Username}@{noteReport.User.Host})");
+                
+                // User local link
+                message
+                    .Append(' ')
+                    .AppendHtmlAnchor(localUserLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
+                
+                // Instance remote link
+                message
+                    .Append(" from instance ")
+                    .AppendHtmlAnchor(instanceLink, $"<code>{noteReport.Instance.Id}</code> ({noteReport.Instance.Host})");
+                
+                // Instance local link
+                message
+                    .Append(' ')
+                    .AppendHtmlAnchor(localInstanceLink, () => message
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
+            }
+            
+            message.Append("</li>");
+        }
+        message.Append("</ul>");
+    }
+    
     private SendGridSend CreateSend(string subject, string message)
         // https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
         => new()

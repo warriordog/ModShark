@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SharkeyDB;
@@ -11,9 +12,11 @@ using SharkeyDB;
 namespace SharkeyDB.Migrations
 {
     [DbContext(typeof(SharkeyContext))]
-    partial class SharkeyContextModelSnapshot : ModelSnapshot
+    [Migration("20240713030814_Add_FlaggedNoteRule")]
+    partial class Add_FlaggedNoteRule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,6 +120,7 @@ namespace SharkeyDB.Migrations
                         .HasColumnName("flagged_at");
 
                     b.Property<string>("InstanceId")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("instance_id");
@@ -143,6 +147,7 @@ namespace SharkeyDB.Migrations
                         .HasColumnName("flagged_at");
 
                     b.Property<string>("NoteId")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("note_id");
@@ -169,6 +174,7 @@ namespace SharkeyDB.Migrations
                         .HasColumnName("flagged_at");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("user_id");
@@ -348,11 +354,6 @@ namespace SharkeyDB.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("token");
 
-                    b.Property<string>("Uri")
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)")
-                        .HasColumnName("uri");
-
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -400,64 +401,10 @@ namespace SharkeyDB.Migrations
                     b.Navigation("TargetUser");
                 });
 
-            modelBuilder.Entity("SharkeyDB.Entities.MSFlaggedInstance", b =>
-                {
-                    b.HasOne("SharkeyDB.Entities.Instance", "Instance")
-                        .WithOne("FlaggedInstance")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedInstance", "InstanceId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("SharkeyDB.Entities.MSQueuedInstance", "QueuedInstance")
-                        .WithOne("FlaggedInstance")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedInstance", "InstanceId")
-                        .HasPrincipalKey("SharkeyDB.Entities.MSQueuedInstance", "InstanceId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Instance");
-
-                    b.Navigation("QueuedInstance");
-                });
-
-            modelBuilder.Entity("SharkeyDB.Entities.MSFlaggedNote", b =>
-                {
-                    b.HasOne("SharkeyDB.Entities.Note", "Note")
-                        .WithOne("FlaggedNote")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedNote", "NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("SharkeyDB.Entities.MSQueuedNote", "QueuedNote")
-                        .WithOne("FlaggedNote")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedNote", "NoteId")
-                        .HasPrincipalKey("SharkeyDB.Entities.MSQueuedNote", "NoteId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Note");
-
-                    b.Navigation("QueuedNote");
-                });
-
-            modelBuilder.Entity("SharkeyDB.Entities.MSFlaggedUser", b =>
-                {
-                    b.HasOne("SharkeyDB.Entities.User", "User")
-                        .WithOne("FlaggedUser")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedUser", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("SharkeyDB.Entities.MSQueuedUser", "QueuedUser")
-                        .WithOne("FlaggedUser")
-                        .HasForeignKey("SharkeyDB.Entities.MSFlaggedUser", "UserId")
-                        .HasPrincipalKey("SharkeyDB.Entities.MSQueuedUser", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("QueuedUser");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SharkeyDB.Entities.MSQueuedInstance", b =>
                 {
                     b.HasOne("SharkeyDB.Entities.Instance", "Instance")
-                        .WithOne("QueuedInstance")
+                        .WithOne("MSQueuedInstance")
                         .HasForeignKey("SharkeyDB.Entities.MSQueuedInstance", "InstanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -468,7 +415,7 @@ namespace SharkeyDB.Migrations
             modelBuilder.Entity("SharkeyDB.Entities.MSQueuedNote", b =>
                 {
                     b.HasOne("SharkeyDB.Entities.Note", "Note")
-                        .WithOne("QueuedNote")
+                        .WithOne("MSQueuedNote")
                         .HasForeignKey("SharkeyDB.Entities.MSQueuedNote", "NoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -479,7 +426,7 @@ namespace SharkeyDB.Migrations
             modelBuilder.Entity("SharkeyDB.Entities.MSQueuedUser", b =>
                 {
                     b.HasOne("SharkeyDB.Entities.User", "User")
-                        .WithOne("QueuedUser")
+                        .WithOne("MSQueuedUser")
                         .HasForeignKey("SharkeyDB.Entities.MSQueuedUser", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -502,50 +449,28 @@ namespace SharkeyDB.Migrations
                 {
                     b.HasOne("SharkeyDB.Entities.Instance", "Instance")
                         .WithMany("Users")
-                        .HasForeignKey("Host")
-                        .HasPrincipalKey("Host");
+                        .HasForeignKey("Host");
 
                     b.Navigation("Instance");
                 });
 
             modelBuilder.Entity("SharkeyDB.Entities.Instance", b =>
                 {
-                    b.Navigation("FlaggedInstance");
-
-                    b.Navigation("QueuedInstance");
+                    b.Navigation("MSQueuedInstance");
 
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("SharkeyDB.Entities.MSQueuedInstance", b =>
-                {
-                    b.Navigation("FlaggedInstance");
-                });
-
-            modelBuilder.Entity("SharkeyDB.Entities.MSQueuedNote", b =>
-                {
-                    b.Navigation("FlaggedNote");
-                });
-
-            modelBuilder.Entity("SharkeyDB.Entities.MSQueuedUser", b =>
-                {
-                    b.Navigation("FlaggedUser");
-                });
-
             modelBuilder.Entity("SharkeyDB.Entities.Note", b =>
                 {
-                    b.Navigation("FlaggedNote");
-
-                    b.Navigation("QueuedNote");
+                    b.Navigation("MSQueuedNote");
                 });
 
             modelBuilder.Entity("SharkeyDB.Entities.User", b =>
                 {
-                    b.Navigation("FlaggedUser");
+                    b.Navigation("MSQueuedUser");
 
                     b.Navigation("Notes");
-
-                    b.Navigation("QueuedUser");
 
                     b.Navigation("ReportsAgainst");
 

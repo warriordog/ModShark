@@ -1,5 +1,4 @@
-﻿using JetBrains.Annotations;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace SharkeyDB;
 
@@ -12,10 +11,4 @@ public static class SharkeyDBModule
 
         return services;
     }
-}
-
-[PublicAPI]
-public class SharkeyDBConfig
-{
-    public required string Connection { get; set; }
 }
