@@ -76,7 +76,9 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
             from q in db.MSQueuedNotes.AsNoTracking()
             join n in db.Notes
                     .AsNoTracking()
-                    .Include(n => n.User)
+                    .Include(n => n.User!) // database constraints ensure that "User" cannot be null
+                    .ThenInclude(u => u.Instance)
+                // TODO convert this to navigation properties
                 on q.NoteId equals n.Id
             join f in db.MSFlaggedNotes.AsNoTracking()
                 on q.NoteId equals f.NoteId
@@ -91,11 +93,11 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
                 && (config.IncludeUnlistedVis || n.Visibility != "home")
                 && (config.IncludeFollowersVis || n.Visibility != "followers")
                 && (config.IncludePrivateVis || n.Visibility != "specified")
-                && (config.IncludeSuspendedUser || !n.User.IsSuspended)
-                && (config.IncludeSilencedUser || !n.User.IsSilenced)
-                && (config.IncludeDeletedUser || !n.User.IsDeleted)
-                && (config.IncludeBlockedInstance || n.User.Host == null || !meta.BlockedHosts.Contains(n.User.Host))
-                && (config.IncludeSilencedInstance || n.User.Host == null || !meta.SilencedHosts.Contains(n.User.Host))
+                && (config.IncludeSuspendedUser || !n.User!.IsSuspended)
+                && (config.IncludeSilencedUser || !n.User!.IsSilenced)
+                && (config.IncludeDeletedUser || !n.User!.IsDeleted)
+                && (config.IncludeBlockedInstance || n.User!.Host == null || !meta.BlockedHosts.Contains(n.User!.Host))
+                && (config.IncludeSilencedInstance || n.User!.Host == null || !meta.SilencedHosts.Contains(n.User!.Host))
             orderby q.Id
             select n;
         
@@ -103,7 +105,8 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         var newNotes = query.AsAsyncEnumerable();
         await foreach (var note in newNotes)
         {
-            var user = note.User;
+            // Guaranteed to be non-null by the Include() statement
+            var user = note.User!;
             
             // Check for base domain and alternate-case matches.
             // This cannot be done efficiently in-database.
@@ -123,6 +126,7 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
             
             report.NoteReports.Add(new NoteReport
             {
+                Instance = user.Instance,
                 User = user,
                 Note = note
             });

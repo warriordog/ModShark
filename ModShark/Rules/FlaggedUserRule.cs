@@ -66,7 +66,9 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         // Query for all new users that match the given flags
         var query =
             from q in db.MSQueuedUsers.AsNoTracking()
-            join u in db.Users.AsNoTracking()
+            join u in db.Users
+                    .AsNoTracking()
+                    .Include(u => u.Instance)
                 on q.UserId equals u.Id
             where
                 q.Id <= maxId
@@ -103,6 +105,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             
             report.UserReports.Add(new UserReport
             {
+                Instance = user.Instance,
                 User = user
             });
 

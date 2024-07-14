@@ -76,7 +76,8 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
                 continue;
             }
 
-            await MakeReport(reportedId, instanceReport.Instance.Host, reporterId, InstanceReportComment, report.ReportDate, stoppingToken);
+            var comment = $"Instance: {linkService.GetLinkToInstance(instanceReport.Instance)}\n-----\n{InstanceReportComment}";
+            await MakeReport(reportedId, instanceReport.Instance.Host, reporterId, comment, report.ReportDate, stoppingToken);
         }
     }
 

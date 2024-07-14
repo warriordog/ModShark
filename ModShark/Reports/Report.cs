@@ -1,4 +1,5 @@
-﻿using SharkeyDB.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using SharkeyDB.Entities;
 
 namespace ModShark.Reports;
 
@@ -15,19 +16,26 @@ public class Report
     public bool HasNoteReports => NoteReports.Count > 0;
 }
 
-public class UserReport
-{
-    public required User User { get; set; }
-    
-    public bool IsLocal => User.Host == null;
-}
-
 public class InstanceReport
 {
     public required Instance Instance { get; set; }
 }
 
-public class NoteReport : UserReport
+public class UserReport
 {
+    public Instance? Instance { get; set; }
+    public required User User { get; set; }
+    
+    [MemberNotNullWhen(false, nameof(Instance))]
+    public bool IsLocal => Instance == null;
+}
+
+public class NoteReport
+{
+    public Instance? Instance { get; set; }
+    public required User User { get; set; }
     public required Note Note { get; set; }
+    
+    [MemberNotNullWhen(false, nameof(Instance))]
+    public bool IsLocal => Instance == null;
 }
