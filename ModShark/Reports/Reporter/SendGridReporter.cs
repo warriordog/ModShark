@@ -101,14 +101,12 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
                 .AppendHtml("li", () => message
                     // Instance remote link
                     .Append("Remote instance ")
-                    .AppendHtmlAnchor(instanceLink, () => message
-                        .Append($"<code>{instanceReport.Instance.Id}</code> ({instanceReport.Instance.Host})"))
+                    .AppendHtmlAnchor(instanceLink, $"<code>{instanceReport.Instance.Id}</code> ({instanceReport.Instance.Host})")
 
                     // instance local link
                     .Append(' ')
                     .AppendHtmlAnchor(localInstanceLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]"))));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]")));
         }
         message.Append("</ul>");
     }
@@ -137,8 +135,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
                 message
                     .AppendHtml("strong", () => message
                         .Append("Local user ")
-                        .AppendHtmlAnchor(userLink, () => message
-                            .Append($"<code>{userReport.User.Id}</code> ({userReport.User.Username})")));
+                        .AppendHtmlAnchor(userLink, $"<code>{userReport.User.Id}</code> ({userReport.User.Username})"));
             }
             else
             {
@@ -149,28 +146,24 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
                 // User remote link
                 message
                     .Append("Remote user ")
-                    .AppendHtmlAnchor(userLink, () => message
-                        .Append($"<code>{userReport.User.Id}</code> ({userReport.User.Username}@{userReport.User.Host})"));
+                    .AppendHtmlAnchor(userLink, $"<code>{userReport.User.Id}</code> ({userReport.User.Username}@{userReport.User.Host})");
                 
                 // User local link
                 message
                     .Append(' ')
                     .AppendHtmlAnchor(localUserLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]")));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
                 
                 // Instance remote link
                 message
                     .Append(" from instance ")
-                    .AppendHtmlAnchor(instanceLink, () => message
-                        .Append($"<code>{userReport.Instance.Id}</code> ({userReport.Instance.Host})"));
+                    .AppendHtmlAnchor(instanceLink, $"<code>{userReport.Instance.Id}</code> ({userReport.Instance.Host})");
                 
                 // Instance local link
                 message
                     .Append(' ')
                     .AppendHtmlAnchor(localInstanceLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]")));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
             }
             
             message.Append("</li>");
@@ -203,14 +196,12 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
                 message
                     .AppendHtml("strong", () => message
                         .Append("Local note ")
-                        .AppendHtmlAnchor(noteLink, () => message
-                            .Append($"<code>{noteReport.Note.Id}</code>")));
+                        .AppendHtmlAnchor(noteLink, $"<code>{noteReport.Note.Id}</code>"));
                 
                 // user local link
                 message
                     .Append(" by user ")
-                    .AppendHtmlAnchor(userLink, () => message
-                        .Append($"<code>{noteReport.User.Id}</code> ({noteReport.User.Username})"));
+                    .AppendHtmlAnchor(userLink, $"<code>{noteReport.User.Id}</code> ({noteReport.User.Username})");
             }
             else 
             {
@@ -222,41 +213,35 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
                 // Note remote link
                 message
                     .Append("Remote note ")
-                    .AppendHtmlAnchor(noteLink, () => message
-                        .Append($"<code>{noteReport.Note.Id}</code>"));
+                    .AppendHtmlAnchor(noteLink, $"<code>{noteReport.Note.Id}</code>");
                 
                 // Note local link
                 message
                     .Append(' ')
                     .AppendHtmlAnchor(localNoteLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]")));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
                 
                 // User remote link
                 message
                     .Append(" by user ")
-                    .AppendHtmlAnchor(userLink, () => message
-                        .Append($"<code>{noteReport.User.Id}</code> ({noteReport.User.Username}@{noteReport.User.Host})"));
+                    .AppendHtmlAnchor(userLink, $"<code>{noteReport.User.Id}</code> ({noteReport.User.Username}@{noteReport.User.Host})");
                 
                 // User local link
                 message
                     .Append(' ')
                     .AppendHtmlAnchor(localUserLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]")));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
                 
                 // Instance remote link
                 message
                     .Append(" from instance ")
-                    .AppendHtmlAnchor(instanceLink, () => message
-                        .Append($"<code>{noteReport.Instance.Id}</code> ({noteReport.Instance.Host})"));
+                    .AppendHtmlAnchor(instanceLink, $"<code>{noteReport.Instance.Id}</code> ({noteReport.Instance.Host})");
                 
                 // Instance local link
                 message
                     .Append(' ')
                     .AppendHtmlAnchor(localInstanceLink, () => message
-                        .AppendHtmlStyle("font-style: italic", () => message
-                            .Append("[local mirror]")));
+                        .AppendHtmlStyle("font-style: italic", "[local mirror]"));
             }
             
             message.Append("</li>");

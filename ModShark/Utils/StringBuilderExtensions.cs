@@ -6,11 +6,20 @@ public static class StringBuilderExtensions
 {
     public static StringBuilder AppendHtmlAnchor(this StringBuilder builder, string href, Action contents)
         => builder.AppendBlock($"<a href=\"{href}\" rel=\"noopener noreferer\" target=\"_blank\">", "</a>", contents);
+    
+    public static StringBuilder AppendHtmlAnchor(this StringBuilder builder, string href, string contents)
+        => builder.AppendBlock($"<a href=\"{href}\" rel=\"noopener noreferer\" target=\"_blank\">", "</a>", contents);
 
     public static StringBuilder AppendHtmlStyle(this StringBuilder builder, string style, Action contents)
         => builder.AppendBlock($"<span style=\"{style}\">", "</span>", contents);
 
+    public static StringBuilder AppendHtmlStyle(this StringBuilder builder, string style, string contents)
+        => builder.AppendBlock($"<span style=\"{style}\">", "</span>", contents);
+    
     public static StringBuilder AppendHtml(this StringBuilder builder, string tag, Action contents)
+        => builder.AppendHtml(tag, null, contents);
+    
+    public static StringBuilder AppendHtml(this StringBuilder builder, string tag, string contents)
         => builder.AppendHtml(tag, null, contents);
     
     public static StringBuilder AppendHtml(this StringBuilder builder, string tag, string? attributes, Action contents)
@@ -25,6 +34,20 @@ public static class StringBuilderExtensions
 
         contents();
 
+        builder.Append($"</{tag}>");
+        return builder;
+    }
+    
+    public static StringBuilder AppendHtml(this StringBuilder builder, string tag, string? attributes, string contents)
+    {
+        builder.Append($"<{tag}");
+        if (attributes != null)
+        {
+            builder.Append(' ');
+            builder.Append(attributes);
+        }
+        builder.Append('>');
+        builder.Append(contents);
         builder.Append($"</{tag}>");
         return builder;
     }
