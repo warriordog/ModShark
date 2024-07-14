@@ -32,7 +32,7 @@ if (-Not (Test-Path $ReleaseDir)) {
 
 # Publish build
 dotnet clean $BuildProject --configuration $BuildConfig
-dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir
+dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -p:UseAppHost=false
 dotnet ef migrations script --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/ModShark-migrations.sql"
 
 # Package build
