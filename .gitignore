@@ -6,3 +6,5 @@ riderModule.iml
 appsettings.Local.json
 appsettings.Production.json
 ModShark.sln.DotSettings.user
+/Publish/
+/Release/
