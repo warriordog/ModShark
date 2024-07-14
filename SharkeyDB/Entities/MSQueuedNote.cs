@@ -27,4 +27,9 @@ public class MSQueuedNote : IEntity<int>
     /// Note that is queued
     /// </summary>
     public Note? Note { get; set; }
+    
+    /// <summary>
+    /// Flag record for the queued note
+    /// </summary>
+    public MSFlaggedNote? FlaggedNote { get; set; }
 }

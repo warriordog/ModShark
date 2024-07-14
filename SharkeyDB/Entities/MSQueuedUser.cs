@@ -27,4 +27,9 @@ public class MSQueuedUser : IEntity<int>
     /// User who is queued
     /// </summary>
     public User? User { get; set; }
+    
+    /// <summary>
+    /// Flag record for the queued user
+    /// </summary>
+    public MSFlaggedUser? FlaggedUser { get; set; }
 }

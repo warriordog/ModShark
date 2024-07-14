@@ -19,11 +19,21 @@ public class MSFlaggedNote : IEntity<int>
     public int Id { get; set; }
     
     /// <summary>
-    /// ID of the note - will map to <see cref="Note.Id"/> unless the note has been deleted.
-    /// Not a foreign key! 
+    /// ID of the note.
+    /// Maps to <see cref="Note.Id"/> unless the note has been deleted.
     /// </summary>
     [Column("note_id"), MaxLength(32)]
     public required string NoteId { get; set; }
+    
+    /// <summary>
+    /// Note that was flagged, if it still exists.
+    /// </summary>
+    public Note? Note { get; set; }
+    
+    /// <summary>
+    /// Queue entry for the note that was flagged.
+    /// </summary>
+    public MSQueuedNote? QueuedNote { get; set; }
     
     /// <summary>
     /// When the note was checked for flags.

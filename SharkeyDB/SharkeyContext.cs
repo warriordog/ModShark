@@ -51,12 +51,41 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
 
         // FK ms_queued_user(user_id) -> user(id)  
         modelBuilder
-            .Entity<User>()
-            .HasOne(u => u.MSQueuedUser)
-            .WithOne(q => q.User)
+            .Entity<MSQueuedUser>()
+            .HasOne(q => q.User)
+            .WithOne(u => u.QueuedUser)
             .HasForeignKey<MSQueuedUser>(q => q.UserId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+        
+        // // FK ms_queued_user(user_id) -> ms_queued_user(user_id)  
+        // modelBuilder
+        //     .Entity<MSQueuedUser>()
+        //     .HasOne(q => q.FlaggedUser)
+        //     .WithOne(f => f.QueuedUser)
+        //     .HasForeignKey<MSQueuedUser>(q => q.UserId)
+        //     .HasPrincipalKey<MSFlaggedUser>(f => f.UserId)
+        //     .IsRequired()
+        //     .OnDelete(DeleteBehavior.Cascade);
+        
+        // FK ms_flagged_user(user_id) -> ?user(id)  
+        modelBuilder
+            .Entity<MSFlaggedUser>()
+            .HasOne(f => f.User)
+            .WithOne(u => u.FlaggedUser)
+            .HasForeignKey<MSFlaggedUser>(f => f.UserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        // FK ms_flagged_user(user_id) -> ?ms_queued_user(user_id)  
+        modelBuilder
+            .Entity<MSFlaggedUser>()
+            .HasOne(f => f.QueuedUser)
+            .WithOne(q => q.FlaggedUser)
+            .HasForeignKey<MSFlaggedUser>(f => f.UserId)
+            .HasPrincipalKey<MSQueuedUser>(q => q.UserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
         
         // FK abuse_user_report(reporter_id)* -> user(id)  
         modelBuilder
@@ -93,21 +122,59 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
         
         // FK ms_queued_instance(instance_id) -> instance(id)  
         modelBuilder
-            .Entity<Instance>()
-            .HasOne(i => i.MSQueuedInstance)
-            .WithOne(q => q.Instance)
+            .Entity<MSQueuedInstance>()
+            .HasOne(q => q.Instance)
+            .WithOne(i => i.QueuedInstance)
             .HasForeignKey<MSQueuedInstance>(q => q.InstanceId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
         
+        // FK ms_flagged_instance(instance_id) -> ?instance(id)  
+        modelBuilder
+            .Entity<MSFlaggedInstance>()
+            .HasOne(f => f.Instance)
+            .WithOne(i => i.FlaggedInstance)
+            .HasForeignKey<MSFlaggedInstance>(f => f.InstanceId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        // FK ms_flagged_instance(instance_id) -> ?ms_queued_instance(instance_id)  
+        modelBuilder
+            .Entity<MSFlaggedInstance>()
+            .HasOne(f => f.QueuedInstance)
+            .WithOne(q => q.FlaggedInstance)
+            .HasForeignKey<MSFlaggedInstance>(f => f.InstanceId)
+            .HasPrincipalKey<MSQueuedInstance>(q => q.InstanceId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         // FK ms_queued_note(note_id) -> note(id)  
         modelBuilder
-            .Entity<Note>()
-            .HasOne(n => n.MSQueuedNote)
-            .WithOne(q => q.Note)
+            .Entity<MSQueuedNote>()
+            .HasOne(q => q.Note)
+            .WithOne(n => n.QueuedNote)
             .HasForeignKey<MSQueuedNote>(q => q.NoteId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
+        
+        // FK ms_flagged_note(note_id) -> ?note(id)  
+        modelBuilder
+            .Entity<MSFlaggedNote>()
+            .HasOne(q => q.Note)
+            .WithOne(n => n.FlaggedNote)
+            .HasForeignKey<MSFlaggedNote>(q => q.NoteId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        // FK ms_flagged_note(note_id) -> ?ms_queued_note(note_id)  
+        modelBuilder
+            .Entity<MSFlaggedNote>()
+            .HasOne(f => f.QueuedNote)
+            .WithOne(q => q.FlaggedNote)
+            .HasForeignKey<MSFlaggedNote>(f => f.NoteId)
+            .HasPrincipalKey<MSQueuedNote>(q => q.NoteId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
         
         // FK note(userId)* -> user(id)  
         modelBuilder

@@ -18,10 +18,21 @@ public class MSFlaggedInstance : IEntity<int>
     public int Id { get; set; }
     
     /// <summary>
-    /// Sharkey instance ID
+    /// Sharkey instance ID.
+    /// Maps to <see cref="Instance.Id"/> unless the instance has been deleted.
     /// </summary>
     [Column("instance_id"), MaxLength(32)]
     public required string InstanceId { get; set; }
+    
+    /// <summary>
+    /// Instance that was flagged, if it still exists.
+    /// </summary>
+    public Instance? Instance { get; set; }
+    
+    /// <summary>
+    /// Queue entry for the instance that was flagged.
+    /// </summary>
+    public MSQueuedInstance? QueuedInstance { get; set; }
     
     /// <summary>
     /// When the user was checked for flags.

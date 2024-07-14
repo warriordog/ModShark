@@ -44,21 +44,21 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         var meta = await metaService.GetInstanceMeta(stoppingToken);
         
         // Query for all new instances that match the given flags
-        var query =
-            from q in db.MSQueuedInstances.AsNoTracking()
-            join i in db.Instances.AsNoTracking()
-                on q.InstanceId equals i.Id
-            where
+        var newInstances = db.MSQueuedInstances
+            .AsNoTracking()
+            .Include(q => q.FlaggedInstance)
+            .Include(q => q.Instance!) // database constraints ensure that "Instance" cannot be null
+            .Where(q =>
                 q.Id <= maxId
-                && (config.IncludeSuspended || i.SuspensionState == "none")
-                && (config.IncludeBlocked || !meta.BlockedHosts.Contains(i.Host))
-                && (config.IncludeSilenced || !meta.SilencedHosts.Contains(i.Host))
-                && !db.MSFlaggedInstances.Any(f => f.InstanceId == q.InstanceId)
-            orderby q.Id
-            select i;
+                && (config.IncludeSuspended || q.Instance!.SuspensionState == "none")
+                && (config.IncludeBlocked || !meta.BlockedHosts.Contains(q.Instance!.Host))
+                && (config.IncludeSilenced || !meta.SilencedHosts.Contains(q.Instance!.Host))
+                && !db.MSFlaggedInstances.Any(f => f.InstanceId == q.InstanceId))
+            .OrderBy(q => q.Id)
+            .Select(q => q.Instance!)
+            .AsAsyncEnumerable();
         
         // Stream each result due to potentially large size
-        var newInstances = query.AsAsyncEnumerable();
         await foreach (var instance in newInstances)
         {
             // The query only excludes exact matches, so check for base domains here

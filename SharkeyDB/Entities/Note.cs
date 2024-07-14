@@ -60,5 +60,6 @@ public class Note : IEntity<string>
     [MemberNotNullWhen(false, nameof(Url))]
     public bool IsLocal => Url == null;
     
-    public MSQueuedNote? MSQueuedNote { get; set; }
+    public MSQueuedNote? QueuedNote { get; set; }
+    public MSFlaggedNote? FlaggedNote { get; set; }
 }

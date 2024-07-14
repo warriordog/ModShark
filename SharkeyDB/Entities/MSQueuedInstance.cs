@@ -27,4 +27,9 @@ public class MSQueuedInstance : IEntity<int>
     /// Instance that is queued
     /// </summary>
     public Instance? Instance { get; set; }
+    
+    /// <summary>
+    /// Flag record for the queued instance
+    /// </summary>
+    public MSFlaggedInstance? FlaggedInstance { get; set; }
 }

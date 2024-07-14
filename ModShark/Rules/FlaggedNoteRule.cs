@@ -72,37 +72,31 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         var meta = await metaService.GetInstanceMeta(stoppingToken);
         
         // Query for all new notes that match the given flags
-        var query =
-            from q in db.MSQueuedNotes.AsNoTracking()
-            join n in db.Notes
-                    .AsNoTracking()
-                    .Include(n => n.User!) // database constraints ensure that "User" cannot be null
+        var newNotes = db.MSQueuedNotes
+            .AsNoTracking()
+            .Include(q => q.FlaggedNote)
+            .Include(q => q.Note!) // database constraints ensure that "Note" cannot be null
+                .ThenInclude(n => n.User!) // database constraints ensure that "User" cannot be null
                     .ThenInclude(u => u.Instance)
-                // TODO convert this to navigation properties
-                on q.NoteId equals n.Id
-            join f in db.MSFlaggedNotes.AsNoTracking()
-                on q.NoteId equals f.NoteId
-                into j
-            from f in j.DefaultIfEmpty()
-            where
+            .Where(q =>
                 q.Id <= maxId
-                && f == null
-                && (n.Text != null || (config.IncludeCW && n.CW != null))
-                && (config.IncludeLocal || n.Url != null)
-                && (config.IncludeRemote || n.Url == null)
-                && (config.IncludeUnlistedVis || n.Visibility != "home")
-                && (config.IncludeFollowersVis || n.Visibility != "followers")
-                && (config.IncludePrivateVis || n.Visibility != "specified")
-                && (config.IncludeSuspendedUser || !n.User!.IsSuspended)
-                && (config.IncludeSilencedUser || !n.User!.IsSilenced)
-                && (config.IncludeDeletedUser || !n.User!.IsDeleted)
-                && (config.IncludeBlockedInstance || n.User!.Host == null || !meta.BlockedHosts.Contains(n.User!.Host))
-                && (config.IncludeSilencedInstance || n.User!.Host == null || !meta.SilencedHosts.Contains(n.User!.Host))
-            orderby q.Id
-            select n;
+                && q.FlaggedNote == null
+                && (q.Note!.Text != null || (config.IncludeCW && q.Note!.CW != null))
+                && (config.IncludeLocal || q.Note!.Url != null)
+                && (config.IncludeRemote || q.Note!.Url == null)
+                && (config.IncludeUnlistedVis || q.Note!.Visibility != "home")
+                && (config.IncludeFollowersVis || q.Note!.Visibility != "followers")
+                && (config.IncludePrivateVis || q.Note!.Visibility != "specified")
+                && (config.IncludeSuspendedUser || !q.Note!.User!.IsSuspended)
+                && (config.IncludeSilencedUser || !q.Note!.User!.IsSilenced)
+                && (config.IncludeDeletedUser || !q.Note!.User!.IsDeleted)
+                && (config.IncludeBlockedInstance || q.Note!.User!.Host == null || !meta.BlockedHosts.Contains(q.Note!.User!.Host))
+                && (config.IncludeSilencedInstance || q.Note!.User!.Host == null || !meta.SilencedHosts.Contains(q.Note!.User!.Host)))
+            .OrderBy(q => q.Id)
+            .Select(q => q.Note!)
+            .AsAsyncEnumerable();
         
         // Stream each result due to potentially large size
-        var newNotes = query.AsAsyncEnumerable();
         await foreach (var note in newNotes)
         {
             // Guaranteed to be non-null by the Include() statement
