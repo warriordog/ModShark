@@ -5,10 +5,10 @@
 We provide security updates for the latest minor branch of each supported major version.
 Please see the table below for details:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| 0.x.x   | :x:                |
+| Version | Supported          | Notes          |
+| ------- | ------------------ |----------------|
+| 1.0.x   | :white_check_mark: | Latest Release |
+| 0.x.x   | :x:                | Pre-production |
 
 ## Reporting a Vulnerability
 Found a security issue in ModShark?
