@@ -47,28 +47,17 @@ Documentation TBD.
 
 Instructions are coming soon, but for now just contact the author or open an issue for assistance.
 
+### System Requirements
+
+* [.NET 8 (or later) Runtime](https://dotnet.microsoft.com/en-us/download)
+* [A supported version of Windows, Linux, or macOS](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (Linux is recommended)
+* At least 128 MB available RAM (256 MB recommended)
+* A functional installation of [Sharkey](https://activitypub.software/TransFem-org/Sharkey)
+* Network or localhost connection to Sharkey's backend API
+* Network or localhost connection to Sharkey's PostgreSQL database, and a user with read/write permissions
+
 ## Configuration
 
 Full documentation is coming soon.
 You may review the `appsettings.json`, `appsettings.Production.json`, and `appsettings.Development.json` files for example configurations.
 Local development will load an option `appsettings.Local.json` file that is automatically excluded from git.
-
-## Helpful Commands
-
-### Apply database migrations
-
-```powershell
-dotnet ef database update --project SharkeyDB --startup-project ModShark
-```
-
-### Create database migration
-
-```powershell
-dotnet ef migrations add $name --project SharkeyDB --startup-project ModShark
-```
-
-### Remove database migration (but keep changes)
-
-```powershell
-dotnet ef migrations remove --project SharkeyDB --startup-project ModShark
-```
