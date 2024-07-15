@@ -33,8 +33,12 @@ if (-Not (Test-Path $ReleaseDir)) {
 # Publish build
 dotnet clean $BuildProject --configuration $BuildConfig
 dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -p:UseAppHost=false
-dotnet ef migrations script --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/ModShark-migrations.sql"
 
-# Package build
+# Publish migrations
+$lastMigration = (dotnet ef migrations list --project SharkeyDB --startup-project $BuildProject)[-1];
+dotnet ef migrations script $lastMigration 0 --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql"
+dotnet ef migrations script --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
+
+# Package release
 # Intentionally do *not* -Force in case someone forgets to update the release version.
 Compress-Archive -Path "$PublishDir/*" -DestinationPath "$ReleaseDir/ModShark-$ReleaseVersion.zip"
