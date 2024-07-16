@@ -1,4 +1,5 @@
-﻿# [Production Build Script]
+﻿#!/usr/bin/env pwsh
+# [Production Build Script]
 # This is a placeholder until proper CI/CD pipelines are built.
 
 # Requirements:
