@@ -6,6 +6,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharkeyDB", "SharkeyDB\Shar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModShark.Tests", "ModShark.Tests\ModShark.Tests.csproj", "{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{E0F50DC0-AD68-4F30-B0CC-21767BA84AA2}"
+	ProjectSection(SolutionItems) = preProject
+		Resources\build-prod.ps1 = Resources\build-prod.ps1
+		Resources\dev-scripts.sql = Resources\dev-scripts.sql
+		Resources\sample-misskey-ids.mjs = Resources\sample-misskey-ids.mjs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
