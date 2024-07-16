@@ -14,7 +14,7 @@
 # * https://stackoverflow.com/questions/8095638/how-do-i-negate-a-condition-in-powershell
 # * https://stackoverflow.com/a/71159216
 
-$ReleaseVersion = '1.0.0-snapshot.1'
+$ReleaseVersion = '1.0.0-snapshot.2'
 $ReleaseDir = './Release'
 $PublishDir = './Publish'
 $BuildConfig = 'Release'
@@ -39,6 +39,14 @@ dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -
 $lastMigration = (dotnet ef migrations list --project SharkeyDB --startup-project $BuildProject)[-1];
 dotnet ef migrations script $lastMigration 0 --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql"
 dotnet ef migrations script --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
+
+# Publish documentation
+cp readme.md "$PublishDir/readme.md"
+cp license.md "$PublishDir/license.md"
+cp security.md "$PublishDir/security.md"
+
+# Publish metadata
+echo $ReleaseVersion > "$PublishDir/version"
 
 # Package release
 # Intentionally do *not* -Force in case someone forgets to update the release version.
