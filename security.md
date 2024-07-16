@@ -6,7 +6,7 @@ We provide security updates for the latest minor branch of each supported major 
 Please see the table below for details:
 
 | Version | Supported          | Notes          |
-| ------- | ------------------ |----------------|
+|---------|--------------------|----------------|
 | 1.0.x   | :white_check_mark: | Latest Release |
 | 0.x.x   | :x:                | Pre-production |
 
