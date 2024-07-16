@@ -1,51 +1,136 @@
 # ModShark - AutoMod for Sharkey instances
 
-ModShark is a standalone moderation tool for servers running the [Sharkey fediverse server](https://activitypub.software/TransFem-org/Sharkey).
+ModShark is an automated moderation tool for servers running the [Sharkey Fediverse server](https://activitypub.software/TransFem-org/Sharkey).
+It runs as a background tool with direct integration to Sharkey's database and API, offering extended and flexible moderation features. 
+With customizable rules and multiple reporting options, ModShark provides a smooth extension to Sharkey's native tooling.
 
 **⚠️ ModShark is work-in-progress software and not ready for production use. ⚠️**
 
 ## Rules
 
-Rules detect flagged behavior according to user-configured parameters.
-See each subsection for detailed instructions.
+ModShark "rules" detect and flag objects according to configurable parameters.
+Current rules can flag instances, notes (posts), and user profiles.
+See the below section for specific documentation.
 
-### Flagged User - detect and alert when any new user matches a flag
+### Flagged Instance Rule
 
-Currently, the only supported flag is Regular Expression matching against username.
-Filters and exclusions are supported.
-Complete documentation TBD.
+The **Flagged Instance rule** compares instance hostnames (domain names) against a list of pattern.
+Any matching instance is flagged and reported.
+Filters are available to exclude instances that have already been actioned by the moderation team, including checks for suspended (delivery stopped), blocked (defederated), and silenced (limited).
 
-### Flagged Instance - detect and alert when any new instance matches a flag
+This is a queued rule, meaning that it runs on a scheduled interval and scans all instances that have been discovered since the last scan.
+New instances are enqueued via database trigger to minimize overhead.
 
-Currently, the only supported flag is Regular Expression matching against hostname.
-Filters and exclusions are supported.
-Complete documentation TBD.
+### Flagged User Rule
+
+The **Flagged User rule** compares usernames against a list of patterns.
+Any matching user is flagged and reported. 
+Filters are available to exclude users who have already been actioned by the moderation team, including checks for suspended (blocked) and silenced (limited).
+Additional filters can exclude local or remote users and users from previously-actioned instances.
+
+This is a queued rule, meaning that it runs on a scheduled interval and scans all users that have been discovered since the last scan.
+New users are enqueued via database trigger to minimize overhead.
+
+### Flagged Note Rule
+
+The **Flagged Note rule** compares note contents against a list of patterns.
+Any matching note is flagged and reported.
+The note's subject (content warning) can also be scanned, which may be desired on instances with stricter moderation standards.
+
+Filters are available to exclude notes by visibility, including unlisted (home timeline), followers-only, and/or private (direct message).
+Additional filters can exclude notes by actioned users or from actioned instances.
+Finally, a pair of scoping filters can exclude local or remote notes as desired.
+
+This is a queued rule, meaning that it runs on a scheduled interval and scans all notes that have been discovered since the last scan.
+New notes are enqueued via database trigger to minimize overhead.
 
 ## Reporters
 
-Various "reporters" are available to communicate alerts in whatever format is desired.
-Multiple reporters can be active at once.
+ModShark offers a variety of "reporters" to communicate reports in any desired format.
+All reporters are optional, and multiple can be enabled simultaneously.
+See the sections below for specific documentation.
 
-### Console - log to the system log via console output
+### Console Reporter
 
-Documentation TBD.
+The **Console reporter** is the simplest one - it simply writes the reported objects to ModShark's console output.
+If installed under Systemd or a similar service architecture, this output will be captured into the system's native logging system.
+The reporter's output is human-readable, but follows a predictable format that can be parsed via Regular Expression.
 
-### SendGrid - send a notification email via the SendGrid API
+The console reporter is **on by default**, and should remain active under most environments.
+Disabling this reporter can complicate diagnostic and audit tasks.
 
-Requires a valid SendGrid subscription.
-Documentation TBD.
+### SendGrid Reporter
 
-### Native - create a native Sharkey report
+The **SendGrid reporter** provides for email notification via [SendGrid](https://sendgrid.com/en-us).
+Emails can be sent from any source address / name, and to any number of recipients.
+This reporter's output is formatted for human consumption and produces screen-reader-friendly HTML emails.
 
-Documentation TBD.
+As SendGrid is a commercial service, this reporter **requires a valid API key**.
+The SendGrid reporter is disabled by default.
 
-### Post - create a post from a Sharkey user account
+### Native Reporter
 
-Documentation TBD.
+The **Native reporter** creates reports directly within Sharkey itself.
+This reporter provides a closer integration with Sharkey and is ideal for teams accustomed to working with Sharkey's moderation controls.
 
-## Installation
+Two modes are available: **API mode** and **database mode**.
+API mode submits reports using a service account, triggering the report workflow including notification emails.
+If this is not desired, then database mode can be used to "quietly" insert a report that will not trigger notifications.
+Both modes will result in a valid report entry and trigger the "unresolved reports" dashboard message.
 
-Instructions are coming soon, but for now just contact the author or open an issue for assistance.
+The native reporter is **on by default** and uses database mode if not otherwise configured.
+
+### Post Reporter
+
+The **Post reporter** creates an announcement post using a service account.
+The post template, visibility, audience, and subject (content warning) can all be configured.
+This feature is designed for internal staff notifications, but can be used for public alerts with adjustments to the template.
+
+The template can be any valid post in MFM format, with special "variables" available to insert report contents.
+* `$audience`- insert the configured audience as a string of @mentions.
+* `$report_body` - contents of the report in a human-readable format.
+
+The post reporter is disabled by default.
+
+## Installing ModShark
+
+These instructions are intended for Linux environments using Systemd, and other platforms may require adjustments to the commands.
+Make sure to substitute all variables for their correct values.
+
+1. Create a service account for ModShark: `sudo useradd -s /bin/bash -d /home/modshark -m modshark`
+2. Log into the service account: `sudo su - modshark`
+3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
+4. Extract the release package into a directory: `unzip ModShark-1.0.0-snapshot.1.zip -d ModShark`
+5. Create the production config file (see the [Configuration section](#Configuration) for details): `nano ModShark/appsettings.Production.json` 
+6. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
+7. Return to an admin account: `exit`
+8. Install the Systemd service: `sudo cp ModShark/modshark.service /etc/systemd/system/modshark.service`
+9. Register the service: `sudo systemctl dameon-reload && sudo systemctl enable modshark`
+10. Start the ModShark service: `sudo systemctl start modshark`
+
+## Updating ModShark
+
+These instructions are intended for Linux environments using Systemd, but should be generally applicable to other platforms.
+Make sure to substitute all variables for their correct values.
+
+1. Stop the ModShark service, if it's running: `sudo systemctl stop ModShark`
+2. Log into the ModShark service account: `sudo su - modshark`
+3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
+4. Extract the release package into your installation directory, overwriting any files: `unzip -o ModShark-1.0.0-snapshot.1.zip -d ModShark`
+5. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
+6. Return to an admin account: `exit`
+7. Start the ModShark service: `sudo systemctl start ModShark`
+
+## Removing ModShark
+
+These instructions are intended for Linux environments using Systemd, and other platforms may require adjustments to the commands.
+Make sure to substitute all variables for their correct values.
+
+1. Stop the ModShark service, if it's running: `systemctl stop modshark`
+2. Disable the service: `systemctl disable modshark`
+3. Remove the service file: `rm /etc/systemd/system/modshark.service && systemctl daemon-reload`
+4. Revert ModShark's database changes: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f uninstall-ModShark-migrations.sql`
+5. Remove ModShark files: `rm -r $modshark_directory`
 
 ### System Requirements
 
@@ -58,6 +143,79 @@ Instructions are coming soon, but for now just contact the author or open an iss
 
 ## Configuration
 
-Full documentation is coming soon.
-You may review the `appsettings.json`, `appsettings.Production.json`, and `appsettings.Development.json` files for example configurations.
-Local development will load an option `appsettings.Local.json` file that is automatically excluded from git.
+ModShark uses a layered configuration approach that allows for automatic updates without clobbering changes.
+The root configuration file is `appsettings.json`, which contains the default value for all options.
+You may use this as a reference, but **please do not modify it directly**.
+Any changes will be overwritten by updates.
+
+To customize the default configuration, create a **new** file called `appsettings.Production.json`.
+Populate this file with the same structure as `appsettings.json`, but include only the properties that you wish to modify.
+Objects will be merged; arrays and all other values are replaced.
+
+Tip: You can substitute "Production" for any other value to create environment-specific configurations.
+Some common values are `appsettings.Development.json`, `appsettings.Testing.json`, and `appsettings.Staging.json`.
+There is also a special `appsettings.Local.json`, which will be loaded as an **additional** layer on top of `appsettings.Development.json`.
+This file exists to store local secrets that should not be committed to source control.
+
+
+### Configuration Properties
+
+
+| Property                                             | Type     | Required | Description                                                                                                                                                                                     | Default                                                                                                                                        |
+|------------------------------------------------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Logging.LogLevel`                                   | Hash     | No       | Sets the minimum log severity.<br/>See this [Microsoft article](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging?tabs=command-line#configure-logging-without-code) for details. | <pre><code>{<br/>  "Default": "Warning",<br/>  "ModShark": "Information",<br/>  "Microsoft.Hosting.Lifetime": "Information"<br/>}</code></pre> |
+| `ModShark.Postgres.Connection`                       | String   | Yes      | Connection string for the database                                                                                                                                                              | <pre><code>"Host=localhost<br/>;Port=5432<br/>;Database=sharkey<br/>;Username=sharkey<br/>;Password=sharkey"</code></pre>                      |
+| `ModShark.Postgres.Timeout`                          | Integer  | No       | Maximum time that a query can run before automatically terminating                                                                                                                              | `30`                                                                                                                                           |
+| `ModShark.Reporters.Console.Enabled`                 | Boolean  | No       | Whether the [Console reporter](#console-reporter) should be used                                                                                                                                | `true`                                                                                                                                         |
+| `ModShark.Reporters.Native.Enabled`                  | Boolean  | No       | Whether the [Native reporter](#native-reporter) should be used                                                                                                                                  | `true`                                                                                                                                         |
+| `ModShark.Reporters.Native.UseApi`                   | Boolean  | No       | Whether reports should be sent by API instead of database insert                                                                                                                                | `false`                                                                                                                                        |
+| `ModShark.Reporters.Post.Audience`                   | String[] | No       | Array of usernames to be granted access to the post (in @user@instance.tld format)                                                                                                              | *none*                                                                                                                                         |
+| `ModShark.Reporters.Post.Enabled`                    | Boolean  | No       | Whether the [Post reporter](#post-reporter) should be used                                                                                                                                      | `false`                                                                                                                                        |
+| `ModShark.Reporters.Post.LocalOnly`                  | Boolean  | Yes*     | Whether the post should be sent to local users only (defederated)                                                                                                                               | `true`                                                                                                                                         |
+| `ModShark.Reporters.Post.Subject`                    | String   | No       | Subject line / content warning for the post                                                                                                                                                     | `"ModShark Report"`                                                                                                                            |
+| `ModShark.Reporters.Post.Template`                   | String   | No       | Template for the post (use variables $audience and $report_body)                                                                                                                                | `"$report_body"`                                                                                                                               |
+| `ModShark.Reporters.Post.Visibility`                 | Enum     | No       | Visibility of the report post.<br/>(must be one of `"public"`, `"unlisted"`, `"followers"`, or `"private"`)                                                                                     | `"followers"`                                                                                                                                  |
+| `ModShark.Reporters.SendGrid.ApiKey`                 | String   | Yes*     | SendGrid API key (must have send mail permissions)                                                                                                                                              | *none*                                                                                                                                         |
+| `ModShark.Reporters.SendGrid.Enabled`                | Boolean  | No       | Whether the [SendGrid reporter](#sendgrid-reporter) should be used                                                                                                                              | `false`                                                                                                                                        |
+| `ModShark.Reporters.SendGrid.FromAddress`            | String   | Yes*     | Email address to send reports from                                                                                                                                                              | *none*                                                                                                                                         |
+| `ModShark.Reporters.SendGrid.FromName`               | String   | Yes*     | Name to associate with the from address                                                                                                                                                         | `"ModShark"`                                                                                                                                   |
+| `ModShark.Reporters.SendGrid.ToAddresses`            | String[] | Yes*     | Array of email addresses to send reports to                                                                                                                                                     | *none*                                                                                                                                         |
+| `ModShark.Rules.FlaggedInstance.BatchLimit`          | Integer  | No       | Maximum number of instances to check at once                                                                                                                                                    | `5000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedInstance.Enabled`             | Boolean  | No       | Whether the [Flagged Instance rule](#flagged-instance-rule) should be executed                                                                                                                  | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedInstance.HostnamePatterns`    | String[] | Yes*     | Array of regular expressions to check against each hostname                                                                                                                                     | *none*                                                                                                                                         |
+| `ModShark.Rules.FlaggedInstance.IncludeBlocked`      | Boolean  | No       | Whether blocked (defederated) instances should be scanned                                                                                                                                       | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedInstance.IncludeSilenced`     | Boolean  | No       | Whether silenced (limited) instances should be scanned                                                                                                                                          | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedInstance.IncludeSuspended`    | Boolean  | No       | Whether suspended (delivery stopped) instances should be scanned                                                                                                                                | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedInstance.Timeout`             | Integer  | No       | Maximum time in milliseconds to spend scanning each instance                                                                                                                                    | `1000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.BatchLimit`              | Integer  | No       | Maximum number of notes to check at once                                                                                                                                                        | `5000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.Enabled`                 | Boolean  | No       | Whether the [Flagged Note rule](#flagged-note-rule) should be executed                                                                                                                          | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeBlockedInstance`  | Boolean  | No       | Whether notes by users from blocked (defederated) instances should be scanned                                                                                                                   | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeCW`               | Boolean  | No       | Whether the subject line / content warning should be scanned                                                                                                                                    | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.IncludeDeletedUser`      | Boolean  | No       | Whether notes by users marked as deleted should be scanned                                                                                                                                      | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeFollowersVis`     | Boolean  | No       | Whether followers-only notes should be scanned                                                                                                                                                  | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeLocal`            | Boolean  | No       | Whether local notes should be scanned                                                                                                                                                           | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.InlcudePrivateVis`       | Boolean  | No       | Whether private (direct message) notes should be scanned                                                                                                                                        | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeRemote`           | Boolean  | No       | Whether remote notes should be scanned                                                                                                                                                          | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.IncludeSilencedUser`     | Boolean  | No       | Whether notes by silenced users should be scanned                                                                                                                                               | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.IncludeSuspendedUser`    | Boolean  | No       | Whether notes by suspended users should be scanned                                                                                                                                              | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedNote.IncludeSilencedInstance` | Boolean  | No       | Whether notes by users from silenced (limited) instances should be scanned                                                                                                                      | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.IncludeUnlistedVis`      | Boolean  | No       | Whether unlisted (home only) notes should be scanned                                                                                                                                            | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.TextPatterns`            | String[] | Yes*     | Array of regular expressions to check against each note body/CW                                                                                                                                 | *none*                                                                                                                                         |
+| `ModShark.Rules.FlaggedNote.Timeout`                 | Integer  | No       | Maximum time in milliseconds to spend scanning each note                                                                                                                                        | `1000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.BatchLimit`              | Integer  | No       | Maximum number of users to check at once                                                                                                                                                        | `5000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.Enabled`                 | Boolean  | No       | Whether the [Flagged User rule](#flagged-user-rule) should be executed                                                                                                                          | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedUser.IncludeBlockedInstance`  | Boolean  | No       | Whether users from blocked (defederated) instances should be scanned                                                                                                                            | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedUser.IncludeDeleted`          | Boolean  | No       | Whether users who are marked as deleted (but still exist) should be scanned                                                                                                                     | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedUser.IncludeLocal`            | Boolean  | No       | Whether local users should be scanned                                                                                                                                                           | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.IncludeRemote`           | Boolean  | No       | Whether remote users should be scanned                                                                                                                                                          | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.IncludeSilenced`         | Boolean  | No       | Whether silenced users should be scanned                                                                                                                                                        | `false`                                                                                                                                        |
+| `ModShark.Rules.FlaggedUser.IncludeSilencedInstance` | Boolean  | No       | Whether users from silenced (limited) instances should be scanned                                                                                                                               | `true`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.Timeout`                 | Integer  | No       | Maximum time in milliseconds to spend scanning each username                                                                                                                                    | `1000`                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.UsernamePatterns`        | String[] | Yes*     | Array of regular expressions to check against each username                                                                                                                                     | *none*                                                                                                                                         |
+| `ModShark.Sharkey.ApiEndpoint`                       | String   | Yes      | URL of the instance's backend API                                                                                                                                                               | `"https://127.0.0.1:3000"`                                                                                                                     |
+| `ModShark.Sharkey.IdFormat`                          | Enum     | Yes      | ID format used by this instance.<br/>(must be one of `"aid"`, `"aidx"`, `"meid"`, `"meidg"`, `"ulid"`, or `"objectid"`)                                                                         | `"aidx"`                                                                                                                                       |
+| `ModShark.Sharkey.PublicHost`                        | String   | Yes      | Public hostname / domain of the instance                                                                                                                                                        | *none*                                                                                                                                         |
+| `ModShark.Sharkey.ServiceAccount`                    | String   | No       | Username of ModShark's service account                                                                                                                                                          | `"instance.actor"`                                                                                                                             |
+| `ModShark.Worker.PollInterval`                       | Integer  | No       | Time in milliseconds to wait between each run                                                                                                                                                   | `"1800000"`                                                                                                                                    |
+
+`Yes*` - the property is required only if the relevant section is enabled

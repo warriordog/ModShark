@@ -1,12 +1,4 @@
-﻿# [Sample Systemd unit for ModShark]
-# Instructions:
-# 1. Copy this file to your systemd services directory (on Ubuntu, this is "/etc/systemd/system/") and name it "modshark.service".
-# 2. Fill out the path to your ModShark installation in the "ExecStart" and "WorkingDirectory" fields below.
-# 3. Run "systemctl daemon-reload". Check for any error messages in the output.
-# 4. Run "systemctl enable modshark". This will register ModShark to run at startup.
-# 5. Run "systemctl start modshark". This will start ModShark immediately.
-
-[Unit]
+﻿[Unit]
 Description=ModShark
 Documentation=https://github.com/warriordog/ModShark
 
@@ -17,8 +9,8 @@ Wants=postgresql.service
 [Service]
 Type=simple
 User=calckey
-ExecStart=dotnet /path/to/ModShark/ModShark.dll
-WorkingDirectory=/path/to/ModShark
+ExecStart=dotnet /home/modshark/ModShark/ModShark.dll
+WorkingDirectory=/home/modshark/Modshark
 TimeoutSec=60
 StandardOutput=journal
 StandardError=journal
