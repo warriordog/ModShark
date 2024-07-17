@@ -14,11 +14,13 @@
 # * https://stackoverflow.com/questions/8095638/how-do-i-negate-a-condition-in-powershell
 # * https://stackoverflow.com/a/71159216
 
-$ReleaseVersion = '1.0.0-snapshot.2'
-$ReleaseDir = './Release'
-$PublishDir = './Publish'
-$BuildConfig = 'Release'
-$BuildProject = 'ModShark'
+param(
+    [Parameter(Mandatory)][string]$ReleaseVersion,
+    [string]$ReleaseDir = './Release',
+    [string]$PublishDir = './Publish',
+    [string]$BuildConfig = 'Release',
+    [string]$BuildProject = 'ModShark'
+);
 
 # Clean publish directory
 if (Test-Path $PublishDir) {
