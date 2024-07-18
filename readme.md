@@ -102,7 +102,7 @@ Make sure to substitute all variables for their correct values.
 3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
 4. Extract the release package into a directory: `unzip ModShark-1.0.0-snapshot.1.zip -d ModShark`
 5. Create the production config file (see the [Configuration section](#Configuration) for details): `nano ModShark/appsettings.Production.json` 
-6. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
+6. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 7. Return to an admin account: `exit`
 8. Install the Systemd service: `sudo cp ModShark/modshark.service /etc/systemd/system/modshark.service`
 9. Register the service: `sudo systemctl dameon-reload && sudo systemctl enable modshark`
@@ -118,6 +118,7 @@ Make sure to substitute all variables for their correct values.
 3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
 4. Extract the release package into your installation directory, overwriting any files: `unzip -o ModShark-1.0.0-snapshot.1.zip -d ModShark`
 5. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
+5. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 6. Return to an admin account: `exit`
 7. Start the ModShark service: `sudo systemctl start ModShark`
 
@@ -129,7 +130,7 @@ Make sure to substitute all variables for their correct values.
 1. Stop the ModShark service, if it's running: `systemctl stop modshark`
 2. Disable the service: `systemctl disable modshark`
 3. Remove the service file: `rm /etc/systemd/system/modshark.service && systemctl daemon-reload`
-4. Revert ModShark's database changes: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f uninstall-ModShark-migrations.sql`
+4. Revert ModShark's database changes: `psql -U $postgres_user -W -d $sharkey_database -a -f uninstall-ModShark-migrations.sql`
 5. Remove ModShark files: `rm -r $modshark_directory`
 
 ### System Requirements
