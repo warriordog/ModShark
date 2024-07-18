@@ -51,7 +51,7 @@ namespace SharkeyDB.Migrations
                 insert into ms_queued_note (note_id)
                 select id as note_id
                 from "note"
-                on conflict do nothing
+                on conflict do nothing;
                 """
             );
             

@@ -101,7 +101,7 @@ namespace SharkeyDB.Migrations
                 insert into ms_queued_instance (instance_id)
                 select id as instance_id
                 from "instance"
-                on conflict do nothing
+                on conflict do nothing;
                 """
             );
             
