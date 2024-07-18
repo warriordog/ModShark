@@ -99,8 +99,8 @@ Make sure to substitute all variables for their correct values.
 
 1. Create a service account for ModShark: `sudo useradd -s /bin/bash -d /home/modshark -m modshark`
 2. Log into the service account: `sudo su - modshark`
-3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
-4. Extract the release package into a directory: `unzip ModShark-1.0.0-snapshot.1.zip -d ModShark`
+3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.3): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.3/ModShark-1.0.0-snapshot.3.zip`
+4. Extract the release package into a directory: `mkdir ModShark && bsdtar -xvf ModShark-1.0.0-snapshot.3.zip -C ModShark`
 5. Create the production config file (see the [Configuration section](#Configuration) for details): `nano ModShark/appsettings.Production.json` 
 6. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 7. Return to an admin account: `exit`
@@ -115,9 +115,8 @@ Make sure to substitute all variables for their correct values.
 
 1. Stop the ModShark service, if it's running: `sudo systemctl stop modshark`
 2. Log into the ModShark service account: `sudo su - modshark`
-3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
-4. Extract the release package into your installation directory, overwriting any files: `unzip -o ModShark-1.0.0-snapshot.1.zip -d ModShark`
-5. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
+3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.3): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.3/ModShark-1.0.0-snapshot.3.zip`
+4. Extract the release package into your installation directory, overwriting any files: `mkdir ModShark && bsdtar -xvf ModShark-1.0.0-snapshot.3.zip -C ModShark`
 5. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 6. Return to an admin account: `exit`
 7. Start the ModShark service: `sudo systemctl start modshark`
