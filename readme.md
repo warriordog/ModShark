@@ -113,14 +113,14 @@ Make sure to substitute all variables for their correct values.
 These instructions are intended for Linux environments using Systemd, but should be generally applicable to other platforms.
 Make sure to substitute all variables for their correct values.
 
-1. Stop the ModShark service, if it's running: `sudo systemctl stop ModShark`
+1. Stop the ModShark service, if it's running: `sudo systemctl stop modshark`
 2. Log into the ModShark service account: `sudo su - modshark`
 3. Download the [latest release package](https://github.com/warriordog/ModShark/releases/tag/v1.0.0-snapshot.1): `wget https://github.com/warriordog/ModShark/releases/download/v1.0.0-snapshot.1/ModShark-1.0.0-snapshot.1.zip`
 4. Extract the release package into your installation directory, overwriting any files: `unzip -o ModShark-1.0.0-snapshot.1.zip -d ModShark`
 5. Run the latest database migrations: `psql -U $postgres_user -W $postgres_pass -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 5. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 6. Return to an admin account: `exit`
-7. Start the ModShark service: `sudo systemctl start ModShark`
+7. Start the ModShark service: `sudo systemctl start modshark`
 
 ## Removing ModShark
 
