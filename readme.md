@@ -4,8 +4,6 @@ ModShark is an automated moderation tool for servers running the [Sharkey Fedive
 It runs as a background tool with direct integration to Sharkey's database and API, offering extended and flexible moderation features. 
 With customizable rules and multiple reporting options, ModShark provides a smooth extension to Sharkey's native tooling.
 
-**⚠️ ModShark is work-in-progress software and not ready for production use. ⚠️**
-
 ## Rules
 
 ModShark "rules" detect and flag objects according to configurable parameters.
