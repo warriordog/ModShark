@@ -8,7 +8,7 @@ Wants=postgresql.service
 
 [Service]
 Type=simple
-User=calckey
+User=modshark
 ExecStart=dotnet /home/modshark/ModShark/ModShark.dll
 WorkingDirectory=/home/modshark/Modshark
 TimeoutSec=60
