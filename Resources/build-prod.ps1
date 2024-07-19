@@ -41,8 +41,8 @@ dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -
 
 # Publish migrations
 $lastMigration = (dotnet ef migrations list --project SharkeyDB --startup-project $BuildProject)[-1];
-dotnet ef migrations script $lastMigration 0 --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql"
-dotnet ef migrations script --idempotent --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
+dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql" $lastMigration 0
+dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
 
 # Remove UTF-8 Byte Order Mark - works around a file encoding bug in EF Core Tools.
 # * https://stackoverflow.com/a/35454558
