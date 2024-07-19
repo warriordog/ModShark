@@ -168,8 +168,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
             // instance local link
             message
                 .Append(' ')
-                .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
-                    .AppendMarkdownItalics("local mirror"));
+                .AppendMarkdownLink(localInstanceLink, () => message
+                    .AppendMarkdownItalics(true, "[local mirror]"));
             
             message.Append('\n');
         }
@@ -219,8 +219,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
                 // User local link
                 message
                     .Append(' ')
-                    .AppendMarkdownLinkWithBrackets(localUserLink, () => message
-                        .AppendMarkdownItalics("local mirror"));
+                    .AppendMarkdownLink(localUserLink, () => message
+                        .AppendMarkdownItalics(true, "[local mirror]"));
                 
                 // Instance remote link
                 message
@@ -232,8 +232,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
                 // instance local link
                 message
                     .Append(' ')
-                    .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
-                        .AppendMarkdownItalics("local mirror"));
+                    .AppendMarkdownLink(localInstanceLink, () => message
+                        .AppendMarkdownItalics(true, "[local mirror]"));
             }
             
             message.Append('\n');
@@ -291,8 +291,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
                 // Note local link
                 message
                     .Append(' ')
-                    .AppendMarkdownLinkWithBrackets(localNoteLink, () => message
-                        .AppendMarkdownItalics("local mirror"));
+                    .AppendMarkdownLink(localNoteLink, () => message
+                        .AppendMarkdownItalics(true, "[local mirror]"));
                 
                 // User remote link
                 message
@@ -304,8 +304,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
                 // User local link
                 message
                     .Append(' ')
-                    .AppendMarkdownLinkWithBrackets(localUserLink, () => message
-                        .AppendMarkdownItalics("local mirror"));
+                    .AppendMarkdownLink(localUserLink, () => message
+                        .AppendMarkdownItalics(true, "[local mirror]"));
                 
                 // Instance remote link
                 message
@@ -317,8 +317,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
                 // instance local link
                 message
                     .Append(' ')
-                    .AppendMarkdownLinkWithBrackets(localInstanceLink, () => message
-                        .AppendMarkdownItalics("local mirror"));
+                    .AppendMarkdownLink(localInstanceLink, () => message
+                        .AppendMarkdownItalics(true, "[local mirror]"));
             }
             
             message.Append('\n');

@@ -53,16 +53,36 @@ public static class StringBuilderExtensions
     }
 
     public static StringBuilder AppendMarkdownItalics(this StringBuilder builder, Action contents)
-        => builder.AppendBlock("*", "*", contents);
+        => builder.AppendMarkdownItalics(false, contents);
     
     public static StringBuilder AppendMarkdownItalics(this StringBuilder builder, string contents)
-        => builder.AppendBlock("*", "*", contents);
+        => builder.AppendMarkdownItalics(false, contents);
+
+    public static StringBuilder AppendMarkdownItalics(this StringBuilder builder, bool hasPunctuation, Action contents)
+        => hasPunctuation
+            ? builder.AppendBlock("<i>", "</i>", contents)
+            : builder.AppendBlock("*", "*", contents);
     
+    public static StringBuilder AppendMarkdownItalics(this StringBuilder builder, bool hasPunctuation, string contents)
+        => hasPunctuation
+            ? builder.AppendBlock("<i>", "</i>", contents)
+            : builder.AppendBlock("*", "*", contents);
+
     public static StringBuilder AppendMarkdownBold(this StringBuilder builder, Action contents)
-        => builder.AppendBlock("**", "**", contents);
+        => builder.AppendMarkdownBold(false, contents);
     
     public static StringBuilder AppendMarkdownBold(this StringBuilder builder, string contents)
-        => builder.AppendBlock("**", "**", contents);
+        => builder.AppendMarkdownBold(false, contents);
+    
+    public static StringBuilder AppendMarkdownBold(this StringBuilder builder, bool hasPunctuation, Action contents)
+        => hasPunctuation 
+            ? builder.AppendBlock("<b>", "</b>", contents)
+            : builder.AppendBlock("**", "**", contents);
+    
+    public static StringBuilder AppendMarkdownBold(this StringBuilder builder, bool hasPunctuation, string contents)
+        => hasPunctuation 
+            ? builder.AppendBlock("<b>", "</b>", contents)
+            : builder.AppendBlock("**", "**", contents);
 
     public static StringBuilder AppendMarkdownCode(this StringBuilder builder, Action contents)
         => builder.AppendBlock("`", "`", contents);
@@ -74,12 +94,6 @@ public static class StringBuilderExtensions
     
     public static StringBuilder AppendMarkdownLink(this StringBuilder builder, string href, string contents)
         => builder.AppendBlock("[", $"]({href})", contents);
-
-    public static StringBuilder AppendMarkdownLinkWithBrackets(this StringBuilder builder, string href, Action contents)
-        => builder.AppendBlock("$[scale [][", $"]({href})]", contents);
-    
-    public static StringBuilder AppendMarkdownLinkWithBrackets(this StringBuilder builder, string href, string contents)
-        => builder.AppendBlock("$[scale [][", $"]({href})]", contents);
     
     private static StringBuilder AppendBlock(this StringBuilder builder, string start, string end, Action contents)
     {

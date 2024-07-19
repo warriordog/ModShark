@@ -90,10 +90,88 @@ public class StringBuilderExtensionsTests
     [TestCase("div", "attr", "content", "<div attr>content</div>")]
     public void AppendHtml_StringAction_ShouldBuildCorrectString(string tag, string? attributes, string content, string expected)
         => Call(b
-            => b.AppendHtml(tag, attributes, () =>
-                b.Append(content)))
+            => b.AppendHtml(tag, attributes, ()
+                => b.Append(content)))
         .Should().Be(expected);
 
+    [TestCase("", "**")]
+    [TestCase("test", "*test*")]
+    public void AppendMarkdownItalics_String_ShouldBuildCorrectString(string content, string expected)
+        => Call(b => b.AppendMarkdownItalics(content))
+            .Should().Be(expected);
+
+    [TestCase("", "**")]
+    [TestCase("test", "*test*")]
+    public void AppendMarkdownItalics_Action_ShouldBuildCorrectString(string content, string expected)
+        => Call(b
+                => b.AppendMarkdownItalics(() 
+                    => b.Append(content)))
+            .Should().Be(expected);
+    
+    [TestCase(false, "", "**")]
+    [TestCase(false, "test", "*test*")]
+    [TestCase(true, "", "<i></i>")]
+    [TestCase(true, "test", "<i>test</i>")]
+    public void AppendMarkdownItalics_BoolString_ShouldUseHTML_WhenContentHasPunctuation(bool hasPunctuation, string content, string expected)
+        => Call(b => b.AppendMarkdownItalics(hasPunctuation, content))
+            .Should().Be(expected);
+
+    [TestCase(false, "", "**")]
+    [TestCase(false, "test", "*test*")]
+    [TestCase(true, "", "<i></i>")]
+    [TestCase(true, "test", "<i>test</i>")]
+    public void AppendMarkdownItalics_BoolAction_ShouldUseHTML_WhenContentHasPunctuation(bool hasPunctuation, string content, string expected)
+        => Call(b
+                => b.AppendMarkdownItalics(hasPunctuation, () 
+                    => b.Append(content)))
+            .Should().Be(expected);
+
+    [TestCase("", "****")]
+    [TestCase("test", "**test**")]
+    public void AppendMarkdownBold_String_ShouldBuildCorrectString(string content, string expected)
+        => Call(b => b.AppendMarkdownBold(content))
+            .Should().Be(expected);
+
+    [TestCase("", "****")]
+    [TestCase("test", "**test**")]
+    public void AppendMarkdownBold_Action_ShouldBuildCorrectString(string content, string expected)
+        => Call(b
+                => b.AppendMarkdownBold(() 
+                    => b.Append(content)))
+            .Should().Be(expected);
+    
+    [TestCase(false, "", "****")]
+    [TestCase(false, "test", "**test**")]
+    [TestCase(true, "", "<b></b>")]
+    [TestCase(true, "test", "<b>test</b>")]
+    public void AppendMarkdownBold_BoolString_ShouldUseHTML_WhenContentHasPunctuation(bool hasPunctuation, string content, string expected)
+        => Call(b => b.AppendMarkdownBold(hasPunctuation, content))
+            .Should().Be(expected);
+
+    [TestCase(false, "", "****")]
+    [TestCase(false, "test", "**test**")]
+    [TestCase(true, "", "<b></b>")]
+    [TestCase(true, "test", "<b>test</b>")]
+    public void AppendMarkdownBold_BoolAction_ShouldUseHTML_WhenContentHasPunctuation(bool hasPunctuation, string content, string expected)
+        => Call(b
+                => b.AppendMarkdownBold(hasPunctuation, () 
+                    => b.Append(content)))
+            .Should().Be(expected);
+
+    [TestCase("", "``")]
+    [TestCase("test", "`test`")]
+    public void AppendMarkdownCode_String_ShouldBuildCorrectString(string content, string expected)
+        => Call(b => b.AppendMarkdownCode(content))
+            .Should().Be(expected);
+
+    [TestCase("", "``")]
+    [TestCase("test", "`test`")]
+    public void AppendMarkdownCode_Action_ShouldBuildCorrectString(string content, string expected)
+        => Call(b
+            => b.AppendMarkdownCode(() 
+                => b.Append(content)))
+        .Should().Be(expected);
+    
     [TestCase("", "", "[]()")]
     [TestCase("https://example.com", "", "[](https://example.com)")]
     [TestCase("", "content", "[content]()")]
@@ -109,24 +187,6 @@ public class StringBuilderExtensionsTests
     public void AppendMarkdownLink_Action_ShouldBuildCorrectString(string href, string content, string expected)
         => Call(b
             => b.AppendMarkdownLink(href, () =>
-                b.Append(content)))
-        .Should().Be(expected);
-
-    [TestCase("", "", "$[scale [][]()]")]
-    [TestCase("https://example.com", "", "$[scale [][](https://example.com)]")]
-    [TestCase("", "content", "$[scale [][content]()]")]
-    [TestCase("https://example.com", "content", "$[scale [][content](https://example.com)]")]
-    public void AppendMarkdownLinkWithBrackets_String_ShouldBuildCorrectString(string href, string content, string expected)
-        => Call(b => b.AppendMarkdownLinkWithBrackets(href, content))
-            .Should().Be(expected);
-
-    [TestCase("", "", "$[scale [][]()]")]
-    [TestCase("https://example.com", "", "$[scale [][](https://example.com)]")]
-    [TestCase("", "content", "$[scale [][content]()]")]
-    [TestCase("https://example.com", "content", "$[scale [][content](https://example.com)]")]
-    public void AppendMarkdownLinkWithBrackets_Action_ShouldBuildCorrectString(string href, string content, string expected)
-        => Call(b
-            => b.AppendMarkdownLinkWithBrackets(href, () =>
                 b.Append(content)))
         .Should().Be(expected);
     
