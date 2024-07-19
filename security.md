@@ -5,10 +5,11 @@
 We provide security updates for the latest minor branch of each supported major version.
 Please see the table below for details:
 
-| Version | Supported          | Notes          |
-|---------|--------------------|----------------|
-| 1.0.x   | :white_check_mark: | Latest Release |
-| 0.x.x   | :x:                | Pre-production |
+| Version          | Supported          | Notes          |
+|------------------|--------------------|----------------|
+| 1.0.x            | :white_check_mark: | Latest release |
+| 0.x.x            | :x:                | Pre-production |
+| x.x.x-snapshot.x | :x:                | Pre-release    |
 
 ## Reporting a Vulnerability
 Found a security issue in ModShark?
@@ -22,4 +23,4 @@ If your report is found to be an exploitable vulnerability, then we will publish
 
 ---
 
-Last updated: 2024-07-14
+Last updated: 2024-07-19
