@@ -60,3 +60,4 @@ echo $ReleaseVersion > "$PublishDir/version"
 
 # Package release
 Compress-Archive -Path "$PublishDir/*" -DestinationPath "$ReleaseDir/ModShark-$ReleaseVersion.zip" -Force:$Overwrite
+cp -Force "$ReleaseDir/ModShark-$ReleaseVersion.zip" "$ReleaseDir/ModShark-latest.zip"
