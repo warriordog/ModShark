@@ -20,7 +20,8 @@ param(
     [string]$ReleaseDir = './Release',
     [string]$PublishDir = './Publish',
     [string]$BuildConfig = 'Release',
-    [string]$BuildProject = 'ModShark'
+    [string]$BuildProject = 'ModShark',
+    [switch]$Overwrite
 );
 
 # Clean publish directory
@@ -58,5 +59,4 @@ cp security.md "$PublishDir/security.md"
 echo $ReleaseVersion > "$PublishDir/version"
 
 # Package release
-# Intentionally do *not* -Force in case someone forgets to update the release version.
-Compress-Archive -Path "$PublishDir/*" -DestinationPath "$ReleaseDir/ModShark-$ReleaseVersion.zip"
+Compress-Archive -Path "$PublishDir/*" -DestinationPath "$ReleaseDir/ModShark-$ReleaseVersion.zip" -Force:$Overwrite
