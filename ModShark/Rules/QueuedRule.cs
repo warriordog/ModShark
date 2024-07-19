@@ -70,7 +70,7 @@ public abstract class QueuedRule<TQueueEntity>(ILogger logger, QueuedRuleConfig 
         }
 
         if (numChecked > 0)
-            logger.LogDebug("Checked {numChecked} new instances", numChecked);
+            logger.LogDebug("Checked {numChecked} new objects", numChecked);
         else
             logger.LogDebug("Nothing to do, queue is empty");
     }
