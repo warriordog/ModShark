@@ -97,8 +97,8 @@ namespace SharkeyDB.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Remove trigger
-            migrationBuilder.Sql("drop trigger TRG_after_note_insert");
-            migrationBuilder.Sql("drop function add_note_to_modshark_queue");
+            migrationBuilder.Sql("drop trigger TRG_after_note_insert on \"note\";");
+            migrationBuilder.Sql("drop function add_note_to_modshark_queue;");
             
             migrationBuilder.DropTable(
                 name: "ms_flagged_note");

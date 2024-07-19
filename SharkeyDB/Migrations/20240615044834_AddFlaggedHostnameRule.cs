@@ -133,8 +133,8 @@ namespace SharkeyDB.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             // Remove trigger
-            migrationBuilder.Sql("drop trigger TRG_after_instance_insert");
-            migrationBuilder.Sql("drop function add_instance_to_modshark_queue");
+            migrationBuilder.Sql("drop trigger TRG_after_instance_insert on \"instance\";");
+            migrationBuilder.Sql("drop function add_instance_to_modshark_queue;");
             
             // Revert previous trigger
             migrationBuilder.Sql(
