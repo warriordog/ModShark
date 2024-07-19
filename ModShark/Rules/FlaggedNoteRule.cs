@@ -31,17 +31,22 @@ public class FlaggedNoteConfig : QueuedRuleConfig
     public bool IncludeSilencedInstance { get; set; }
     
     public List<string> TextPatterns { get; set; } = [];
+    public List<string> EmojiPatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
 public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedNote>(logger, config, db, db.MSQueuedNotes), IFlaggedNoteRule
 {
-    // Merge and pre-compile the pattern for efficiency
+    // Merge and pre-compile the patterns for efficiency
     private Regex TextPattern { get; } = PatternUtils.CreateMatcher(config.TextPatterns, config.Timeout);
+    private Regex EmojiPattern { get; } = PatternUtils.CreateMatcher(config.EmojiPatterns, config.Timeout);
 
+    private bool HasTextPatterns => config.TextPatterns.Count > 0;
+    private bool HasEmojiPatterns => config.EmojiPatterns.Count > 0;
+    
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (config.TextPatterns.Count < 1)
+        if (!HasTextPatterns && !HasEmojiPatterns)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -78,6 +83,8 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
             .Include(q => q.Note!) // database constraints ensure that "Note" cannot be null
                 .ThenInclude(n => n.User!) // database constraints ensure that "User" cannot be null
                     .ThenInclude(u => u.Instance)
+            .Include(q => q.Note!) // database constraints ensure that "Note" cannot be null
+                .ThenInclude(n => n.Instance)
             .Where(q =>
                 q.Id <= maxId
                 && q.FlaggedNote == null
@@ -90,8 +97,8 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
                 && (config.IncludeSuspendedUser || !q.Note!.User!.IsSuspended)
                 && (config.IncludeSilencedUser || !q.Note!.User!.IsSilenced)
                 && (config.IncludeDeletedUser || !q.Note!.User!.IsDeleted)
-                && (config.IncludeBlockedInstance || q.Note!.User!.Host == null || !meta.BlockedHosts.Contains(q.Note!.User!.Host))
-                && (config.IncludeSilencedInstance || q.Note!.User!.Host == null || !meta.SilencedHosts.Contains(q.Note!.User!.Host)))
+                && (config.IncludeBlockedInstance || q.Note!.UserHost == null || !meta.BlockedHosts.Contains(q.Note!.UserHost))
+                && (config.IncludeSilencedInstance || q.Note!.UserHost == null || !meta.SilencedHosts.Contains(q.Note!.UserHost)))
             .OrderBy(q => q.Id)
             .Select(q => q.Note!)
             .AsAsyncEnumerable();
@@ -99,29 +106,26 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         // Stream each result due to potentially large size
         await foreach (var note in newNotes)
         {
-            // Guaranteed to be non-null by the Include() statement
-            var user = note.User!;
-            
             // Check for base domain and alternate-case matches.
             // This cannot be done efficiently in-database.
-            if (user.Host != null)
+            if (note.UserHost != null)
             {
                 // The query only excludes exact matches, so check for base domains here
-                if (!config.IncludeBlockedInstance && HostUtils.Matches(user.Host, meta.BlockedHosts))
+                if (!config.IncludeBlockedInstance && HostUtils.Matches(note.UserHost, meta.BlockedHosts))
                     continue;
-                if (!config.IncludeSilencedInstance && HostUtils.Matches(user.Host, meta.SilencedHosts))
+                if (!config.IncludeSilencedInstance && HostUtils.Matches(note.UserHost, meta.SilencedHosts))
                     continue;
             }
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!HasMatchedText(note))
+            if (!HasMatchedText(note) && !HasMatchedEmoji(note))
                 continue;
             
             report.NoteReports.Add(new NoteReport
             {
-                Instance = user.Instance,
-                User = user,
+                Instance = note.Instance,
+                User = note.User!, // Guaranteed to be non-null by the Include() statement
                 Note = note
             });
 
@@ -135,6 +139,9 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
 
     private bool HasMatchedText(Note note)
     {
+        if (!HasTextPatterns)
+            return false;
+        
         // Check "text" field
         if (note.Text != null && TextPattern.IsMatch(note.Text))
             return true;
@@ -144,5 +151,18 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
             return true;
 
         return false;
+    }
+
+    private bool HasMatchedEmoji(Note note)
+    {
+        if (!HasEmojiPatterns)
+            return false;
+
+        if (!note.HasEmojis)
+            return false;
+
+        return note
+            .GetEmojiLongcodes()
+            .Any(e => EmojiPattern.IsMatch(e));
     }
 }

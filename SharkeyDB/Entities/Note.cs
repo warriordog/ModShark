@@ -92,6 +92,7 @@ public class Note : IEntity<string>
     /// </summary>
     [Column("emojis"), MaxLength(128)]
     public string[] Emojis { get; set; } = [];
+    public bool HasEmojis => Emojis.Length > 0;
     
     public Instance? Instance { get; set; }
     public MSQueuedNote? QueuedNote { get; set; }
