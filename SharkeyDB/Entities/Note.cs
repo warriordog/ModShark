@@ -48,6 +48,13 @@ public class Note : IEntity<string>
     public User? User { get; set; }
     
     /// <summary>
+    /// Hostname of the user's instance.
+    /// Will be null for local users.
+    /// </summary>
+    [Column("userHost"), MaxLength(512)]
+    public string? UserHost { get; set; }
+    
+    /// <summary>
     /// Visibility of the note.
     /// MUST be one of "public", "home", "followers", or "specified".
     /// </summary>
@@ -80,6 +87,7 @@ public class Note : IEntity<string>
     [MemberNotNullWhen(false, nameof(Url))]
     public bool IsLocal => Url == null;
     
+    public Instance? Instance { get; set; }
     public MSQueuedNote? QueuedNote { get; set; }
     public MSFlaggedNote? FlaggedNote { get; set; }
 }

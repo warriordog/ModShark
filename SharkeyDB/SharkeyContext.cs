@@ -183,6 +183,15 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .WithMany(u => u.Notes)
             .HasForeignKey(n => n.UserId)
             .IsRequired();
+        
+        // FK note(userHost)* -> ?instance(host)
+        modelBuilder
+            .Entity<Note>()
+            .HasOne(n => n.Instance)
+            .WithMany(i => i.Notes)
+            .HasForeignKey(n => n.UserHost)
+            .HasPrincipalKey(i => i.Host)
+            .IsRequired(false);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)

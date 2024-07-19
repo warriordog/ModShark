@@ -32,4 +32,5 @@ public class Instance : IEntity<string>
     public MSFlaggedInstance? FlaggedInstance { get; set; }
     
     public ICollection<User> Users { get; set; } = new List<User>();
+    public ICollection<Note> Notes { get; set; } = new List<Note>();
 }
