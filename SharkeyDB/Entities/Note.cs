@@ -87,6 +87,12 @@ public class Note : IEntity<string>
     [MemberNotNullWhen(false, nameof(Url))]
     public bool IsLocal => Url == null;
     
+    /// <summary>
+    /// Array of emoji shortcodes used in this note.
+    /// </summary>
+    [Column("emojis"), MaxLength(128)]
+    public string[] Emojis { get; set; } = [];
+    
     public Instance? Instance { get; set; }
     public MSQueuedNote? QueuedNote { get; set; }
     public MSFlaggedNote? FlaggedNote { get; set; }
