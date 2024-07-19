@@ -184,9 +184,9 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
 
         var count = report.UserReports.Count;
         if (count == 1)
-            message.Append("Found 1 new flagged username:\n");
+            message.Append("Found 1 new flagged users:\n");
         else
-            message.Append($"**Found {count} new flagged usernames:**\n");
+            message.Append($"**Found {count} new flagged users:**\n");
         
         foreach (var userReport in report.UserReports)
         {

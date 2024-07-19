@@ -118,9 +118,9 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
 
         var count = report.UserReports.Count;
         if (count == 1)
-            message.Append("<h2>Found 1 new flagged username</h2>");
+            message.Append("<h2>Found 1 new flagged users</h2>");
         else
-            message.Append($"<h2>Found {count} new flagged usernames</h2>");
+            message.Append($"<h2>Found {count} new flagged users</h2>");
         
         message.Append("<ul>");
         foreach (var userReport in report.UserReports)
