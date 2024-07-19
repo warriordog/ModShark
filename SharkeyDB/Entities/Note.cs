@@ -11,6 +11,26 @@ namespace SharkeyDB.Entities;
 public class Note : IEntity<string>
 {
     /// <summary>
+    /// Visible everywhere
+    /// </summary>
+    public const string VisibilityPublic = "public";
+    
+    /// <summary>
+    /// Visible on home timeline only (AKA "unlisted")
+    /// </summary>
+    public const string VisibilityHome = "home";
+    
+    /// <summary>
+    /// Visible to user's followers only
+    /// </summary>
+    public const string VisibilityFollowers = "followers";
+    
+    /// <summary>
+    /// Visible to specified followers only
+    /// </summary>
+    public const string VisibilitySpecified = "specified";
+    
+    /// <summary>
     /// Unique ID of the note
     /// </summary>
     [Column("id"), MaxLength(32), Key]

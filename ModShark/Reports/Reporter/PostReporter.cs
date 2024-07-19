@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
 using ModShark.Utils;
 using SharkeyDB;
+using SharkeyDB.Entities;
 
 namespace ModShark.Reports.Reporter;
 
@@ -73,10 +74,10 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
 
     private string? SharkeyVisibility => reporterConfig.Visibility switch
     {
-        PostVisibility.Public => "public",
-        PostVisibility.Unlisted => "home",
-        PostVisibility.Followers => "followers",
-        PostVisibility.Private => "specified",
+        PostVisibility.Public => Note.VisibilityPublic,
+        PostVisibility.Unlisted => Note.VisibilityHome,
+        PostVisibility.Followers => Note.VisibilityFollowers,
+        PostVisibility.Private => Note.VisibilitySpecified,
         _ => null
     };
 

@@ -36,7 +36,7 @@ public class LinkServiceTests
         {
             Id = "0",
             UserId = FakeRemoteUser.Id,
-            Visibility = "public",
+            Visibility = Note.VisibilityPublic,
             Url = "https://fake.example.com/notes/0"
         };
         FakeLocalUser = new User
@@ -49,7 +49,7 @@ public class LinkServiceTests
         {
             Id = "1",
             UserId = FakeLocalUser.Id,
-            Visibility = "public"
+            Visibility = Note.VisibilityPublic
         };
         
         FakeSharkeyConfig = new SharkeyConfig
