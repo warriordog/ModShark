@@ -23,7 +23,8 @@ param(
     [string]$ReleaseDir = './Release',
     [string]$PublishDir = './Publish',
     [string]$BuildConfig = 'Release',
-    [string]$BuildProject = 'ModShark'
+    [string]$BuildProject = 'ModShark',
+    [string]$DBProject = 'SharkeyDB'
 );
 
 # Read project version and compute the full release version string.
@@ -49,9 +50,9 @@ dotnet clean $BuildProject --configuration $BuildConfig
 dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -p:UseAppHost=false --version-suffix $VersionSuffix
 
 # Publish migrations
-$lastMigration = (Get-ChildItem -Path './SharkeyDB/Migrations/' -Exclude 'SharkeyContextModelSnapshot.cs','*.Designer.cs' | Select-Object -ExpandProperty Name -Last 1).Replace('.cs', '');
-dotnet ef migrations script --idempotent --no-build --project SharkeyDB --configuration $BuildConfig --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql" $lastMigration 0
-dotnet ef migrations script --idempotent --no-build --project SharkeyDB --configuration $BuildConfig --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
+$lastMigration = (Get-ChildItem -Path "./$DBProject/Migrations/" -Exclude 'SharkeyContextModelSnapshot.cs','*.Designer.cs' | Select-Object -ExpandProperty Name -Last 1).Replace('.cs', '');
+dotnet ef migrations script --idempotent --no-build --project $DBProject --configuration $BuildConfig --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql" $lastMigration 0
+dotnet ef migrations script --idempotent --no-build --project $DBProject --configuration $BuildConfig --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
 
 # Remove UTF-8 Byte Order Mark - works around a file encoding bug in EF Core Tools.
 # - https://stackoverflow.com/a/35454558
