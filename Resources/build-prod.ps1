@@ -49,7 +49,7 @@ dotnet clean $BuildProject --configuration $BuildConfig
 dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -p:UseAppHost=false --version-suffix $VersionSuffix
 
 # Publish migrations
-$lastMigration = (dotnet ef migrations list --no-build --no-connect --prefix-output --project SharkeyDB --startup-project $BuildProject | Select-String -Pattern '^data:\s*(.*)\s*$')[-1].Matches.Groups[1].Value
+$lastMigration = (Get-ChildItem -Path './SharkeyDB/Migrations/' -Exclude 'SharkeyContextModelSnapshot.cs','*.Designer.cs' | Select-Object -ExpandProperty Name -Last 1).Replace('.cs', '');
 dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql" $lastMigration 0
 dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
 
