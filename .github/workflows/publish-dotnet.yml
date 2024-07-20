@@ -25,23 +25,18 @@ jobs:
         # https://stackoverflow.com/questions/59234655/apply-ef-migrations-in-github-workflow
         run: dotnet tool install --global dotnet-ef
 
-      - name: Run build script
-        id: run-build-script
+      - name: Run and publish build
         # https://stackoverflow.com/questions/58061430/how-to-call-powershell-script-with-github-actions-workflow
         # https://stackoverflow.com/questions/58886293/getting-current-branch-and-commit-hash-in-github-action
         # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
+        # https://stackoverflow.com/questions/75679683/how-can-i-auto-generate-a-release-note-and-create-a-release-using-github-actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: |
           $VersionDate = Get-Date -Format "yyyyMMdd-HHmm"
           $VersionHash = git rev-parse --short ${{ github.ref }}
-          $VersionSuffix = "-ci-$VersionDate-$VersionHash"
-          & ./Resources/build-prod.ps1 -VersionSuffix $VersionSuffix
+          $VersionTag = "$VersionDate-$VersionHash"
           $ProjectVersion = (Select-Xml -Path "Directory.Build.props" -XPath "/Project/PropertyGroup/Version/text()").Node.Value
-          $ReleaseVersion = "$ProjectVersion$VersionSuffix"
-          echo "RELEASE_VERSION=$ReleaseVersion" >> "$GITHUB_OUTPUT"
-
-      - name: Publish CI build
-        # https://stackoverflow.com/questions/75679683/how-can-i-auto-generate-a-release-note-and-create-a-release-using-github-actions
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create 'v${{ steps.run-build-script.outputs.RELEASE_VERSION }}' --repo="$GITHUB_REPOSITORY" --title='Version ${{ steps.run-build-script.outputs.RELEASE_VERSION }}' --generate-notes --prerelease
+          & ./Resources/build-prod.ps1 -VersionSuffix "-ci-$VersionTag"
+          gh release create "v$ProjectVersion-ci-$VersionTag" --repo="$GITHUB_REPOSITORY" --title="Version $ProjectVersion CI $VersionTag" --generate-notes --prerelease
