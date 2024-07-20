@@ -60,6 +60,6 @@ jobs:
       shell: pwsh
       run: |
         $VersionDate = Get-Date -Format "yyyyMMdd-HHmm"
-        $VersionHash = git rev-parse --short "$GITHUB_SHA";
+        $VersionHash = git rev-parse --short ${{ github.ref }};
         & ./Resources/build-prod.ps1 -VersionSuffix "-ci-$VersionDate-$VersionHash"
 
