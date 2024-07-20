@@ -49,7 +49,7 @@ dotnet clean $BuildProject --configuration $BuildConfig
 dotnet publish $BuildProject --configuration $BuildConfig --output $PublishDir -p:UseAppHost=false --version-suffix $VersionSuffix
 
 # Publish migrations
-$lastMigration = (dotnet ef migrations list --project SharkeyDB --startup-project $BuildProject)[-1]
+$lastMigration = (dotnet ef migrations list --no-build --no-connect --prefix-output --project SharkeyDB --startup-project $BuildProject | Select-String -Pattern '^data:\s*(.*)\s*$')[-1].Matches.Groups[1].Value
 dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/uninstall-ModShark-migrations.sql" $lastMigration 0
 dotnet ef migrations script --idempotent --no-build --project SharkeyDB --startup-project $BuildProject --output "$PublishDir/update-ModShark-migrations.sql"
 
