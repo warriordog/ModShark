@@ -1,0 +1,47 @@
+﻿name: .NET Publish
+
+on:
+  push:
+    branches: [ "main" ]
+    
+permissions:
+  contents: write
+  
+jobs:
+  publish:
+    name: Publish CI/CD snapshot
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install EF Core Tools
+        # https://stackoverflow.com/questions/59234655/apply-ef-migrations-in-github-workflow
+        run: dotnet tool install --global dotnet-ef
+
+      - name: Run build script
+        id: run-build-script
+        # https://stackoverflow.com/questions/58061430/how-to-call-powershell-script-with-github-actions-workflow
+        # https://stackoverflow.com/questions/58886293/getting-current-branch-and-commit-hash-in-github-action
+        # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-output-parameter
+        shell: pwsh
+        run: |
+          $VersionDate = Get-Date -Format "yyyyMMdd-HHmm"
+          $VersionHash = git rev-parse --short ${{ github.ref }}
+          $VersionSuffix = "-ci-$VersionDate-$VersionHash"
+          & ./Resources/build-prod.ps1 -VersionSuffix $VersionSuffix
+          $ProjectVersion = (Select-Xml -Path "Directory.Build.props" -XPath "/Project/PropertyGroup/Version/text()").Node.Value
+          $ReleaseVersion = "$ProjectVersion$VersionSuffix"
+          echo "ReleaseVersion=$ReleaseVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Publish CI build
+        # https://stackoverflow.com/questions/75679683/how-can-i-auto-generate-a-release-note-and-create-a-release-using-github-actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create 'v${{ steps.run-build-script.output.ReleaseVersion }}' --repo="$GITHUB_REPOSITORY" --title='Version ${{ steps.run-build-script.output.ReleaseVersion }}' --generate-notes --prerelease
