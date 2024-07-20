@@ -35,13 +35,13 @@ $ReleaseVersion = "$ProjectVersion$VersionSuffix"
 
 # Clean publish directory
 if (Test-Path $PublishDir) {
-    rm -Recurse $PublishDir
-    mkdir $PublishDir
+    Remove-Item -Recurse $PublishDir
+    New-Item -Path $PublishDir -Type Directory
 }
 
 # Create release directory
 if (-Not (Test-Path $ReleaseDir)) {
-    mkdir $ReleaseDir
+    New-Item -Path $ReleaseDir -Type Directory
 }
 
 # Publish build
@@ -60,13 +60,13 @@ dotnet ef migrations script --idempotent --no-build --project SharkeyDB --config
 [IO.File]::WriteAllText("$PublishDir/update-ModShark-migrations.sql", [IO.File]::ReadAllText("$PublishDir/update-ModShark-migrations.sql"))
 
 # Publish documentation
-cp readme.md "$PublishDir/readme.md"
-cp license.md "$PublishDir/license.md"
-cp security.md "$PublishDir/security.md"
+Copy-Item readme.md "$PublishDir/readme.md"
+Copy-Item license.md "$PublishDir/license.md"
+Copy-Item security.md "$PublishDir/security.md"
 
 # Publish metadata
-echo $ReleaseVersion > "$PublishDir/version"
+Write-Output $ReleaseVersion > "$PublishDir/version"
 
 # Package release
 Compress-Archive -Path "$PublishDir/*" -DestinationPath "$ReleaseDir/ModShark-$ReleaseVersion.zip" -Force:$Overwrite
-cp -Force "$ReleaseDir/ModShark-$ReleaseVersion.zip" "$ReleaseDir/ModShark-latest.zip"
+Copy-Item -Force "$ReleaseDir/ModShark-$ReleaseVersion.zip" "$ReleaseDir/ModShark-latest.zip"
