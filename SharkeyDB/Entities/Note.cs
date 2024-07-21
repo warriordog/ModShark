@@ -69,6 +69,9 @@ public class Note : IEntity<string>
     [Column("text")]
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string? Text { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Text))]
+    public bool HasText => !string.IsNullOrEmpty(Text);
     
     /// <summary>
     /// Content Warning / subject line of the note.
@@ -76,6 +79,9 @@ public class Note : IEntity<string>
     /// </summary>
     [Column("cw"), MaxLength(512)]
     public string? CW { get; set; }
+
+    [MemberNotNullWhen(true, nameof(CW))]
+    public bool HasCW => !string.IsNullOrEmpty(CW);
     
     /// <summary>
     /// Human-readable URL to the post.

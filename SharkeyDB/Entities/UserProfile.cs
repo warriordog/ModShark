@@ -31,5 +31,5 @@ public class UserProfile
     public string? Description { get; set; }
 
     [MemberNotNullWhen(true, nameof(Description))]
-    public bool HasDescription => Description != null;
+    public bool HasDescription => !string.IsNullOrEmpty(Description);
 }

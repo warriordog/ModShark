@@ -29,7 +29,7 @@ public class Instance : IEntity<string>
     public string? Name { get; set; }
 
     [MemberNotNullWhen(true, nameof(Name))]
-    public bool HasName => Name != null;
+    public bool HasName => !string.IsNullOrEmpty(Name);
     
     /// <summary>
     /// Human-readable description of the instance
@@ -38,7 +38,7 @@ public class Instance : IEntity<string>
     public string? Description { get; set; }
 
     [MemberNotNullWhen(true, nameof(Description))]
-    public bool HasDescription => Description != null;
+    public bool HasDescription => !string.IsNullOrEmpty(Description);
     
     /// <summary>
     /// Name of the instance admin
@@ -47,7 +47,7 @@ public class Instance : IEntity<string>
     public string? MaintainerName { get; set; }
 
     [MemberNotNullWhen(true, nameof(MaintainerName))]
-    public bool HasMaintainerName => MaintainerName != null;
+    public bool HasMaintainerName => !string.IsNullOrEmpty(MaintainerName);
     
     /// <summary>
     /// Email address of the instance admin
@@ -57,6 +57,7 @@ public class Instance : IEntity<string>
 
     [MemberNotNullWhen(true, nameof(MaintainerEmail))]
     public bool HasMaintainerEmail => MaintainerEmail != null;
+    public bool HasMaintainerEmail => !string.IsNullOrEmpty(MaintainerEmail);
     
     /// <summary>
     /// Status and/or reason of the instance suspension.
