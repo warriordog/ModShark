@@ -33,7 +33,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, ignoreCase: true);
     private Regex DescriptionPattern { get; } = PatternUtils.CreateMatcher(config.DescriptionPatterns, config.Timeout, ignoreCase: true);
     private Regex ContactPattern { get; } = PatternUtils.CreateMatcher(config.ContactPatterns, config.Timeout, ignoreCase: true);
-    private Regex SoftwarePattern { get; } = PatternUtils.CreateMatcher(config.SoftwarePatterns, config.Timeout);
+    private Regex SoftwarePattern { get; } = PatternUtils.CreateMatcher(config.SoftwarePatterns, config.Timeout, ignoreCase: true);
     
 
     private bool HasNamePatterns => config.NamePatterns.Count > 0;
