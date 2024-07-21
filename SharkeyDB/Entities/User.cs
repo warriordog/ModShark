@@ -51,9 +51,24 @@ public class User : IEntity<string>
     public bool IsLocal => Host == null;
     
     public UserProfile? Profile { get; set; }
+    
+    [MemberNotNullWhen(true, nameof(Profile))]
+    public bool HasProfile => Profile != null;
+    
     public MSQueuedUser? QueuedUser { get; set; }
+
+    [MemberNotNullWhen(true, nameof(QueuedUser))]
+    public bool IsQueued => QueuedUser != null;
+    
     public MSFlaggedUser? FlaggedUser { get; set; }
+
+    [MemberNotNullWhen(true, nameof(FlaggedUser))]
+    public bool IsFlagged => FlaggedUser != null;
+    
     public Instance? Instance { get; set; }
+    
+    [MemberNotNullWhen(true, nameof(Instance))]
+    public bool HasInstance => Instance != null;
     
     public ICollection<AbuseUserReport> ReportsBy { get; set; } = new List<AbuseUserReport>();
     public ICollection<AbuseUserReport> ReportsAgainst { get; set; } = new List<AbuseUserReport>();

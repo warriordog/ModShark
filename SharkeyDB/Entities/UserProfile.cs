@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SharkeyDB.Entities;
 
@@ -19,10 +20,16 @@ public class UserProfile
     /// The user whose profile this is
     /// </summary>
     public User? User { get; set; }
+
+    [MemberNotNullWhen(true, nameof(User))]
+    public bool HasUser => User != null;
     
     /// <summary>
     /// User's bio text
     /// </summary>
     [Column("description"), MaxLength(2048)]
     public string? Description { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Description))]
+    public bool HasDescription => Description != null;
 }
