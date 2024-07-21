@@ -152,7 +152,10 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!HasBioPatterns)
             return false;
 
-        if (user.Profile?.Description == null)
+        if (!user.HasProfile)
+            return false;
+        
+        if (!user.Profile.HasDescription)
             return false;
 
         return BioPattern.IsMatch(user.Profile.Description);
