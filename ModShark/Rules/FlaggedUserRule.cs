@@ -33,7 +33,7 @@ public class FlaggedUserConfig : QueuedRuleConfig
 public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedUser>(logger, config, db, db.MSQueuedUsers), IFlaggedUserRule
 {
     // Merge and pre-compile the patterns for efficiency
-    private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
+    private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout, ignoreCase: true);
     private Regex DisplayNamePattern { get; } = PatternUtils.CreateMatcher(config.DisplayNamePatterns, config.Timeout, ignoreCase: true);
     private Regex BioPattern { get; } = PatternUtils.CreateMatcher(config.BioPatterns, config.Timeout, ignoreCase: true);
 
