@@ -25,7 +25,7 @@ public class FlaggedInstanceConfig : QueuedRuleConfig
 public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedInstanceConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedInstance>(logger, config, db, db.MSQueuedInstances), IFlaggedInstanceRule
 {
     // Merge and pre-compile the pattern for efficiency
-    private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, true);
+    private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, ignoreCase: true);
 
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
