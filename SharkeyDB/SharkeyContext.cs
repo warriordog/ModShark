@@ -16,6 +16,7 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
     public DbSet<Meta> Metas { get; set; }
     
     public DbSet<User> Users { get; set; }
+    public DbSet<UserProfile> UserProfiles { get; set; }
     public DbSet<MSFlaggedUser> MSFlaggedUsers { get; set; }
     public DbSet<MSQueuedUser> MSQueuedUsers { get; set; }
     
@@ -35,6 +36,9 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
         // https://devblogs.microsoft.com/dotnet/announcing-entity-framework-core-efcore-5-0-rc1/#exclude-tables-from-migrations
         modelBuilder
             .Entity<User>()
+            .ToTable(t => t.ExcludeFromMigrations());
+        modelBuilder
+            .Entity<UserProfile>()
             .ToTable(t => t.ExcludeFromMigrations());
         modelBuilder
             .Entity<Instance>()
@@ -57,16 +61,6 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .HasForeignKey<MSQueuedUser>(q => q.UserId)
             .IsRequired()
             .OnDelete(DeleteBehavior.Cascade);
-        
-        // // FK ms_queued_user(user_id) -> ms_queued_user(user_id)  
-        // modelBuilder
-        //     .Entity<MSQueuedUser>()
-        //     .HasOne(q => q.FlaggedUser)
-        //     .WithOne(f => f.QueuedUser)
-        //     .HasForeignKey<MSQueuedUser>(q => q.UserId)
-        //     .HasPrincipalKey<MSFlaggedUser>(f => f.UserId)
-        //     .IsRequired()
-        //     .OnDelete(DeleteBehavior.Cascade);
         
         // FK ms_flagged_user(user_id) -> ?user(id)  
         modelBuilder
@@ -192,6 +186,15 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .HasForeignKey(n => n.UserHost)
             .HasPrincipalKey(i => i.Host)
             .IsRequired(false);
+        
+        // FK user_profile(userId) -> ?user(id)  
+        modelBuilder
+            .Entity<UserProfile>()
+            .HasOne(p => p.User)
+            .WithOne(u => u.Profile)
+            .HasForeignKey<UserProfile>(p => p.UserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)

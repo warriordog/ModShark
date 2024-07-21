@@ -50,6 +50,7 @@ public class User : IEntity<string>
     [MemberNotNullWhen(false, nameof(Host))]
     public bool IsLocal => Host == null;
     
+    public UserProfile? Profile { get; set; }
     public MSQueuedUser? QueuedUser { get; set; }
     public MSFlaggedUser? FlaggedUser { get; set; }
     public Instance? Instance { get; set; }
