@@ -19,17 +19,22 @@ public class FlaggedInstanceConfig : QueuedRuleConfig
     public bool IncludeBlocked { get; set; }
     
     public List<string> HostnamePatterns { get; set; } = [];
+    public List<string> DescriptionPatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
 public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedInstanceConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedInstance>(logger, config, db, db.MSQueuedInstances), IFlaggedInstanceRule
 {
-    // Merge and pre-compile the pattern for efficiency
+    // Merge and pre-compile the patterns for efficiency
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, ignoreCase: true);
+    private Regex DescriptionPattern { get; } = PatternUtils.CreateMatcher(config.DescriptionPatterns, config.Timeout, ignoreCase: true);
+
+    private bool HasHostnamePatterns => config.HostnamePatterns.Count > 0;
+    private bool HasDescriptionPatterns => config.DescriptionPatterns.Count > 0;
 
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (config.HostnamePatterns.Count < 1)
+        if (!HasHostnamePatterns && !HasDescriptionPatterns)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -69,7 +74,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!HostnamePattern.IsMatch(instance.Host))
+            if (!HasFlaggedHostname(instance) && !HasFlaggedDescription(instance))
                 continue;
             
             report.InstanceReports.Add(new InstanceReport
@@ -83,5 +88,24 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
                 FlaggedAt = report.ReportDate
             });
         }
+    }
+
+    private bool HasFlaggedHostname(Instance instance)
+    {
+        if (!HasHostnamePatterns)
+            return false;
+
+        return HostnamePattern.IsMatch(instance.Host);
+    }
+
+    private bool HasFlaggedDescription(Instance instance)
+    {
+        if (!HasDescriptionPatterns)
+            return false;
+
+        if (!instance.HasDescription)
+            return false;
+
+        return DescriptionPattern.IsMatch(instance.Description);
     }
 }
