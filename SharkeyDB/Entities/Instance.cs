@@ -41,6 +41,24 @@ public class Instance : IEntity<string>
     public bool HasDescription => Description != null;
     
     /// <summary>
+    /// Name of the instance admin
+    /// </summary>
+    [Column("maintainerName"), MaxLength(128)]
+    public string? MaintainerName { get; set; }
+
+    [MemberNotNullWhen(true, nameof(MaintainerName))]
+    public bool HasMaintainerName => MaintainerName != null;
+    
+    /// <summary>
+    /// Email address of the instance admin
+    /// </summary>
+    [Column("maintainerEmail"), MaxLength(256)]
+    public string? MaintainerEmail { get; set; }
+
+    [MemberNotNullWhen(true, nameof(MaintainerEmail))]
+    public bool HasMaintainerEmail => MaintainerEmail != null;
+    
+    /// <summary>
     /// Status and/or reason of the instance suspension.
     /// This is actually an enum, but we are *not* dealing with that.
     /// </summary>
