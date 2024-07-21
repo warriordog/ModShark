@@ -38,8 +38,8 @@ public class FlaggedNoteConfig : QueuedRuleConfig
 public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedNote>(logger, config, db, db.MSQueuedNotes), IFlaggedNoteRule
 {
     // Merge and pre-compile the patterns for efficiency
-    private Regex TextPattern { get; } = PatternUtils.CreateMatcher(config.TextPatterns, config.Timeout);
-    private Regex EmojiPattern { get; } = PatternUtils.CreateMatcher(config.EmojiPatterns, config.Timeout);
+    private Regex TextPattern { get; } = PatternUtils.CreateMatcher(config.TextPatterns, config.Timeout, ignoreCase: true);
+    private Regex EmojiPattern { get; } = PatternUtils.CreateMatcher(config.EmojiPatterns, config.Timeout, ignoreCase: true);
 
     private bool HasTextPatterns => config.TextPatterns.Count > 0;
     private bool HasEmojiPatterns => config.EmojiPatterns.Count > 0;
