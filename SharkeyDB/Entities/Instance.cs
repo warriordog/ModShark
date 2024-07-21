@@ -56,8 +56,25 @@ public class Instance : IEntity<string>
     public string? MaintainerEmail { get; set; }
 
     [MemberNotNullWhen(true, nameof(MaintainerEmail))]
-    public bool HasMaintainerEmail => MaintainerEmail != null;
     public bool HasMaintainerEmail => !string.IsNullOrEmpty(MaintainerEmail);
+    
+    /// <summary>
+    /// Name of the backend software used by the instance
+    /// </summary>
+    [Column("softwareName"), MaxLength(64)]
+    public string? SoftwareName { get; set; }
+
+    [MemberNotNullWhen(true, nameof(SoftwareName))]
+    public bool HasSoftwareName => !string.IsNullOrEmpty(SoftwareName);
+    
+    /// <summary>
+    /// Version of the backend software used by the instance
+    /// </summary>
+    [Column("softwareVersion"), MaxLength(64)]
+    public string? SoftwareVersion { get; set; }
+
+    [MemberNotNullWhen(true, nameof(SoftwareVersion))]
+    public bool HasSoftwareVersion => !string.IsNullOrEmpty(SoftwareVersion);
     
     /// <summary>
     /// Status and/or reason of the instance suspension.
