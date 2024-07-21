@@ -19,6 +19,12 @@ public class User : IEntity<string>
     [Column("usernameLower"), MaxLength(128)]
     public required string UsernameLower { get; set; }
     
+    [Column("name"), MaxLength(128)]
+    public string? Name { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Name))]
+    public bool HasName => Name != null;
+    
     [Column("host"), MaxLength(500)]
     public string? Host { get; set; }
     
