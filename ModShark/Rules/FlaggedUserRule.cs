@@ -16,24 +16,31 @@ public class FlaggedUserConfig : QueuedRuleConfig
 {
     public bool IncludeLocal { get; set; }
     public bool IncludeRemote { get; set; }
+    
     public bool IncludeDeleted { get; set; }
     public bool IncludeSuspended { get; set; }
     public bool IncludeSilenced { get; set; }
+    
     public bool IncludeBlockedInstance { get; set; }
     public bool IncludeSilencedInstance { get; set; }
     
     public List<string> UsernamePatterns { get; set; } = [];
+    public List<string> DisplayNamePatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
 public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedUser>(logger, config, db, db.MSQueuedUsers), IFlaggedUserRule
 {
-    // Merge and pre-compile the pattern for efficiency
+    // Merge and pre-compile the patterns for efficiency
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
+    private Regex DisplayNamePattern { get; } = PatternUtils.CreateMatcher(config.DisplayNamePatterns, config.Timeout, ignoreCase: true);
+
+    private bool HasUsernamePatterns => config.UsernamePatterns.Count > 0;
+    private bool HasDisplayNamePattern => config.DisplayNamePatterns.Count > 0;
     
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (config.UsernamePatterns.Count < 1)
+        if (!HasUsernamePatterns && !HasDisplayNamePattern)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -99,7 +106,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!UsernamePattern.IsMatch(user.UsernameLower))
+            if (!HasFlaggedUsername(user) && !HasFlaggedDisplayName(user))
                 continue;
             
             report.UserReports.Add(new UserReport
@@ -114,5 +121,24 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
                 FlaggedAt = report.ReportDate
             });
         }
+    }
+
+    private bool HasFlaggedUsername(User user)
+    {
+        if (!HasUsernamePatterns)
+            return false;
+        
+        return UsernamePattern.IsMatch(user.UsernameLower);
+    }
+
+    private bool HasFlaggedDisplayName(User user)
+    {
+        if (!HasDisplayNamePattern)
+            return false;
+
+        if (!user.HasName)
+            return false;
+
+        return DisplayNamePattern.IsMatch(user.Name);
     }
 }
