@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SharkeyDB.Entities;
 
@@ -20,6 +21,15 @@ public class Instance : IEntity<string>
     /// </summary>
     [Column("host"), MaxLength(512)]
     public required string Host { get; set; }
+    
+    /// <summary>
+    /// Human-readable description of the instance
+    /// </summary>
+    [Column("description"), MaxLength(4096)]
+    public string? Description { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Description))]
+    public bool HasDescription => Description != null;
     
     /// <summary>
     /// Status and/or reason of the instance suspension.
