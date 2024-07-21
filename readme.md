@@ -4,6 +4,26 @@ ModShark is an automated moderation tool for servers running the [Sharkey Fedive
 It runs as a background tool with direct integration to Sharkey's database and API, offering extended and flexible moderation features. 
 With customizable rules and multiple reporting options, ModShark provides a smooth extension to Sharkey's native tooling.
 
+## Basic Design
+
+ModShark is based around an asynchronous, backend processing model.
+New objects accumulate into queues (driven by database triggers) until the next scheduled run.
+This allows flexible scheduling and burst-mode performance, at the cost of delayed reporting.
+
+When ModShark runs, it processes each queue sequentially.
+Objects are read from the queues in batches which are then scanned to detect any flags.
+Wherever possible, filters are checked in-database to reduce extraneous data transfers.
+
+[Rules](#Rules) are responsible for the actual scanning logic.
+Each rule has a number of filters and common settings, along with a collection of "flags" that can each identify some target characteristic.
+At present, all flags are in the form of regular expression lists.
+These are compiled at runtime into an optimized scanner, which runs once per object to categorize it.
+Any match from any flag will cause the entire rule to match.
+
+All matched objects are collected into a single "report" as the run progresses.
+Once all queues have been cleared, the final report is serialized and distributed by the enabled [reporters](#Reporters).
+Each reporter may format the report in a different way, so take care to enable the best one(s) for your environment and staff.
+
 ## Rules
 
 ModShark "rules" detect and flag objects according to configurable parameters.
@@ -12,35 +32,61 @@ See the below section for specific documentation.
 
 ### Flagged Instance Rule
 
-The **Flagged Instance rule** compares instance hostnames (domain names) against a list of pattern.
-Any matching instance is flagged and reported.
+The **Flagged Instance rule** checks all newly-discovered instances against a set of flags. 
+Any flagged instance is included on the report.
 Filters are available to exclude instances that have already been actioned by the moderation team, including checks for suspended (delivery stopped), blocked (defederated), and silenced (limited).
 
 This is a queued rule, meaning that it runs on a scheduled interval and scans all instances that have been discovered since the last scan.
 New instances are enqueued via database trigger to minimize overhead.
 
+#### Available Flags:
+
+| Flag         | Description                                                                                                                                                                                                               |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Hostname     | Scans the domain / hostname.                                                                                                                                                                                              |
+| Display Name | Scans the human-readable display name, if present.                                                                                                                                                                        |
+| Description  | Scans the human-readable description line, if present.<br/>Note: this field may contain santized HTML.                                                                                                                    |
+| Contact      | Scans the administrator name / email fields, if present.                                                                                                                                                                  |
+| Software     | Scans the **reported** software name / version.<br/>**Note 1: these fields can be spoofed and are frequently outdated.**<br/>**Note 2: due to a Sharkey bug, these fields are only present for Misskey-based instances.** |
+
+
 ### Flagged User Rule
 
-The **Flagged User rule** compares usernames against a list of patterns.
-Any matching user is flagged and reported. 
+The **Flagged User rule** checks all newly-discovered users against a set of flags.
+Any flagged user is included on the report.
 Filters are available to exclude users who have already been actioned by the moderation team, including checks for suspended (blocked) and silenced (limited).
 Additional filters can exclude local or remote users and users from previously-actioned instances.
 
 This is a queued rule, meaning that it runs on a scheduled interval and scans all users that have been discovered since the last scan.
 New users are enqueued via database trigger to minimize overhead.
 
+#### Available Flags:
+
+| Flag         | Description                                                                                          |
+|--------------|------------------------------------------------------------------------------------------------------|
+| Username     | Scans the unqualified username, excluding the `@` prefix.                                            |
+| Display Name | Scans the human-readable display name, if present.<br/>Note: this field may contain MFM or Markdown. |
+| Bio Text     | Scans the human-readable bio text, if present.<br/>Note: this field may contain MFM or Markdown.     |
+
+
 ### Flagged Note Rule
 
-The **Flagged Note rule** compares note contents against a list of patterns.
-Any matching note is flagged and reported.
+The **Flagged Note rule** checks all newly-discovered notes against a set of flags.
+Any flagged note is included on the report.
 The note's subject (content warning) can also be scanned, which may be desired on instances with stricter moderation standards.
-
 Filters are available to exclude notes by visibility, including unlisted (home timeline), followers-only, and/or private (direct message).
 Additional filters can exclude notes by actioned users or from actioned instances.
 Finally, a pair of scoping filters can exclude local or remote notes as desired.
 
 This is a queued rule, meaning that it runs on a scheduled interval and scans all notes that have been discovered since the last scan.
 New notes are enqueued via database trigger to minimize overhead.
+
+#### Available Flags:
+
+| Flag      | Description                                                                                       |
+|-----------|---------------------------------------------------------------------------------------------------|
+| Text / CW | Scans the text and CW field, if configured.                                                       |
+| Emojis    | Scans the emojis by longcode, if present. <br/>Note: emojis are in `@shortcode@host.name` format. |
 
 ## Reporters
 
@@ -179,13 +225,18 @@ This file exists to store local secrets that should not be committed to source c
 | `ModShark.Reporters.SendGrid.FromName`               | String   | Name to associate with the from address.<br/>Required if `ModShark.Reporters.SendGrid.Enabled` is true.<br/>Default: `"ModShark"`                                                                                                                                                                                                                  |
 | `ModShark.Reporters.SendGrid.ToAddresses`            | String[] | Array of email addresses to send reports to.<br/>Required if `ModShark.Reporters.SendGrid.Enabled` is true.                                                                                                                                                                                                                                        |
 | `ModShark.Rules.FlaggedInstance.BatchLimit`          | Integer  | Maximum number of instances to check at once.<br/>Default: `5000`                                                                                                                                                                                                                                                                                  |
+| `ModShark.Rules.FlaggedInstance.ContactPatterns`     | String[] | Array of regular expressions to check against each instance's admin name / email.                                                                                                                                                                                                                                                                  |
+| `ModShark.Rules.FlaggedInstance.DescriptionPatterns` | String[] | Array of regular expressions to check against each instance's description.                                                                                                                                                                                                                                                                         |
 | `ModShark.Rules.FlaggedInstance.Enabled`             | Boolean  | Whether the [Flagged Instance rule](#Flagged-Instance-Rule) should be executed.<br/>Default: `false`                                                                                                                                                                                                                                               |
-| `ModShark.Rules.FlaggedInstance.HostnamePatterns`    | String[] | Array of regular expressions to check against each hostname.<br/>Required if `ModShark.Rules.FlaggedInstance.Enabled` is true.                                                                                                                                                                                                                     |
+| `ModShark.Rules.FlaggedInstance.HostnamePatterns`    | String[] | Array of regular expressions to check against each instance's hostname.                                                                                                                                                                                                                                                                            |
 | `ModShark.Rules.FlaggedInstance.IncludeBlocked`      | Boolean  | Whether blocked (defederated) instances should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                                    |
 | `ModShark.Rules.FlaggedInstance.IncludeSilenced`     | Boolean  | Whether silenced (limited) instances should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                                       |
 | `ModShark.Rules.FlaggedInstance.IncludeSuspended`    | Boolean  | Whether suspended (delivery stopped) instances should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                             |
+| `ModShark.Rules.FlaggedInstance.NamePatterns`        | String[] | Array of regular expressions to check against each instance's name.                                                                                                                                                                                                                                                                                |
+| `ModShark.Rules.FlaggedInstance.SoftwarePatterns`    | String[] | Array of regular expressions to check against each instance's software name / version.                                                                                                                                                                                                                                                             |
 | `ModShark.Rules.FlaggedInstance.Timeout`             | Integer  | Maximum time in milliseconds to spend scanning each instance.<br/>Default: `1000`                                                                                                                                                                                                                                                                  |
 | `ModShark.Rules.FlaggedNote.BatchLimit`              | Integer  | Maximum number of notes to check at once.<br/>Default: `5000`                                                                                                                                                                                                                                                                                      |
+| `ModShark.Rules.FlaggedNote.EmojiPatterns`           | String[] | Array of regular expressions to check against each note's emoji longcodes.                                                                                                                                                                                                                                                                         |
 | `ModShark.Rules.FlaggedNote.Enabled`                 | Boolean  | Whether the [Flagged Note rule](#Flagged-Note-Rule) should be executed.<br/>Default: `false`                                                                                                                                                                                                                                                       |
 | `ModShark.Rules.FlaggedNote.IncludeBlockedInstance`  | Boolean  | Whether notes by users from blocked (defederated) instances should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                |
 | `ModShark.Rules.FlaggedNote.IncludeCW`               | Boolean  | Whether the subject line / content warning should be scanned.<br/>Default: `true`                                                                                                                                                                                                                                                                  |
@@ -198,9 +249,11 @@ This file exists to store local secrets that should not be committed to source c
 | `ModShark.Rules.FlaggedNote.IncludeSuspendedUser`    | Boolean  | Whether notes by suspended users should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                                           |
 | `ModShark.Rules.FlaggedNote.IncludeSilencedInstance` | Boolean  | Whether notes by users from silenced (limited) instances should be scanned.<br/>Default: `true`                                                                                                                                                                                                                                                    |
 | `ModShark.Rules.FlaggedNote.IncludeUnlistedVis`      | Boolean  | Whether unlisted (home only) notes should be scanned.<br/>Default: `true`                                                                                                                                                                                                                                                                          |
-| `ModShark.Rules.FlaggedNote.TextPatterns`            | String[] | Array of regular expressions to check against each note body/CW.<br/>Required if `ModShark.Rules.FlaggedNote.Enabled` is true.                                                                                                                                                                                                                     |
+| `ModShark.Rules.FlaggedNote.TextPatterns`            | String[] | Array of regular expressions to check against each note's body / CW.                                                                                                                                                                                                                                                                               |
 | `ModShark.Rules.FlaggedNote.Timeout`                 | Integer  | Maximum time in milliseconds to spend scanning each note.<br/>Default: `1000`                                                                                                                                                                                                                                                                      |
 | `ModShark.Rules.FlaggedUser.BatchLimit`              | Integer  | Maximum number of users to check at once.<br/>Default: `5000`                                                                                                                                                                                                                                                                                      |
+| `ModShark.Rules.FlaggedUser.BioPatterns`             | String[] | Array of regular expressions to check against each user's bio text.                                                                                                                                                                                                                                                                                |
+| `ModShark.Rules.FlaggedUser.DisplayNamePatterns`     | String[] | Array of regular expressions to check against each user's display name.                                                                                                                                                                                                                                                                            |
 | `ModShark.Rules.FlaggedUser.Enabled`                 | Boolean  | Whether the [Flagged User rule](#Flagged-User-Rule) should be executed.<br/>Default: `false`                                                                                                                                                                                                                                                       |
 | `ModShark.Rules.FlaggedUser.IncludeBlockedInstance`  | Boolean  | Whether users from blocked (defederated) instances should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                         |
 | `ModShark.Rules.FlaggedUser.IncludeDeleted`          | Boolean  | Whether users who are marked as deleted (but still exist) should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                  |
@@ -209,11 +262,10 @@ This file exists to store local secrets that should not be committed to source c
 | `ModShark.Rules.FlaggedUser.IncludeSilenced`         | Boolean  | Whether silenced users should be scanned.<br/>Default: `false`                                                                                                                                                                                                                                                                                     |
 | `ModShark.Rules.FlaggedUser.IncludeSilencedInstance` | Boolean  | Whether users from silenced (limited) instances should be scanned.<br/>Default: `true`                                                                                                                                                                                                                                                             |
 | `ModShark.Rules.FlaggedUser.Timeout`                 | Integer  | Maximum time in milliseconds to spend scanning each username.<br/>Default: `1000`                                                                                                                                                                                                                                                                  |
-| `ModShark.Rules.FlaggedUser.UsernamePatterns`        | String[] | Array of regular expressions to check against each username.<br/>Required if `ModShark.Rules.FlaggedUser.Enabled` is true.                                                                                                                                                                                                                         |
+| `ModShark.Rules.FlaggedUser.UsernamePatterns`        | String[] | Array of regular expressions to check against each user's username.                                                                                                                                                                                                                                                                                |
 | `ModShark.Sharkey.ApiEndpoint`                       | String   | **Required.** URL of the instance's backend API.<br/>Default: `"https://127.0.0.1:3000"`                                                                                                                                                                                                                                                           |
 | `ModShark.Sharkey.IdFormat`                          | Enum     | **Required.** ID format used by this instance.<br/>Must be one of `"aid"`, `"aidx"`, `"meid"`, `"meidg"`, `"ulid"`, or `"objectid"`.<br/>Default: `"aidx"`                                                                                                                                                                                         |
 | `ModShark.Sharkey.PublicHost`                        | String   | **Required.** Public hostname / domain of the instance.                                                                                                                                                                                                                                                                                            |
 | `ModShark.Sharkey.ServiceAccount`                    | String   | Username of ModShark's service account.<br/>Default: `"instance.actor"`                                                                                                                                                                                                                                                                            |
 | `ModShark.Worker.PollInterval`                       | Integer  | Time in milliseconds to wait between each run.<br/>Default: `1800000`                                                                                                                                                                                                                                                                              |
 
-`Yes*` - the property is required only if the relevant section is enabled
