@@ -26,6 +26,7 @@ public class FlaggedUserConfig : QueuedRuleConfig
     
     public List<string> UsernamePatterns { get; set; } = [];
     public List<string> DisplayNamePatterns { get; set; } = [];
+    public List<string> BioPatterns { get; set; } = []; 
     public int Timeout { get; set; }
 }
 
@@ -34,13 +35,15 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
     // Merge and pre-compile the patterns for efficiency
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout);
     private Regex DisplayNamePattern { get; } = PatternUtils.CreateMatcher(config.DisplayNamePatterns, config.Timeout, ignoreCase: true);
+    private Regex BioPattern { get; } = PatternUtils.CreateMatcher(config.BioPatterns, config.Timeout, ignoreCase: true);
 
     private bool HasUsernamePatterns => config.UsernamePatterns.Count > 0;
-    private bool HasDisplayNamePattern => config.DisplayNamePatterns.Count > 0;
+    private bool HasDisplayNamePatterns => config.DisplayNamePatterns.Count > 0;
+    private bool HasBioPatterns => config.BioPatterns.Count > 0;
     
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (!HasUsernamePatterns && !HasDisplayNamePattern)
+        if (!HasUsernamePatterns && !HasDisplayNamePatterns && !HasBioPatterns)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -76,6 +79,8 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
             .Include(q => q.FlaggedUser)
             .Include(q => q.User!)  // database constraints ensure that "User" cannot be null
                 .ThenInclude(u => u.Instance)
+            .Include(q => q.User!)  // database constraints ensure that "User" cannot be null
+                .ThenInclude(u => u.Profile)
             .Where(q => 
                 q.Id <= maxId
                 && (config.IncludeLocal || q.User!.Host != null)
@@ -106,7 +111,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!HasFlaggedUsername(user) && !HasFlaggedDisplayName(user))
+            if (!HasFlaggedUsername(user) && !HasFlaggedDisplayName(user) && !HasFlaggedBio(user))
                 continue;
             
             report.UserReports.Add(new UserReport
@@ -133,12 +138,23 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
 
     private bool HasFlaggedDisplayName(User user)
     {
-        if (!HasDisplayNamePattern)
+        if (!HasDisplayNamePatterns)
             return false;
 
         if (!user.HasName)
             return false;
 
         return DisplayNamePattern.IsMatch(user.Name);
+    }
+
+    private bool HasFlaggedBio(User user)
+    {
+        if (!HasBioPatterns)
+            return false;
+
+        if (user.Profile?.Description == null)
+            return false;
+
+        return BioPattern.IsMatch(user.Profile.Description);
     }
 }
