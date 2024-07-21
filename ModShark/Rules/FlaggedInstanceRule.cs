@@ -21,6 +21,7 @@ public class FlaggedInstanceConfig : QueuedRuleConfig
     public List<string> NamePatterns { get; set; } = [];
     public List<string> HostnamePatterns { get; set; } = [];
     public List<string> DescriptionPatterns { get; set; } = [];
+    public List<string> ContactPatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
@@ -30,14 +31,17 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
     private Regex NamePattern { get; } = PatternUtils.CreateMatcher(config.NamePatterns, config.Timeout, ignoreCase: true);
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, ignoreCase: true);
     private Regex DescriptionPattern { get; } = PatternUtils.CreateMatcher(config.DescriptionPatterns, config.Timeout, ignoreCase: true);
+    private Regex ContactPattern { get; } = PatternUtils.CreateMatcher(config.ContactPatterns, config.Timeout, ignoreCase: true);
+    
 
     private bool HasNamePatterns => config.NamePatterns.Count > 0;
     private bool HasHostnamePatterns => config.HostnamePatterns.Count > 0;
     private bool HasDescriptionPatterns => config.DescriptionPatterns.Count > 0;
+    private bool HasContactPatterns => config.ContactPatterns.Count > 0;
 
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (!HasNamePatterns && !HasHostnamePatterns && !HasDescriptionPatterns)
+        if (!HasNamePatterns && !HasHostnamePatterns && !HasDescriptionPatterns && !HasContactPatterns)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -77,7 +81,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!HasFlaggedName(instance) && !HasFlaggedHostname(instance) && !HasFlaggedDescription(instance))
+            if (!IsFlagged(instance))
                 continue;
             
             report.InstanceReports.Add(new InstanceReport
@@ -92,6 +96,12 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             });
         }
     }
+
+    private bool IsFlagged(Instance instance)
+        => HasFlaggedName(instance)
+           || HasFlaggedHostname(instance)
+           || HasFlaggedDescription(instance)
+           || HasFlaggedContact(instance);
 
     private bool HasFlaggedName(Instance instance)
     {
@@ -121,5 +131,19 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             return false;
 
         return DescriptionPattern.IsMatch(instance.Description);
+    }
+
+    private bool HasFlaggedContact(Instance instance)
+    {
+        if (!HasContactPatterns)
+            return false;
+
+        if (instance.HasMaintainerName && ContactPattern.IsMatch(instance.MaintainerName))
+            return true;
+
+        if (instance.HasMaintainerEmail && ContactPattern.IsMatch(instance.MaintainerEmail))
+            return true;
+
+        return false;
     }
 }
