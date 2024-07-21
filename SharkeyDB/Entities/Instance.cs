@@ -23,6 +23,15 @@ public class Instance : IEntity<string>
     public required string Host { get; set; }
     
     /// <summary>
+    /// Human-readable name of the instance
+    /// </summary>
+    [Column("name"), MaxLength(256)]
+    public string? Name { get; set; }
+
+    [MemberNotNullWhen(true, nameof(Name))]
+    public bool HasName => Name != null;
+    
+    /// <summary>
     /// Human-readable description of the instance
     /// </summary>
     [Column("description"), MaxLength(4096)]
