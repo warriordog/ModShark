@@ -33,6 +33,7 @@ param(
 # - https://stackoverflow.com/questions/5033955/xpath-select-text-node
 $ProjectVersion = (Select-Xml -Path "Directory.Build.props" -XPath "/Project/PropertyGroup/Version/text()").Node.Value
 $ReleaseVersion = "$ProjectVersion$VersionSuffix"
+Write-Output "Building release version $ReleaseVersion"
 
 # Clean publish directory
 if (Test-Path $PublishDir) {
