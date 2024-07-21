@@ -22,6 +22,7 @@ public class FlaggedInstanceConfig : QueuedRuleConfig
     public List<string> HostnamePatterns { get; set; } = [];
     public List<string> DescriptionPatterns { get; set; } = [];
     public List<string> ContactPatterns { get; set; } = [];
+    public List<string> SoftwarePatterns { get; set; } = [];
     public int Timeout { get; set; }
 }
 
@@ -32,16 +33,18 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
     private Regex HostnamePattern { get; } = PatternUtils.CreateMatcher(config.HostnamePatterns, config.Timeout, ignoreCase: true);
     private Regex DescriptionPattern { get; } = PatternUtils.CreateMatcher(config.DescriptionPatterns, config.Timeout, ignoreCase: true);
     private Regex ContactPattern { get; } = PatternUtils.CreateMatcher(config.ContactPatterns, config.Timeout, ignoreCase: true);
+    private Regex SoftwarePattern { get; } = PatternUtils.CreateMatcher(config.SoftwarePatterns, config.Timeout);
     
 
     private bool HasNamePatterns => config.NamePatterns.Count > 0;
     private bool HasHostnamePatterns => config.HostnamePatterns.Count > 0;
     private bool HasDescriptionPatterns => config.DescriptionPatterns.Count > 0;
     private bool HasContactPatterns => config.ContactPatterns.Count > 0;
+    private bool HasSoftwarePatterns => config.SoftwarePatterns.Count > 0;
 
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
-        if (!HasNamePatterns && !HasHostnamePatterns && !HasDescriptionPatterns && !HasContactPatterns)
+        if (!HasNamePatterns && !HasHostnamePatterns && !HasDescriptionPatterns && !HasContactPatterns && !HasSoftwarePatterns)
         {
             logger.LogWarning("Skipping run, no patterns defined");
             return Task.FromResult(false);
@@ -101,7 +104,8 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         => HasFlaggedName(instance)
            || HasFlaggedHostname(instance)
            || HasFlaggedDescription(instance)
-           || HasFlaggedContact(instance);
+           || HasFlaggedContact(instance)
+           || HasFlaggedSoftware(instance);
 
     private bool HasFlaggedName(Instance instance)
     {
@@ -145,5 +149,17 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             return true;
 
         return false;
+    }
+
+    private bool HasFlaggedSoftware(Instance instance)
+    {
+        if (!HasSoftwarePatterns)
+            return false;
+
+        if (!instance.HasSoftwareName && !instance.HasSoftwareVersion)
+            return false;
+
+        var versionString = instance.GetSoftwareString();
+        return SoftwarePattern.IsMatch(versionString);
     }
 }
