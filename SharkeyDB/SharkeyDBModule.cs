@@ -4,7 +4,7 @@ namespace SharkeyDB;
 
 public static class SharkeyDBModule
 {
-    public static T UseSharkeyDB<T>(this T services)
+    public static T AddSharkeyDB<T>(this T services)
         where T : IServiceCollection
     {
         services.AddDbContext<SharkeyContext>();
