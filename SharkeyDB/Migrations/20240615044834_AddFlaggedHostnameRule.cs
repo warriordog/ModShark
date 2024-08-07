@@ -95,16 +95,6 @@ namespace SharkeyDB.Migrations
                 """
             );
             
-            // Populate existing data
-            migrationBuilder.Sql(
-                """
-                insert into ms_queued_instance (instance_id)
-                select id as instance_id
-                from "instance"
-                on conflict do nothing;
-                """
-            );
-            
             // Create trigger for new data
             migrationBuilder.Sql(
                 """

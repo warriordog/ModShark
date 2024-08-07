@@ -36,16 +36,6 @@ namespace SharkeyDB.Migrations
                 column: "user_id",
                 unique: true);
             
-            // Populate existing data
-            migrationBuilder.Sql(
-                """
-                insert into ms_queued_user (user_id)
-                select id as user_id
-                from "user"
-                on conflict do nothing;
-                """
-            );
-            
             // Create trigger for new data
             migrationBuilder.Sql(
                 """

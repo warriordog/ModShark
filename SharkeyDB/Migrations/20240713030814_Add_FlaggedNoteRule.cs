@@ -45,16 +45,6 @@ namespace SharkeyDB.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
             
-            // Populate existing data
-            migrationBuilder.Sql(
-                """
-                insert into ms_queued_note (note_id)
-                select id as note_id
-                from "note"
-                on conflict do nothing;
-                """
-            );
-            
             // Create trigger for new data
             migrationBuilder.Sql(
                 """

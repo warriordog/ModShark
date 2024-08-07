@@ -11,6 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		Resources\build-prod.ps1 = Resources\build-prod.ps1
 		Resources\dev-scripts.sql = Resources\dev-scripts.sql
 		Resources\sample-misskey-ids.mjs = Resources\sample-misskey-ids.mjs
+		Resources\enqueue-instances.sql = Resources\enqueue-instances.sql
+		Resources\enqueue-users.sql = Resources\enqueue-users.sql
+		Resources\enqueue-notes.sql = Resources\enqueue-notes.sql
 	EndProjectSection
 EndProject
 Global
