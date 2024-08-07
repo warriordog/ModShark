@@ -15,7 +15,7 @@ public class NativeReporterConfig
     public bool UseApi { get; set; }
 }
 
-public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IServiceAccountService serviceAccountService, ISharkeyHttpService http, ILinkService linkService) : INativeReporter
+public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IUserService userService, ISharkeyHttpService http, ILinkService linkService) : INativeReporter
 {
     private const string UserReportComment = "ModShark: username matched one or more flagged patterns";
     private const string InstanceReportComment = "ModShark: instance hostname matched one or more flagged patterns";
@@ -34,7 +34,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
             return;
         }
         
-        var reporterId = await serviceAccountService.GetServiceAccountId(stoppingToken);
+        var reporterId = await userService.GetServiceAccountId(stoppingToken);
         if (reporterId == null)
         {
             logger.LogWarning("Skipping native - configured service account could not be found");

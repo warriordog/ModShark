@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using ModShark.Services;
 using ModShark.Utils;
-using SharkeyDB;
 using SharkeyDB.Entities;
 
 namespace ModShark.Reports.Reporter;
@@ -52,7 +51,7 @@ public enum PostVisibility
     Private
 }
 
-public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConfig reporterConfig, SharkeyContext db, ISharkeyHttpService http, ILinkService linkService) : IPostReporter
+public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConfig reporterConfig, IUserService userService, ISharkeyHttpService http, ILinkService linkService) : IPostReporter
 {
     // Parse the audience list from handle[] into (handle, username, host?)[].
     // For performance, we do this only once.
@@ -62,12 +61,15 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
         .Where(m => m.Success)
         .Select(m =>
         {
-            var handle = m.Value;
             var username = m.Groups[1].Value;
             var host =
                 m.Groups[2].Success
-                    ? m.Groups[2].Value
+                    ? m.Groups[2].Value.ToLower()
                     : null;
+            var handle =
+                host == null
+                    ? $"@{username}"
+                    : $"@{username}@{host}";
             return new Audience(handle, username, host);
         })
         .ToList();
@@ -122,7 +124,9 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
 
     private string RenderPost(Report report)
     {
-        var audienceText = string.Join(' ', reporterConfig.Audience);
+        var audienceHandles = ParsedAudience
+            .Select(a => a.Handle);
+        var audienceText = string.Join(' ', audienceHandles);
         var reportText = RenderReport(report);
 
         return reporterConfig.Template
@@ -337,9 +341,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
         var audienceIds = new HashSet<string>();
         foreach (var (handle, username, host) in ParsedAudience)
         {
-            var id = await db.Users
-                .AsNoTracking()
-                .Where(u => u.Host == host && u.Username == username)
+            var id = await
+                userService.QueryByUserHost(username, host)
                 .Select(u => u.Id)
                 .FirstOrDefaultAsync(stoppingToken);
         

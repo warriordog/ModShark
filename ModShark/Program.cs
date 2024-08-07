@@ -72,7 +72,7 @@ builder.Services.AddScoped<IRuleService, RuleService>();
 
 builder.Services.AddSingleton<ILinkService, LinkService>();
 builder.Services.AddScoped<IMetaService, MetaService>();
-builder.Services.AddScoped<IServiceAccountService, ServiceAccountService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHostedService<Worker>();
  
 var host = builder.Build();

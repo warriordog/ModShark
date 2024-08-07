@@ -11,7 +11,7 @@ public interface ISharkeyHttpService
     Task CreateNote(CreateNoteRequest request, CancellationToken stoppingToken);
 }
 
-public class SharkeyHttpService(ILogger<SharkeyHttpService> logger, SharkeyConfig config, IHttpService http, IServiceAccountService serviceAccountService) : ISharkeyHttpService
+public class SharkeyHttpService(ILogger<SharkeyHttpService> logger, SharkeyConfig config, IHttpService http, IUserService userService) : ISharkeyHttpService
 {
     public async Task ReportAbuse(string userId, string comment, CancellationToken stoppingToken)
         => await ReportAbuse(new ReportAbuseRequest
@@ -42,7 +42,7 @@ public class SharkeyHttpService(ILogger<SharkeyHttpService> logger, SharkeyConfi
     {
         // Populate the auto token, if not already set
         request.AuthToken
-            ??= await serviceAccountService.GetServiceAccountToken(stoppingToken)
+            ??= await userService.GetServiceAccountToken(stoppingToken)
             ?? throw new ArgumentException("Authenticated request is missing auth token, and no service account token was found in the database", nameof(request));
         
         // Make the request
@@ -70,7 +70,7 @@ public abstract class AuthenticatedRequestBase
 {
     /// <summary>
     /// Authentication token for the user to make this request.
-    /// If null, will be populated automatically by the <see cref="IServiceAccountService"/>.
+    /// If null, will be populated automatically by the <see cref="IUserService"/>.
     /// </summary>
     [JsonPropertyName("i")]
     public string? AuthToken { get; set; }
