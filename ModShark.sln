@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{
 		Resources\sample-misskey-ids.mjs = Resources\sample-misskey-ids.mjs
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Main", "Main\Main.csproj", "{BEA17D18-66E1-4075-AEAA-1626BF2FF8B7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,5 +33,9 @@ Global
 		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0EE90C8-1DA3-42F9-A461-A469F9C31D1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEA17D18-66E1-4075-AEAA-1626BF2FF8B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEA17D18-66E1-4075-AEAA-1626BF2FF8B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEA17D18-66E1-4075-AEAA-1626BF2FF8B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEA17D18-66E1-4075-AEAA-1626BF2FF8B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

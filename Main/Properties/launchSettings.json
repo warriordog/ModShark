@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "ModShark": {
+    "Main": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

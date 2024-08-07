@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Worker">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -13,15 +13,7 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0"/>
         <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Update="appsettings.Local.json">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-      </Content>
     </ItemGroup>
 
     <ItemGroup>

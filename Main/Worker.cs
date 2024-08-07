@@ -1,7 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ModShark.Reports;
 using ModShark.Services;
 
-namespace ModShark;
+namespace ModShark.Main;
 
 public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFactory scopeFactory) : BackgroundService
 {
@@ -37,9 +40,4 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
             .GetRequiredService<IReportService>()
             .MakeReports(report, stoppingToken);
     }
-}
-
-public class WorkerConfig
-{
-    public int PollInterval { get; set; }
 }

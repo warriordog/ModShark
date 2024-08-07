@@ -18,6 +18,12 @@ public class ModSharkConfig
 }
 
 [PublicAPI]
+public class WorkerConfig
+{
+    public int PollInterval { get; set; }
+}
+
+[PublicAPI]
 public class SharkeyConfig
 {
     [JsonConverter(typeof(JsonStringEnumConverter<IdFormat>))]
