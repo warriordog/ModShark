@@ -23,7 +23,8 @@ public class FlaggedUserConfig : QueuedRuleConfig
     
     public bool IncludeBlockedInstance { get; set; }
     public bool IncludeSilencedInstance { get; set; }
-    
+
+    public List<string> AgeRanges { get; set; } = [];
     public List<string> UsernamePatterns { get; set; } = [];
     public List<string> DisplayNamePatterns { get; set; } = [];
     public List<string> BioPatterns { get; set; } = []; 
@@ -36,10 +37,12 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout, ignoreCase: true);
     private Regex DisplayNamePattern { get; } = PatternUtils.CreateMatcher(config.DisplayNamePatterns, config.Timeout, ignoreCase: true);
     private Regex BioPattern { get; } = PatternUtils.CreateMatcher(config.BioPatterns, config.Timeout, ignoreCase: true);
-
+    private List<AgeRange> AgeRanges { get; } = ParseAgeRanges(config.AgeRanges);
+    
     private bool HasUsernamePatterns => config.UsernamePatterns.Count > 0;
     private bool HasDisplayNamePatterns => config.DisplayNamePatterns.Count > 0;
     private bool HasBioPatterns => config.BioPatterns.Count > 0;
+    private bool HasAgeRanges => AgeRanges.Count > 0;
     
     protected override Task<bool> CanRun(CancellationToken stoppingToken)
     {
@@ -109,9 +112,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
                     continue;
             }
 
-            // For better use of database resources, we handle pattern matching in application code.
-            // This also gives us .NET's faster and more powerful regex engine.
-            if (!HasFlaggedUsername(user) && !HasFlaggedDisplayName(user) && !HasFlaggedBio(user))
+            if (!IsFlagged(user))
                 continue;
             
             report.UserReports.Add(new UserReport
@@ -126,6 +127,45 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
                 FlaggedAt = report.ReportDate
             });
         }
+    }
+
+    private bool IsFlagged(User user)
+    {
+        // We check for age first, since it's a faster comparison.
+        if (HasFlaggedAge(user))
+            return true;
+        
+        // For better use of database resources, we handle pattern matching in application code.
+        // This also gives us .NET's faster and more powerful regex engine.
+        if (HasFlaggedUsername(user))
+            return true;
+        if (HasFlaggedDisplayName(user))
+            return true;
+        if (HasFlaggedBio(user))
+            return true;
+
+        return false;
+    }
+
+    private bool HasFlaggedAge(User user)
+    {
+        if (!HasAgeRanges)
+            return false;
+
+        if (!user.HasProfile)
+            return false;
+
+        if (!user.Profile.HasBirthday)
+            return false;
+
+        var today = DateTime.Now;
+        var birthday = user.Profile.Birthday.Value;
+        if (birthday > today)
+            return false;
+
+        return AgeRanges.Any(r =>
+            r.IsInRange(birthday, today)
+        );
     }
 
     private bool HasFlaggedUsername(User user)
@@ -160,4 +200,9 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
 
         return BioPattern.IsMatch(user.Profile.Description);
     }
+
+    private static List<AgeRange> ParseAgeRanges(IEnumerable<string> rangePatterns) =>
+        rangePatterns
+            .Select(AgeRange.Parse)
+            .ToList();
 }

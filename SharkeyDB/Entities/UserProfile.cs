@@ -32,4 +32,15 @@ public class UserProfile
 
     [MemberNotNullWhen(true, nameof(Description))]
     public bool HasDescription => !string.IsNullOrEmpty(Description);
+    
+    /// <summary>
+    /// User's birthday, or null if not set.
+    /// Time is ignored - only the date is preserved.
+    /// </summary>
+    [Column("birthday"), MaxLength(10)]
+    public DateTime? Birthday { get; set; }
+    
+    [MemberNotNullWhen(true, nameof(Birthday))]
+    public bool HasBirthday => Birthday != null;
+
 }

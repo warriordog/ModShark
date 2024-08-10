@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Globalization;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using SharkeyDB.Entities;
 
@@ -52,6 +53,16 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
         modelBuilder
             .Entity<Note>()
             .ToTable(t => t.ExcludeFromMigrations());
+        
+        // Birthday is stored as a YYYY-MM-DD string for some reason.
+        // Values will never be null: https://learn.microsoft.com/en-us/ef/core/modeling/value-conversions?tabs=data-annotations#configuring-a-value-converter
+        modelBuilder
+            .Entity<UserProfile>()
+            .Property(p => p.Birthday)
+            .HasConversion(
+                v => v!.Value.ToString("yyyy-MM-dd"),
+                v => SafeParseDate(v)
+            );
 
         // FK ms_queued_user(user_id) -> user(id)  
         modelBuilder
@@ -195,6 +206,15 @@ public class SharkeyContext(DbContextOptions<SharkeyContext> options, SharkeyDBC
             .HasForeignKey<UserProfile>(p => p.UserId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    // Separate method because EF uses expression trees
+    private static DateTime? SafeParseDate(string v)
+    {
+        if (DateTime.TryParseExact(v, "yyyy-MM-dd", null, DateTimeStyles.None, out var date))
+            return date;
+
+        return null;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
