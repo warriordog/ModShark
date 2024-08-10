@@ -62,11 +62,30 @@ New users are enqueued via database trigger to minimize overhead.
 
 #### Available Flags:
 
-| Flag         | Description                                                                                          |
-|--------------|------------------------------------------------------------------------------------------------------|
-| Username     | Scans the unqualified username, excluding the `@` prefix.                                            |
-| Display Name | Scans the human-readable display name, if present.<br/>Note: this field may contain MFM or Markdown. |
-| Bio Text     | Scans the human-readable bio text, if present.<br/>Note: this field may contain MFM or Markdown.     |
+| Flag         | Description                                                                                                        |
+|--------------|--------------------------------------------------------------------------------------------------------------------|
+| Username     | Scans the unqualified username, excluding the `@` prefix.                                                          |
+| Display Name | Scans the human-readable display name, if present.<br/>Note: this field may contain MFM or Markdown.               |
+| Bio Text     | Scans the human-readable bio text, if present.<br/>Note: this field may contain MFM or Markdown.                   |
+| Age Range    | Compares the user's listed birthday against a list of flagged ranges.<br/>The age range format is described below. |
+
+
+#### Age Range Format
+
+Flagged age ranges are defined by a pair of age definitions separated by a dash.
+The first age defines the inclusive lower bound, while the second defines the exclusive upper bound.
+Each age follows the same format: `#y#m#d`.
+"y", "m", and "d", of course, refer to year, month, and day respectively.
+All are optional, but each age must include at least one component.
+
+For simplicity, the lower bound can be excluded to match any age below the end point.
+The starting age will be inferred as zero years whenever there is *only* a single age, without any dash.
+
+**Examples:**
+* Flag ages that are likely fake: `0y - 4y`, `80y - 9999y`
+* Flag users under 18: `18y`
+* Flag users under 18, with a 1-day margin-of-error: `18y1d`
+* Flag users under 18, excluding fake ages: `4y - 18y`
 
 
 ### Flagged Note Rule
@@ -251,6 +270,7 @@ This file exists to store local secrets that should not be committed to source c
 | `ModShark.Rules.FlaggedNote.IncludeUnlistedVis`      | Boolean  | Whether unlisted (home only) notes should be scanned.<br/>Default: `true`                                                                                                                                                                                                                                                                          |
 | `ModShark.Rules.FlaggedNote.TextPatterns`            | String[] | Array of regular expressions to check against each note's body / CW.                                                                                                                                                                                                                                                                               |
 | `ModShark.Rules.FlaggedNote.Timeout`                 | Integer  | Maximum time in milliseconds to spend scanning each note.<br/>Default: `1000`                                                                                                                                                                                                                                                                      |
+| `ModShark.Rules.FlaggedUser.AgeRanges`               | String[] | Array of age ranges to flag.                                                                                                                                                                                                                                                                                                                       |
 | `ModShark.Rules.FlaggedUser.BatchLimit`              | Integer  | Maximum number of users to check at once.<br/>Default: `5000`                                                                                                                                                                                                                                                                                      |
 | `ModShark.Rules.FlaggedUser.BioPatterns`             | String[] | Array of regular expressions to check against each user's bio text.                                                                                                                                                                                                                                                                                |
 | `ModShark.Rules.FlaggedUser.DisplayNamePatterns`     | String[] | Array of regular expressions to check against each user's display name.                                                                                                                                                                                                                                                                            |
