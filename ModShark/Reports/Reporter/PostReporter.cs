@@ -1,10 +1,10 @@
-﻿using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using ModShark.Reports.Document;
+using ModShark.Reports.Render;
 using ModShark.Services;
-using ModShark.Utils;
 using SharkeyDB.Entities;
 
 namespace ModShark.Reports.Reporter;
@@ -51,8 +51,15 @@ public enum PostVisibility
     Private
 }
 
-public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConfig reporterConfig, IUserService userService, ISharkeyHttpService http, ILinkService linkService) : IPostReporter
+public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sharkeyConfig, PostReporterConfig reporterConfig, IUserService userService, ISharkeyHttpService http, IRenderService renderService) : IPostReporter
 {
+    private const int MinimumNoteLength = 100;
+    private readonly RenderHints _renderHints = new()
+    {
+        LimitWidth = true
+    };
+
+    
     // Parse the audience list from handle[] into (handle, username, host?)[].
     // For performance, we do this only once.
     private List<Audience> ParsedAudience { get; } = reporterConfig
@@ -109,231 +116,67 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
             return;
         }
 
-        var content = RenderPost(report);
+        if (sharkeyConfig.MaxNoteLength < MinimumNoteLength)
+        {
+            logger.LogWarning("Skipping Post - max note length is too low: {limit}", sharkeyConfig.MaxNoteLength);
+            return;
+        }
+
         var visibleUserIds = await GetAudienceIds(stoppingToken);
-        
-        await http.CreateNote(
-            content,
-            SharkeyVisibility,
-            stoppingToken,
-            localOnly: reporterConfig.LocalOnly,
-            cw: Subject,
-            visibleUserIds: visibleUserIds
-        );
+        var posts = RenderPost(report);
+
+        string? lastNoteId = null;
+        foreach (var post in posts)
+        {
+            // Delay to avoid rate limits
+            if (lastNoteId != null)
+                await Task.Delay(1200, stoppingToken);
+            
+            // Send the post
+            var response = await http.CreateNote(
+                post,
+                SharkeyVisibility,
+                stoppingToken,
+                localOnly: reporterConfig.LocalOnly,
+                cw: Subject,
+                visibleUserIds: visibleUserIds,
+                inReplyTo: lastNoteId
+            );
+
+            // Save the post ID so that we can reply to it
+            lastNoteId = response.CreatedNote.Id;
+        }
     }
 
-    private string RenderPost(Report report)
+    private List<string> RenderPost(Report report)
     {
         var audienceHandles = ParsedAudience
             .Select(a => a.Handle);
         var audienceText = string.Join(' ', audienceHandles);
-        var reportText = RenderReport(report);
 
-        return reporterConfig.Template
-            .Replace("$audience", audienceText)
-            .Replace("$report_body", reportText);
-    }
-
-    // Adapted from SendGridReporter.RenderReport()
-    private string RenderReport(Report report)
-    {
-        var messageBuilder = new StringBuilder();
-
-        messageBuilder.Append("**ModShark Report**\n\n");
-        RenderInstanceReports(report, messageBuilder);
-        RenderUserReports(report, messageBuilder);
-        RenderNoteReports(report, messageBuilder);
-        
-        return messageBuilder.ToString();
-    }
-
-    private void RenderInstanceReports(Report report, StringBuilder message)
-    {
-        if (!report.HasInstanceReports)
-            return;
-
-        var count = report.InstanceReports.Count;
-        if (count == 1)
-            message.Append("Found 1 new flagged instance:\n");
-        else
-            message.Append($"**Found {count} new flagged instances:**\n");
-        
-        foreach (var instanceReport in report.InstanceReports)
+        // To make sure that text is chunked correctly, we render everything *except* the report and calculate the length.
+        var finalTemplate = reporterConfig.Template
+            .Replace("$audience", audienceText);
+        var reportChunkSize = sharkeyConfig.MaxNoteLength - finalTemplate.Length;
+        if (reportChunkSize < MinimumNoteLength)
         {
-            var instanceLink = linkService.GetLinkToInstance(instanceReport.Instance);
-            var localInstanceLink = linkService.GetLocalLinkToInstance(instanceReport.Instance);
-            
-            // Instance remote link
-            message
-                .Append("- Remote instance ")
-                .AppendMarkdownLink(instanceLink, () => message
-                    .AppendMarkdownCode(instanceReport.Instance.Id)
-                    .Append($" ({instanceReport.Instance.Host})"));
-
-            // instance local link
-            message
-                .Append(' ')
-                .AppendMarkdownLink(localInstanceLink, () => message
-                    .AppendMarkdownItalics(true, "[local mirror]"));
-            
-            message.Append('\n');
+            logger.LogWarning("Post template is too long and would overflow the limit of {limit}", sharkeyConfig.MaxNoteLength);
+            return [];
         }
-
-        message.Append('\n');
-    }
-
-    private void RenderUserReports(Report report, StringBuilder message)
-    {
-        if (!report.HasUserReports)
-            return;
-
-        var count = report.UserReports.Count;
-        if (count == 1)
-            message.Append("Found 1 new flagged users:\n");
-        else
-            message.Append($"**Found {count} new flagged users:**\n");
         
-        foreach (var userReport in report.UserReports)
-        {
-            var userLink = linkService.GetLinkToUser(userReport.User);
-            
-            if (userReport.IsLocal)
-            {
-                // User local link
-                message
-                    .Append("- ")
-                    .AppendMarkdownBold(() => message
-                        .Append("Local user ")
-                        .AppendMarkdownLink(userLink, () => message
-                            .AppendMarkdownCode(userReport.User.Id)
-                            .Append($" ({userReport.User.Username})")));
-            }
-            else
-            {
-                var instanceLink = linkService.GetLinkToInstance(userReport.Instance);
-                var localInstanceLink = linkService.GetLocalLinkToInstance(userReport.Instance);
-                var localUserLink = linkService.GetLocalLinkToUser(userReport.User);
-                
-                // User remote link
-                message
-                    .Append("- Remote user ")
-                    .AppendMarkdownLink(userLink, () => message
-                        .AppendMarkdownCode(userReport.User.Id)
-                        .Append($" ({userReport.User.Username}@{userReport.User.Host})"));
-                
-                // User local link
-                message
-                    .Append(' ')
-                    .AppendMarkdownLink(localUserLink, () => message
-                        .AppendMarkdownItalics(true, "[local mirror]"));
-                
-                // Instance remote link
-                message
-                    .Append("\n   from instance ")
-                    .AppendMarkdownLink(instanceLink, () => message
-                        .AppendMarkdownCode(userReport.Instance.Id)
-                        .Append($" ({userReport.Instance.Host})"));
-
-                // instance local link
-                message
-                    .Append(' ')
-                    .AppendMarkdownLink(localInstanceLink, () => message
-                        .AppendMarkdownItalics(true, "[local mirror]"));
-            }
-            
-            message.Append('\n');
-        }
-
-        message.Append('\n');
+        // Chunk the report and generate posts.
+        // We have to re-render the template each time, to ensure that the audience is carried over.
+        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM, _renderHints);
+        return postBuilder
+            .ToStrings(reportChunkSize)
+            .Select(chunk => finalTemplate.Replace("$report_body", chunk))
+            .ToList();
     }
 
-    private void RenderNoteReports(Report report, StringBuilder message)
-    {
-        if (!report.HasNoteReports)
-            return;
-
-        var count = report.NoteReports.Count;
-        if (count == 1)
-            message.Append("Found 1 new flagged note:\n");
-        else
-            message.Append($"**Found {count} new flagged notes:**\n");
-        
-        foreach (var noteReport in report.NoteReports)
-        {
-            var noteLink = linkService.GetLinkToNote(noteReport.Note);
-            var userLink = linkService.GetLinkToUser(noteReport.User);
-            
-            if (noteReport.IsLocal) 
-            {
-                // note local link
-                message
-                    .Append("- ")
-                    .AppendMarkdownBold(() => message
-                        .Append("Local note ")
-                        .AppendMarkdownLink(noteLink, () => message
-                            .AppendMarkdownCode(noteReport.Note.Id)));
-                
-                // user local link
-                message
-                    .Append("\n   by user ")
-                    .AppendMarkdownLink(userLink, () => message
-                        .AppendMarkdownCode(noteReport.User.Id)
-                        .Append($" ({noteReport.User.Username})"));
-            }
-            else 
-            {
-                var instanceLink = linkService.GetLinkToInstance(noteReport.Instance);
-                var localInstanceLink = linkService.GetLocalLinkToInstance(noteReport.Instance);
-                var localNoteLink = linkService.GetLocalLinkToNote(noteReport.Note);
-                var localUserLink = linkService.GetLocalLinkToUser(noteReport.User);
-                
-                // Note remote link
-                message
-                    .Append("- Remote note ")
-                    .AppendMarkdownLink(noteLink, () => message
-                        .AppendMarkdownCode(noteReport.Note.Id));
-                
-                // Note local link
-                message
-                    .Append(' ')
-                    .AppendMarkdownLink(localNoteLink, () => message
-                        .AppendMarkdownItalics(true, "[local mirror]"));
-                
-                // User remote link
-                message
-                    .Append("\n   by user ")
-                    .AppendMarkdownLink(userLink, () => message
-                        .AppendMarkdownCode(noteReport.User.Id)
-                        .Append($" ({noteReport.User.Username}@{noteReport.User.Host})"));
-                
-                // User local link
-                message
-                    .Append(' ')
-                    .AppendMarkdownLink(localUserLink, () => message
-                        .AppendMarkdownItalics(true, "[local mirror]"));
-                
-                // Instance remote link
-                message
-                    .Append("\n   from instance ")
-                    .AppendMarkdownLink(instanceLink, () => message
-                        .AppendMarkdownCode(noteReport.Instance.Id)
-                        .Append($" ({noteReport.Instance.Host})"));
-
-                // instance local link
-                message
-                    .Append(' ')
-                    .AppendMarkdownLink(localInstanceLink, () => message
-                        .AppendMarkdownItalics(true, "[local mirror]"));
-            }
-            
-            message.Append('\n');
-        }
-
-        message.Append('\n');
-    }
+    
 
     // Can be simplified once this is implemented: https://github.com/dotnet/efcore/issues/11799
-    private async Task<IEnumerable<string>?> GetAudienceIds(CancellationToken stoppingToken)
+    private async Task<List<string>?> GetAudienceIds(CancellationToken stoppingToken)
     {
         if (reporterConfig.Audience.Count == 0)
             return null;
@@ -355,7 +198,7 @@ public partial class PostReporter(ILogger<PostReporter> logger, PostReporterConf
             audienceIds.Add(id);
         }
         
-        return audienceIds;
+        return audienceIds.ToList();
     }
 
     [GeneratedRegex(@"^@([^@]+)(?:@(.+))?$", RegexOptions.Compiled, 1000)]

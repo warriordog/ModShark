@@ -1,5 +1,6 @@
 using ModShark;
 using ModShark.Reports;
+using ModShark.Reports.Render;
 using ModShark.Reports.Reporter;
 using ModShark.Rules;
 using ModShark.Services;
@@ -59,6 +60,7 @@ builder.Services.AddSingleton<IRandomService, RandomService>();
 builder.Services.AddSingleton<ITimeService, TimeService>();
 builder.Services.AddSingleton<ISharkeyIdService, SharkeyIdService>();
 
+builder.Services.AddSingleton<IRenderService, RenderService>();
 builder.Services.AddSingleton<IConsoleReporter, ConsoleReporter>();
 builder.Services.AddScoped<ISendGridReporter, SendGridReporter>();
 builder.Services.AddScoped<INativeReporter, NativeReporter>();

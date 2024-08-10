@@ -2,6 +2,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using ModShark.Reports;
+using ModShark.Reports.Document;
+using ModShark.Reports.Render;
 using ModShark.Reports.Reporter;
 using ModShark.Services;
 using ModShark.Tests._Utils;
@@ -20,7 +22,7 @@ public class SendGridReporterTests
 
     private Mock<ILogger<SendGridReporter>> MockLogger { get; set; } = null!;
     private Mock<IHttpService> MockHttpService { get; set; } = null!;
-    private Mock<ILinkService> MockLinkService { get; set; } = null!;
+    private Mock<IRenderService> MockRenderService { get; set; } = null!;
 
     [SetUp]
     public void Setup()
@@ -30,7 +32,10 @@ public class SendGridReporterTests
         MockHttpService
             .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<SendGridSend>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
-        MockLinkService = new Mock<ILinkService>();
+        MockRenderService = new Mock<IRenderService>();
+        MockRenderService
+            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<RenderHints?>()))
+            .Returns((Report _, DocumentFormat f, RenderHints? _) => new DocumentBuilder(f));
 
         FakeReporterConfig = new SendGridReporterConfig
         {
@@ -42,7 +47,7 @@ public class SendGridReporterTests
                 "to@example.com"
             ]
         };
-        ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeReporterConfig, MockHttpService.Object, MockLinkService.Object);
+        ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeReporterConfig, MockHttpService.Object, MockRenderService.Object);
     }
     
     

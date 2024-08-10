@@ -24,6 +24,10 @@
         </PackageReference>
         <PackageReference Include="NUnit3TestAdapter" Version="4.5.0"/>
     </ItemGroup>
+    
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage" />
+    </ItemGroup>
 
     <ItemGroup>
         <Using Include="NUnit.Framework"/>

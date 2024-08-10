@@ -25,6 +25,7 @@ public class SharkeyConfig
     public required string ServiceAccount { get; set; }
     public required string ApiEndpoint { get; set; }
     public required string PublicHost { get; set; }
+    public int MaxNoteLength { get; set; } = 3000;
 }
 
 [PublicAPI]
