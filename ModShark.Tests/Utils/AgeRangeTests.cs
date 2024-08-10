@@ -72,7 +72,7 @@ public class AgeRangeTests
     [Test]
     public void Parse_ShouldAllowEndToBeExcluded()
     {
-        var start = new Age(1, 0, 0);
+        var start = new Age(1);
         
         var actual = AgeRange.Parse("1y");
 
@@ -110,7 +110,7 @@ public class AgeRangeTests
     [TestCase(false, 25, 0, 1)]
     public void IsInRange_Age_ShouldReturnTrueWhenAgeIsInRange(bool expected, int y, int m, int d)
     {
-        var range = new AgeRange(new Age(18, 0, 0), new Age(25, 0, 0));
+        var range = new AgeRange(new Age(18), new Age(25));
         var age = new Age(y, m, d);
 
         var actual = range.IsInRange(age);
@@ -119,20 +119,19 @@ public class AgeRangeTests
     }
 
     [TestCase(true, 18, 0, 0)]
-    [TestCase(true, 19, 0, 0)]
     [TestCase(true, 18, 1, 0)]
     [TestCase(true, 18, 0, 1)]
-    [TestCase(false, 25, 0, 0)]
+    [TestCase(true, 19, 0, 0)]
     [TestCase(false, 17, 11, 30)]
     [TestCase(false, 17, 0, 30)]
     [TestCase(false, 17, 11, 0)]
-    [TestCase(false, 17, 1, 1)]
-    [TestCase(false, 26, 0, 0)]
+    [TestCase(false, 25, 0, 0)]
     [TestCase(false, 25, 1, 0)]
     [TestCase(false, 25, 0, 1)]
+    [TestCase(false, 26, 0, 0)]
     public void IsInRange_Date_ShouldReturnTrueWhenInRange(bool expected, int y, int m, int d)
     {
-        var range = new AgeRange(new Age(18, 0, 0), new Age(25, 0, 0));
+        var range = new AgeRange(new Age(18), new Age(25));
         var birthday = new DateTime(2000, 1, 1);
         var today = birthday.AddYears(y).AddMonths(m).AddDays(d);
 
