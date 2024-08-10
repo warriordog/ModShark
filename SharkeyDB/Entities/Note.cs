@@ -84,11 +84,21 @@ public class Note : IEntity<string>
     public bool HasCW => !string.IsNullOrEmpty(CW);
     
     /// <summary>
-    /// Human-readable URL to the post.
+    /// Human-readable URL of the post.
     /// Will be null if this is a local post.
     /// </summary>
+    /// <remarks>
+    /// May be null for remote posts, so always check <see cref="Uri"/> as well.
+    /// </remarks>
     [Column("url"), MaxLength(512)]
     public string? Url { get; set; }
+    
+    /// <summary>
+    /// Canonical URI of the post.
+    /// Will be null if this is a local post.
+    /// </summary>
+    [Column("uri"), MaxLength(512)]
+    public string? Uri { get; set; }
 
     [MemberNotNullWhen(false, nameof(Url))]
     public bool IsLocal => Url == null;

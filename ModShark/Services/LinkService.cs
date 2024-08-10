@@ -15,8 +15,15 @@ public interface ILinkService
 
 public class LinkService(SharkeyConfig config) : ILinkService
 {
-    public string GetLinkToNote(Note note)
-        => note.Url ?? GetLocalLinkToNote(note);
+    public string GetLinkToNote(Note note) =>
+        // "Url" contains user-friendly alias, only applicable for Mastodon.
+        note.Url
+        
+        // "Uri" contains the actual remote URL.
+        ?? note.Uri
+        
+        // Fallback to local link, which always works.
+        ?? GetLocalLinkToNote(note);
 
     public string GetLinkToUser(User user)
         => user.Uri ?? GetLocalLinkToUser(user);
