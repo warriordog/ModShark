@@ -75,13 +75,13 @@ public class Instance : IEntity<string>
 
     [MemberNotNullWhen(true, nameof(SoftwareVersion))]
     public bool HasSoftwareVersion => !string.IsNullOrEmpty(SoftwareVersion);
-    
+
     /// <summary>
     /// Status and/or reason of the instance suspension.
     /// This is actually an enum, but we are *not* dealing with that.
     /// </summary>
     [Column("suspensionState"), MaxLength(256)]
-    public required string SuspensionState { get; set; }
+    public string SuspensionState { get; set; } = "none";
     
     public MSQueuedInstance? QueuedInstance { get; set; }
     public MSFlaggedInstance? FlaggedInstance { get; set; }
