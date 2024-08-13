@@ -168,8 +168,7 @@ Make sure to substitute all variables for their correct values.
 6. Run the latest database migrations: `psql -U $postgres_user -W -d $sharkey_database -a -f ModShark/update-ModShark-migrations.sql`
 7. Return to an admin account: `exit`
 8. Install the Systemd service: `sudo cp ModShark/modshark.service /etc/systemd/system/modshark.service`
-9. Register the service: `sudo systemctl dameon-reload && sudo systemctl enable modshark`
-10. Start the ModShark service: `sudo systemctl start modshark`
+9. Register the service and start it: `sudo systemctl daemon-reload && sudo systemctl enable modshark --now`
 
 ## Updating ModShark
 
