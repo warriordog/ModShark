@@ -121,6 +121,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sh
             logger.LogWarning("Skipping Post - max note length is too low: {limit}", sharkeyConfig.MaxNoteLength);
             return;
         }
+        
+        logger.LogInformation("Sending report via post");
 
         var visibleUserIds = await GetAudienceIds(stoppingToken);
         var posts = RenderPost(report);
