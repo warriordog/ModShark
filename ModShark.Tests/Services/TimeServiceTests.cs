@@ -30,4 +30,12 @@ public class TimeServiceTests
 
         actualTime.Should().BeCloseTo(expectedTime, TimeSpan.FromSeconds(10));
     }
+
+    [Test]
+    public void Delay_ShouldNotCompleteUntilTime()
+    {
+        var task = ServiceUnderTest.Delay(10, CancellationToken.None);
+        
+        task.IsCompleted.Should().BeFalse();
+    }
 }

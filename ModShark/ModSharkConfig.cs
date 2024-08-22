@@ -35,6 +35,7 @@ public class ReportersConfig
     public required ConsoleReporterConfig Console { get; set; }
     public required NativeReporterConfig Native { get; set; }
     public required PostReporterConfig Post { get; set; }
+    public required WebHookReporterConfig WebHook { get; set; }
 }
 
 [PublicAPI]

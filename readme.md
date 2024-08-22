@@ -155,6 +155,15 @@ The template can be any valid post in MFM format, with special "variables" avail
 
 The post reporter is disabled by default.
 
+### Webhook Reporter
+
+The **Webhook reporter** publishes an announcement to Discord using a webhook.
+Multiple webhooks can be used simultaneously, and reports will be sent to all of them.
+This reporter is designed to support mass and cross-server notification use cases.
+
+The webhook reporter is disabled by default.
+
+
 ## Installing ModShark
 
 These instructions are intended for Linux environments using Systemd, and other platforms may require adjustments to the commands.
@@ -243,6 +252,11 @@ This file exists to store local secrets that should not be committed to source c
 | `ModShark.Reporters.SendGrid.FromAddress`            | String   | Email address to send reports from.<br/>Required if `ModShark.Reporters.SendGrid.Enabled` is true.                                                                                                                                                                                                                                                 |
 | `ModShark.Reporters.SendGrid.FromName`               | String   | Name to associate with the from address.<br/>Required if `ModShark.Reporters.SendGrid.Enabled` is true.<br/>Default: `"ModShark"`                                                                                                                                                                                                                  |
 | `ModShark.Reporters.SendGrid.ToAddresses`            | String[] | Array of email addresses to send reports to.<br/>Required if `ModShark.Reporters.SendGrid.Enabled` is true.                                                                                                                                                                                                                                        |
+| `ModShark.Reporters.WebHook.Enabled`                 | Boolean  | Whether the [Webhook reporter](#Webhook-Reporter) should be used.<br/>Default: `false`                                                                                                                                                                                                                                                             |
+| `ModShark.Reporters.WebHook.Hooks`                   | Hash[]   | Array of Webhook configuration objects.<br/>See the following options for details.                                                                                                                                                                                                                                                                 |
+| `ModShark.Reporters.WebHook.Hooks.Url`               | String   | URL of the webhook.                                                                                                                                                                                                                                                                                                                                |
+| `ModShark.Reporters.WebHook.Hooks.Type`              | Enum     | Indicates the type of webhook.</br>Must be equal to `Discord`.<br/>Default: `Discord`                                                                                                                                                                                                                                                              |
+| `ModShark.Reporters.WebHook.Hooks.MaxLength`         | Number   | Maximum number of characters for each webhook message.<br/>Announcements that exceed this length will be chunked.<br/>Default: `2000`                                                                                                                                                                                                              |
 | `ModShark.Rules.FlaggedInstance.BatchLimit`          | Integer  | Maximum number of instances to check at once.<br/>Default: `5000`                                                                                                                                                                                                                                                                                  |
 | `ModShark.Rules.FlaggedInstance.ContactPatterns`     | String[] | Array of regular expressions to check against each instance's admin name / email.                                                                                                                                                                                                                                                                  |
 | `ModShark.Rules.FlaggedInstance.DescriptionPatterns` | String[] | Array of regular expressions to check against each instance's description.                                                                                                                                                                                                                                                                         |
