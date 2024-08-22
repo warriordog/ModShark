@@ -10,7 +10,7 @@ using ModShark.Tests._Utils;
 using Moq;
 using SharkeyDB.Entities;
 
-// This inspection gets confused by the moqs
+// This inspection gets confused by the mocks
 // ReSharper disable StructuredMessageTemplateProblem
 
 namespace ModShark.Tests.Reports.Reporter;
