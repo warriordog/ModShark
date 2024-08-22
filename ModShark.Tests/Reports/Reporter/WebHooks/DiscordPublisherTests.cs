@@ -56,8 +56,8 @@ public class DiscordPublisherTests
         ResponseMessage = new HttpResponseMessage(HttpStatusCode.NoContent);
         MockHttpService = new Mock<IHttpService>();
         MockHttpService
-            .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<DiscordExecute>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string _, DiscordExecute _, CancellationToken _) => ResponseMessage)
+            .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<DiscordExecute>(), It.IsAny<CancellationToken>(), It.IsAny<IDictionary<string, string>>()))
+            .ReturnsAsync((string _, DiscordExecute _, CancellationToken _, IDictionary<string, string> _) => ResponseMessage)
             .Verifiable();
         
         MockRenderService = new Mock<IRenderService>();
@@ -96,7 +96,7 @@ public class DiscordPublisherTests
     {
         await PublisherUnderTest.SendReport(WebHook, FakeReport, CancellationToken.None);
         
-        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.Content.Contains("example.com")), CancellationToken.None), Times.Once);
+        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.Content.Contains("example.com")), CancellationToken.None, It.IsAny<IDictionary<string, string>>()), Times.Once);
     }
 
     [Test]
@@ -104,7 +104,7 @@ public class DiscordPublisherTests
     {
         await PublisherUnderTest.SendReport(WebHook, FakeReport, CancellationToken.None);
         
-        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.AllowedMentions.Parse != null), CancellationToken.None), Times.Once);
+        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.AllowedMentions.Parse != null), CancellationToken.None, It.IsAny<IDictionary<string, string>>()), Times.Once);
 
     }
 
@@ -113,7 +113,7 @@ public class DiscordPublisherTests
     {
         await PublisherUnderTest.SendReport(WebHook, FakeReport, CancellationToken.None);
         
-        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.Flags == MessageFlags.SuppressEmbeds), CancellationToken.None), Times.Once);
+        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.Is<DiscordExecute>(e => e.Flags == MessageFlags.SuppressEmbeds), CancellationToken.None, It.IsAny<IDictionary<string, string>>()), Times.Once);
     }
 
     [Test]
@@ -123,7 +123,7 @@ public class DiscordPublisherTests
         
         await PublisherUnderTest.SendReport(WebHook, FakeReport, CancellationToken.None);
         
-        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.IsAny<DiscordExecute>(), CancellationToken.None), Times.AtLeast(2));
+        MockHttpService.Verify(h => h.PostAsync(WebHook.Url, It.IsAny<DiscordExecute>(), CancellationToken.None, It.IsAny<IDictionary<string, string>>()), Times.AtLeast(2));
     }
 
     [TestCase("2", "0", null)]

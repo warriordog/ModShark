@@ -30,7 +30,7 @@ public class SendGridReporterTests
         MockLogger = new Mock<ILogger<SendGridReporter>>();
         MockHttpService = new Mock<IHttpService>();
         MockHttpService
-            .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<SendGridSend>(), It.IsAny<IDictionary<string, string>>(), It.IsAny<CancellationToken>()))
+            .Setup(h => h.PostAsync(It.IsAny<string>(), It.IsAny<SendGridSend>(), It.IsAny<CancellationToken>(), It.IsAny<IDictionary<string, string>>()))
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
         MockRenderService = new Mock<IRenderService>();
         MockRenderService
@@ -63,8 +63,8 @@ public class SendGridReporterTests
             .Verify(s => s.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ), Times.Never);
     }
 
@@ -80,8 +80,8 @@ public class SendGridReporterTests
             .Verify(s => s.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ), Times.Never);
     }
     
@@ -97,8 +97,8 @@ public class SendGridReporterTests
             .Verify(s => s.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ), Times.Never);
     }
     
@@ -114,8 +114,8 @@ public class SendGridReporterTests
             .Verify(s => s.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ), Times.Never);
     }
 
@@ -129,8 +129,8 @@ public class SendGridReporterTests
             .Verify(s => s.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ), Times.Never);
     }
 
@@ -141,10 +141,10 @@ public class SendGridReporterTests
             .Setup(h => h.PostAsync(
                 It.IsAny<string>(),
                 It.IsAny<SendGridSend>(),
-                It.IsAny<IDictionary<string, string>>(),
-                It.IsAny<CancellationToken>()
+                It.IsAny<CancellationToken>(),
+                It.IsAny<IDictionary<string, string>>()
             ))
-            .Callback((string u, SendGridSend b, IDictionary<string, string> h, CancellationToken _) =>
+            .Callback((string u, SendGridSend b, CancellationToken _, IDictionary<string, string> h) =>
             {
                 u.Should().Be("https://api.sendgrid.com/v3/mail/send");
 

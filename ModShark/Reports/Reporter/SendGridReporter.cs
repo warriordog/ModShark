@@ -109,7 +109,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
             ["Authorization"] = $"Bearer {reporterConfig.ApiKey}"
         };
 
-        var response = await httpService.PostAsync("https://api.sendgrid.com/v3/mail/send", send, headers, stoppingToken);
+        var response = await httpService.PostAsync("https://api.sendgrid.com/v3/mail/send", send, stoppingToken, headers: headers);
         
         if (response.StatusCode != HttpStatusCode.Accepted)
         {

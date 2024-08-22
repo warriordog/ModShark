@@ -4,24 +4,16 @@ namespace ModShark.Services;
 
 public interface IHttpService
 {
-    Task<HttpResponseMessage> PostAsync(string url, CancellationToken stoppingToken);
-    Task<HttpResponseMessage> PostAsync(string url, IDictionary<string, string> headers, CancellationToken stoppingToken);
-    Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, CancellationToken stoppingToken);
-    Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, IDictionary<string, string> headers, CancellationToken stoppingToken);
+    Task<HttpResponseMessage> PostAsync(string url, CancellationToken stoppingToken, IDictionary<string, string>? headers = null);
+    Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, CancellationToken stoppingToken, IDictionary<string, string>? headers = null);
 }
 
 public class HttpService(HttpClient client) : IHttpService
 {
-    public async Task<HttpResponseMessage> PostAsync(string url, CancellationToken stoppingToken)
-        => await PostAsync<object?>(url, null, false, null, stoppingToken);
-
-    public async Task<HttpResponseMessage> PostAsync(string url, IDictionary<string, string> headers, CancellationToken stoppingToken)
+    public async Task<HttpResponseMessage> PostAsync(string url, CancellationToken stoppingToken, IDictionary<string, string>? headers = null)
         => await PostAsync<object?>(url, null, false, headers, stoppingToken);
 
-    public async Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, CancellationToken stoppingToken)
-        => await PostAsync(url, body, true, null, stoppingToken);
-
-    public async Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, IDictionary<string, string> headers, CancellationToken stoppingToken)
+    public async Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, CancellationToken stoppingToken, IDictionary<string, string>? headers = null)
         => await PostAsync(url, body, true, headers, stoppingToken);
     
     private async Task<HttpResponseMessage> PostAsync<TBody>(string url, TBody body, bool hasBody, IDictionary<string, string>? headers, CancellationToken stoppingToken)
@@ -35,6 +27,12 @@ public class HttpService(HttpClient client) : IHttpService
             {
                 message.Headers.Add(name, value);
             }
+        }
+        
+        // Set default user-agent
+        if (!message.Headers.Contains("User-Agent"))
+        {
+            message.Headers.Add("User-Agent", "ModShark (https://github.com/warriordog/ModShark)");
         }
         
         // Attach body
