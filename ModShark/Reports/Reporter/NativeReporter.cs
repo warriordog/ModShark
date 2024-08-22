@@ -13,14 +13,14 @@ public class NativeReporterConfig
 {
     public bool Enabled { get; set; } = true;
     public bool UseApi { get; set; }
+    
+    public string InstanceReportComment { get; set; } = "ModShark: instance matched one or more flagged patterns";
+    public string UserReportComment { get; set; } = "ModShark: user matched one or more flagged patterns";
+    public string NoteReportComment { get; set; } = "ModShark: note matched one or more flagged patterns";
 }
 
 public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IUserService userService, ISharkeyHttpService http, ILinkService linkService) : INativeReporter
 {
-    private const string InstanceReportComment = "ModShark: instance matched one or more flagged patterns";
-    private const string UserReportComment = "ModShark: user matched one or more flagged patterns";
-    private const string NoteReportComment = "ModShark: note matched one or more flagged patterns";
-    
     public async Task MakeReport(Report report, CancellationToken stoppingToken)
     {
         if (!reporterConfig.Enabled)
@@ -56,7 +56,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
 
         foreach (var userReport in report.UserReports)
         {
-            await MakeReport(userReport.User.Id, userReport.User.Host, reporterId, UserReportComment, report.ReportDate, stoppingToken);
+            await MakeReport(userReport.User.Id, userReport.User.Host, reporterId, reporterConfig.UserReportComment, report.ReportDate, stoppingToken);
         }
     }
 
@@ -77,7 +77,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
                 continue;
             }
 
-            var comment = $"Instance: {linkService.GetLinkToInstance(instanceReport.Instance)}\n-----\n{InstanceReportComment}";
+            var comment = $"Instance: {linkService.GetLinkToInstance(instanceReport.Instance)}\n-----\n{reporterConfig.InstanceReportComment}";
             await MakeReport(reportedId, instanceReport.Instance.Host, reporterId, comment, report.ReportDate, stoppingToken);
         }
     }
@@ -115,7 +115,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
 
         foreach (var noteReport in report.NoteReports)
         {
-            var comment = $"Local Note: {linkService.GetLocalLinkToNote(noteReport.Note)}\n-----\n{NoteReportComment}";
+            var comment = $"Local Note: {linkService.GetLocalLinkToNote(noteReport.Note)}\n-----\n{reporterConfig.NoteReportComment}";
             
             if (noteReport.IsLocal)
                 comment = $"Note: {linkService.GetLinkToNote(noteReport.Note)}\n" + comment;
