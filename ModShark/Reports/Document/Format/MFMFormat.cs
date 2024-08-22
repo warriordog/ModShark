@@ -1,4 +1,6 @@
-﻿namespace ModShark.Reports.Document.Format;
+﻿using ModShark.Utils;
+
+namespace ModShark.Reports.Document.Format;
 
 /// <summary>
 /// Misskey-Flavored Markdown formatting.
@@ -12,7 +14,7 @@ public class MFMFormat : MarkdownFormat
     public override string BoldStart() => "<b>";
     public override string BoldEnd() => "</b>";
     
-    public override string ListItemStart() => "- ";
+    public override string ListItemStart(int level) => "- ".Indent("  ", level);
 
     public override string HeaderStart() => BoldStart();
     public override string HeaderEnd() => BoldEnd() + LineBreak();

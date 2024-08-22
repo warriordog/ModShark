@@ -7,7 +7,8 @@ public abstract class SectionBase<TBuilder> : SegmentBase<TBuilder>
         new(
             Format.ListStart(),
             this,
-            Format.ListEnd()
+            Format.ListEnd(),
+            0
         );
 
     public TBuilder AppendLineBreak() =>

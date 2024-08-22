@@ -39,8 +39,11 @@ public class HTMLFormat : DocumentFormat
     public override string ListStart() => "<ul>";
     public override string ListEnd() => "</ul>";
 
-    public override string ListItemStart() => "<li>";
-    public override string ListItemEnd() => "</li>";
+    public override string ListItemStart(int level) => "<li>";
+    public override string ListItemEnd(int level) => "</li>";
+
+    public override string SubListStart(int level) => ListItemStart(level) + ListStart();
+    public override string SubListEnd(int level) => ListEnd() + ListItemEnd(level);
 
     public override string SectionStart() => "<div>";
     public override string SectionEnd() => "</div>";

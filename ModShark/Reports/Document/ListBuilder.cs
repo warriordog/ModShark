@@ -5,13 +5,15 @@ public class ListBuilder<TBuilder> : BuilderBase<ListBuilder<TBuilder>>
 {
     private BuilderBase<TBuilder> Builder { get; }
     private string Suffix { get; }
+    private int Level { get; }
 
     public override DocumentFormat Format => Builder.Format;
-
-    public ListBuilder(string prefix, BuilderBase<TBuilder> builder, string suffix)
+    
+    public ListBuilder(string prefix, BuilderBase<TBuilder> builder, string suffix, int level)
     {
         Builder = builder;
         Suffix = suffix;
+        Level = level;
         
         Builder.Append(prefix);
     }
@@ -30,16 +32,24 @@ public class ListBuilder<TBuilder> : BuilderBase<ListBuilder<TBuilder>>
     
     public SegmentBuilder<ListBuilder<TBuilder>> BeginListItem() =>
         new(
-            Format.ListItemStart(),
+            Format.ListItemStart(Level),
             this,
-            Format.ListItemEnd()
+            Format.ListItemEnd(Level)
         );
     
     public ListBuilder<TBuilder> AppendListItem(string contents)  =>
         Append(
-            Format.ListItemStart(),
+            Format.ListItemStart(Level),
             contents,
-            Format.ListItemEnd()
+            Format.ListItemEnd(Level)
+        );
+    
+    public ListBuilder<ListBuilder<TBuilder>> BeginList() =>
+        new(
+            Format.SubListStart(Level + 1),
+            this,
+            Format.SubListEnd(Level + 1),
+            Level + 1
         );
     
     public TBuilder End()

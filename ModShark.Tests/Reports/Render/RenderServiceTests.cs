@@ -97,12 +97,6 @@ public class RenderServiceTests
     }
 
     [Test]
-    public void DefaultHints_ShouldNotLimitWidth()
-    {
-        ServiceUnderTest.DefaultHints.LimitWidth.Should().BeFalse();
-    }
-
-    [Test]
     public void RenderReport_ShouldRenderTitle()
     {
         var document = ServiceUnderTest

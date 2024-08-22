@@ -28,8 +28,11 @@ public abstract class DocumentFormat
     public abstract string ListStart();
     public abstract string ListEnd();
 
-    public abstract string ListItemStart();
-    public abstract string ListItemEnd();
+    public abstract string ListItemStart(int level);
+    public abstract string ListItemEnd(int level);
+
+    public abstract string SubListStart(int level);
+    public abstract string SubListEnd(int level);
 
     public abstract string SectionStart();
     public abstract string SectionEnd();

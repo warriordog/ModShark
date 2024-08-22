@@ -1,4 +1,6 @@
-﻿namespace ModShark.Reports.Document.Format;
+﻿using ModShark.Utils;
+
+namespace ModShark.Reports.Document.Format;
 
 /// <summary>
 /// Standard Markdown formatting.
@@ -20,8 +22,11 @@ public class MarkdownFormat : DocumentFormat
     public override string ListStart() => LineBreak();
     public override string ListEnd() => "";
 
-    public override string ListItemStart() => "* ";
-    public override string ListItemEnd() => LineBreak();
+    public override string ListItemStart(int level) => "* ".Indent("  ", level);
+    public override string ListItemEnd(int level) => LineBreak();
+
+    public override string SubListStart(int level) => "";
+    public override string SubListEnd(int level) => "";
 
     public override string SectionStart() => LineBreak();
     public override string SectionEnd() => LineBreak();
