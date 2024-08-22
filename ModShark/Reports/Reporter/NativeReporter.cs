@@ -17,8 +17,9 @@ public class NativeReporterConfig
 
 public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig reporterConfig, SharkeyContext db, ISharkeyIdService sharkeyIdService, IUserService userService, ISharkeyHttpService http, ILinkService linkService) : INativeReporter
 {
-    private const string UserReportComment = "ModShark: username matched one or more flagged patterns";
-    private const string InstanceReportComment = "ModShark: instance hostname matched one or more flagged patterns";
+    private const string InstanceReportComment = "ModShark: instance matched one or more flagged patterns";
+    private const string UserReportComment = "ModShark: user matched one or more flagged patterns";
+    private const string NoteReportComment = "ModShark: note matched one or more flagged patterns";
     
     public async Task MakeReport(Report report, CancellationToken stoppingToken)
     {
@@ -114,7 +115,7 @@ public class NativeReporter(ILogger<NativeReporter> logger, NativeReporterConfig
 
         foreach (var noteReport in report.NoteReports)
         {
-            var comment = $"Local Note: {linkService.GetLocalLinkToNote(noteReport.Note)}\n-----\n{UserReportComment}";
+            var comment = $"Local Note: {linkService.GetLocalLinkToNote(noteReport.Note)}\n-----\n{NoteReportComment}";
             
             if (noteReport.IsLocal)
                 comment = $"Note: {linkService.GetLinkToNote(noteReport.Note)}\n" + comment;
