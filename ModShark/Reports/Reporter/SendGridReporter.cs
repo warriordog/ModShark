@@ -61,13 +61,12 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
             return;
         }
         
-        var subject = "ModShark auto-moderator";
         var message = renderService
             .RenderReport(report, _documentFormat)
             .ToString();
-        logger.LogInformation("Sending email via SendGrid {subject}: {body}", subject, message);
-
-        var body = CreateSend(subject, message);
+        var body = CreateSend("ModShark auto-moderator", message);
+        
+        logger.LogInformation("Sending report via SendGrid");
         await SendEmail(body, stoppingToken);
     }
     

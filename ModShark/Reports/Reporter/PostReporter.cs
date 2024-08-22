@@ -54,10 +54,6 @@ public enum PostVisibility
 public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sharkeyConfig, PostReporterConfig reporterConfig, IUserService userService, ISharkeyHttpService http, IRenderService renderService) : IPostReporter
 {
     private const int MinimumNoteLength = 100;
-    private readonly RenderHints _renderHints = new()
-    {
-        LimitWidth = true
-    };
 
     
     // Parse the audience list from handle[] into (handle, username, host?)[].
@@ -121,6 +117,8 @@ public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sh
             logger.LogWarning("Skipping Post - max note length is too low: {limit}", sharkeyConfig.MaxNoteLength);
             return;
         }
+        
+        logger.LogInformation("Sending report via post");
 
         var visibleUserIds = await GetAudienceIds(stoppingToken);
         var posts = RenderPost(report);
@@ -166,7 +164,7 @@ public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sh
         
         // Chunk the report and generate posts.
         // We have to re-render the template each time, to ensure that the audience is carried over.
-        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM, _renderHints);
+        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM);
         return postBuilder
             .ToStrings(reportChunkSize)
             .Select(chunk => finalTemplate.Replace("$report_body", chunk))
