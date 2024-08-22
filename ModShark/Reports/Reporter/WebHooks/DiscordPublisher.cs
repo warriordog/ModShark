@@ -77,6 +77,9 @@ public class DiscordPublisher(ILogger<DiscordPublisher> logger, IHttpService htt
             // Wait for the instructed limit
             var limitMilliseconds = (int)Math.Ceiling(rateLimit.RetryAfter * 1000) + RateLimitMarginOfError;
             await timeService.Delay(limitMilliseconds, stoppingToken);
+            
+            // Retry the request
+            response = await httpService.PostAsync(url, body, stoppingToken);
         }
         
         // Check rate limit headers
