@@ -7,7 +7,7 @@ public class MarkdownFormatTests
 {
     [TestCase("", "")]
     [TestCase("Hello, world", "Hello, world")]
-    [TestCase("#()<>[]\\*-", "\\#\\(\\)\\<\\>\\[\\]\\\\\\*\\-")]
+    [TestCase("|#()<>[]\\*-", @"\|\#\(\)\<\>\[\]\\\*\-")]
     public void Text_ShouldEscapeMarkdown(string input, string expected)
     {
         var format = new MarkdownFormat();
