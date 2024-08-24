@@ -39,6 +39,8 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
             .GetRequiredService<IRuleService>()
             .RunRules(report, stoppingToken);
         
+        logger.LogDebug("Generated report with {flags} flags representing {instances} instances, {users} users, and {notes} notes", report.TotalFlags, report.InstanceReports.Count, report.UserReports.Count, report.NoteReports.Count);
+        
         // Save the report
         await scope.ServiceProvider
             .GetRequiredService<IReportService>()

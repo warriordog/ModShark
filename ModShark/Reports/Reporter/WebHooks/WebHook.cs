@@ -12,6 +12,7 @@ public class WebHook
     public WebHookType Type { get; set; } = WebHookType.Discord;
 
     public int MaxLength { get; set; } = 2000;
+    public bool IncludeFlags { get; set; } = true;
 }
 
 public enum WebHookType

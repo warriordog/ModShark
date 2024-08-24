@@ -31,7 +31,7 @@ public class FlaggedUserConfig : QueuedRuleConfig
     public int Timeout { get; set; }
 }
 
-public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db, IMetaService metaService) : QueuedRule<MSQueuedUser>(logger, config, db, db.MSQueuedUsers), IFlaggedUserRule
+public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig config, SharkeyContext db, IMetaService metaService, ITimeService timeService) : QueuedRule<MSQueuedUser>(logger, config, db, db.MSQueuedUsers), IFlaggedUserRule
 {
     // Merge and pre-compile the patterns for efficiency
     private Regex UsernamePattern { get; } = PatternUtils.CreateMatcher(config.UsernamePatterns, config.Timeout, ignoreCase: true);
@@ -112,13 +112,16 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
                     continue;
             }
 
-            if (!IsFlagged(user))
+            // For better use of database resources, we handle pattern matching in application code.
+            // This also gives us .NET's faster and more powerful regex engine.
+            if (!IsFlagged(user, out var flags))
                 continue;
             
             report.UserReports.Add(new UserReport
             {
                 Instance = user.Instance,
-                User = user
+                User = user,
+                Flags = flags
             });
 
             db.MSFlaggedUsers.Add(new MSFlaggedUser
@@ -129,25 +132,16 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         }
     }
 
-    private bool IsFlagged(User user)
+    private bool IsFlagged(User user, out ReportFlags flags)
     {
-        // We check for age first, since it's a faster comparison.
-        if (HasFlaggedAge(user))
-            return true;
-        
-        // For better use of database resources, we handle pattern matching in application code.
-        // This also gives us .NET's faster and more powerful regex engine.
-        if (HasFlaggedUsername(user))
-            return true;
-        if (HasFlaggedDisplayName(user))
-            return true;
-        if (HasFlaggedBio(user))
-            return true;
-
-        return false;
+        flags = new ReportFlags();
+        return FlagAge(user, flags)
+            || FlagUsername(user, flags)
+            || FlagDisplayName(user, flags)
+            || FlagBio(user, flags);
     }
 
-    private bool HasFlaggedAge(User user)
+    private bool FlagAge(User user, ReportFlags flags)
     {
         if (!HasAgeRanges)
             return false;
@@ -158,25 +152,25 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!user.Profile.HasBirthday)
             return false;
 
-        var today = DateTime.Now;
+        var today = timeService.Now;
         var birthday = user.Profile.Birthday.Value;
         if (birthday > today)
             return false;
 
         return AgeRanges.Any(r =>
-            r.IsInRange(birthday, today)
+            flags.TryAddAgeRange(r, birthday, today)
         );
     }
 
-    private bool HasFlaggedUsername(User user)
+    private bool FlagUsername(User user, ReportFlags flags)
     {
         if (!HasUsernamePatterns)
             return false;
         
-        return UsernamePattern.IsMatch(user.UsernameLower);
+        return flags.TryAddPattern(UsernamePattern, user.UsernameLower);
     }
 
-    private bool HasFlaggedDisplayName(User user)
+    private bool FlagDisplayName(User user, ReportFlags flags)
     {
         if (!HasDisplayNamePatterns)
             return false;
@@ -184,10 +178,10 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!user.HasName)
             return false;
 
-        return DisplayNamePattern.IsMatch(user.Name);
+        return flags.TryAddPattern(DisplayNamePattern, user.Name);
     }
 
-    private bool HasFlaggedBio(User user)
+    private bool FlagBio(User user, ReportFlags flags)
     {
         if (!HasBioPatterns)
             return false;
@@ -198,7 +192,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!user.Profile.HasDescription)
             return false;
 
-        return BioPattern.IsMatch(user.Profile.Description);
+        return flags.TryAddPattern(BioPattern, user.Profile.Description);
     }
 
     private static List<AgeRange> ParseAgeRanges(IEnumerable<string> rangePatterns) =>

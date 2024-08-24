@@ -5,24 +5,24 @@ namespace ModShark.Reports.Render;
 
 public interface IRenderService
 {
-    DocumentBuilder RenderReport(Report report, DocumentFormat format);
+    DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true);
 }
 
 public class RenderService(ILinkService linkService) : IRenderService
 {
-    public DocumentBuilder RenderReport(Report report, DocumentFormat format)
+    public DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true)
     {
         var document = new DocumentBuilder(format);
         document.AppendTitle("ModShark Report");
         
-        RenderInstanceReports(document, report);
-        RenderUserReports(document, report);
-        RenderNoteReports(document, report);
+        RenderInstanceReports(document, report, includeFlags);
+        RenderUserReports(document, report, includeFlags);
+        RenderNoteReports(document, report, includeFlags);
 
         return document;
     }
 
-    private void RenderInstanceReports(DocumentBuilder document, Report report)
+    private void RenderInstanceReports(DocumentBuilder document, Report report, bool includeFlags)
     {
         if (!report.HasInstanceReports)
             return;
@@ -30,24 +30,27 @@ public class RenderService(ILinkService linkService) : IRenderService
         var section = document.BeginSection();
         
         var count = report.InstanceReports.Count;
-        RenderSectionHeader(section, count, "instance");
+        AppendSectionHeader(section, count, "instance");
 
         var list = section.BeginList();
         foreach (var instanceReport in report.InstanceReports)
         {
-            RenderInstanceReport(list, instanceReport);
+            AppendInstanceReport(list, instanceReport);
+            
+            if (includeFlags)
+                AppendFlags(list, instanceReport.Flags);
         }
         list.End();
 
         section.End();
     }
 
-    private void RenderInstanceReport<T>(ListBuilder<T> list, InstanceReport instanceReport)
+    private void AppendInstanceReport<T>(ListBuilder<T> list, InstanceReport instanceReport)
         where T : BuilderBase<T>
     {
         var instanceLink = linkService.GetLinkToInstance(instanceReport.Instance);
         var localInstanceLink = linkService.GetLocalLinkToInstance(instanceReport.Instance);
-            
+        
         list
             .BeginListItem()
                 // Instance remote link
@@ -65,7 +68,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderUserReports(DocumentBuilder document, Report report)
+    private void RenderUserReports(DocumentBuilder document, Report report, bool includeFlags)
     {
         if (!report.HasUserReports)
             return;
@@ -73,23 +76,26 @@ public class RenderService(ILinkService linkService) : IRenderService
         var section = document.BeginSection();
         
         var count = report.UserReports.Count;
-        RenderSectionHeader(section, count, "user");
+        AppendSectionHeader(section, count, "user");
 
         var list = section.BeginList();
         foreach (var userReport in report.UserReports)
         {
             
             if (userReport.IsLocal)
-                RenderLocalUserReport(list, userReport);
+                AppendLocalUserReport(list, userReport);
             else
-                RenderRemoteUserReport(list, userReport);
+                AppendRemoteUserReport(list, userReport);
+
+            if (includeFlags)
+                AppendFlags(list, userReport.Flags);
         }
         list.End();
 
         section.End();
     }
 
-    private void RenderLocalUserReport<T>(ListBuilder<T> list, UserReport userReport)
+    private void AppendLocalUserReport<T>(ListBuilder<T> list, UserReport userReport)
         where T : BuilderBase<T>
     {
         if (!userReport.IsLocal)
@@ -110,7 +116,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
     
-    private void RenderRemoteUserReport<T>(ListBuilder<T> list, UserReport userReport)
+    private void AppendRemoteUserReport<T>(ListBuilder<T> list, UserReport userReport)
         where T : BuilderBase<T>
     {
         if (userReport.IsLocal)
@@ -159,7 +165,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderNoteReports(DocumentBuilder document, Report report)
+    private void RenderNoteReports(DocumentBuilder document, Report report, bool includeFlags)
     {
         if (!report.HasNoteReports)
             return;
@@ -167,22 +173,25 @@ public class RenderService(ILinkService linkService) : IRenderService
         var section = document.BeginSection();
         
         var count = report.NoteReports.Count;
-        RenderSectionHeader(section, count, "note");
+        AppendSectionHeader(section, count, "note");
 
         var list = section.BeginList();
         foreach (var noteReport in report.NoteReports)
         {
             if (noteReport.IsLocal)
-                RenderLocalNoteReport(list, noteReport);
+                AppendLocalNoteReport(list, noteReport);
             else
-                RenderRemoteNoteReport(list, noteReport);
+                AppendRemoteNoteReport(list, noteReport);
+
+            if (includeFlags)
+                AppendFlags(list, noteReport.Flags);
         }
         list.End();
 
         section.End();
     }
 
-    private void RenderLocalNoteReport<T>(ListBuilder<T> list, NoteReport noteReport)
+    private void AppendLocalNoteReport<T>(ListBuilder<T> list, NoteReport noteReport)
         where T : BuilderBase<T>
     {
         if (!noteReport.IsLocal)
@@ -215,7 +224,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderRemoteNoteReport<T>(ListBuilder<T> list, NoteReport noteReport)
+    private void AppendRemoteNoteReport<T>(ListBuilder<T> list, NoteReport noteReport)
         where T : BuilderBase<T>
     {
         if (noteReport.IsLocal)
@@ -284,7 +293,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private static void RenderSectionHeader<T>(SectionBuilder<T> document, int count, string type)
+    private static void AppendSectionHeader<T>(SectionBuilder<T> document, int count, string type)
         where T : BuilderBase<T>
     {
         var header = count == 1
@@ -292,5 +301,61 @@ public class RenderService(ILinkService linkService) : IRenderService
             : $"Flagged {count} {type}s:";
 
         document.AppendHeader(header);
+    }
+
+    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags) where T : BuilderBase<T>
+    {
+        if (!flags.HasAny)
+            return;
+        
+        var subList = list.BeginList();
+
+        AppendTextFlags(flags, subList);
+        AppendAgeRangeFlags(flags, subList);
+        
+        subList.End();
+    }
+
+    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    {
+        if (!flags.HasText)
+            return;
+        
+        var item = subList.BeginListItem();
+        item.Append("for text: ");
+
+        var first = true;
+        foreach (var text in flags.Text)
+        {
+            if (!first)
+                item.AppendText(", ");
+            first = false;
+
+            item.AppendCode(text);
+        }
+
+        item.End();
+    }
+
+    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    {
+        if (!flags.HasAgeRanges)
+            return;
+        
+        var item = subList.BeginListItem();
+        item.Append("for age: ");
+            
+        var first = true;
+        foreach (var ageRange in flags.AgeRanges)
+        {
+            if (!first)
+                item.AppendText(", ");
+            first = false;
+
+            item.AppendText("age ");
+            item.AppendCode(ageRange.ToString());
+        }
+
+        item.End();
     }
 }

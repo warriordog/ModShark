@@ -84,12 +84,13 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlagged(instance))
+            if (!IsFlagged(instance, out var flags))
                 continue;
             
             report.InstanceReports.Add(new InstanceReport
             {
-                Instance = instance
+                Instance = instance,
+                Flags = flags
             });
 
             db.MSFlaggedInstances.Add(new MSFlaggedInstance
@@ -100,14 +101,17 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         }
     }
 
-    private bool IsFlagged(Instance instance)
-        => HasFlaggedName(instance)
-           || HasFlaggedHostname(instance)
-           || HasFlaggedDescription(instance)
-           || HasFlaggedContact(instance)
-           || HasFlaggedSoftware(instance);
+    private bool IsFlagged(Instance instance, out ReportFlags flags)
+    {
+        flags = new ReportFlags();
+        return FlagName(instance, flags)
+            || FlagHostname(instance, flags)
+            || FlagDescription(instance, flags)
+            || FlagContact(instance, flags)
+            || FlagSoftware(instance, flags);
+    }
 
-    private bool HasFlaggedName(Instance instance)
+    private bool FlagName(Instance instance, ReportFlags flags)
     {
         if (!HasNamePatterns)
             return false;
@@ -115,43 +119,41 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!instance.HasName)
             return false;
 
-        return NamePattern.IsMatch(instance.Name);
+        return flags.TryAddPattern(NamePattern, instance.Name);
     }
 
-    private bool HasFlaggedHostname(Instance instance)
+    private bool FlagHostname(Instance instance, ReportFlags flags)
     {
         if (!HasHostnamePatterns)
             return false;
 
-        return HostnamePattern.IsMatch(instance.Host);
+
+        return flags.TryAddPattern(HostnamePattern, instance.Host);
     }
 
-    private bool HasFlaggedDescription(Instance instance)
+    private bool FlagDescription(Instance instance, ReportFlags flags)
     {
         if (!HasDescriptionPatterns)
             return false;
 
         if (!instance.HasDescription)
             return false;
-
-        return DescriptionPattern.IsMatch(instance.Description);
+        
+        return flags.TryAddPattern(DescriptionPattern, instance.Description);
     }
 
-    private bool HasFlaggedContact(Instance instance)
+    private bool FlagContact(Instance instance, ReportFlags flags)
     {
         if (!HasContactPatterns)
             return false;
 
-        if (instance.HasMaintainerName && ContactPattern.IsMatch(instance.MaintainerName))
-            return true;
-
-        if (instance.HasMaintainerEmail && ContactPattern.IsMatch(instance.MaintainerEmail))
-            return true;
-
-        return false;
+        var nameFlagged = instance.HasMaintainerName && flags.TryAddPattern(ContactPattern, instance.MaintainerName);
+        var emailFlagged = instance.HasMaintainerEmail && flags.TryAddPattern(ContactPattern, instance.MaintainerEmail);
+        
+        return nameFlagged || emailFlagged;
     }
 
-    private bool HasFlaggedSoftware(Instance instance)
+    private bool FlagSoftware(Instance instance, ReportFlags flags)
     {
         if (!HasSoftwarePatterns)
             return false;
@@ -159,7 +161,6 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!instance.HasSoftwareName && !instance.HasSoftwareVersion)
             return false;
 
-        var versionString = instance.GetSoftwareString();
-        return SoftwarePattern.IsMatch(versionString);
+        return flags.TryAddPattern(SoftwarePattern, instance.GetSoftwareString());
     }
 }

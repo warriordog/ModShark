@@ -26,6 +26,8 @@ public class PostReporterConfig
     public string? Subject { get; set; } = "ModShark Report";
     
     public string Template { get; set; } = "$report_body";
+
+    public bool IncludeFlags { get; set; }
 }
 
 public enum PostVisibility
@@ -164,7 +166,7 @@ public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sh
         
         // Chunk the report and generate posts.
         // We have to re-render the template each time, to ensure that the audience is carried over.
-        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM);
+        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM, includeFlags: reporterConfig.IncludeFlags);
         return postBuilder
             .ToStrings(reportChunkSize)
             .Select(chunk => finalTemplate.Replace("$report_body", chunk))

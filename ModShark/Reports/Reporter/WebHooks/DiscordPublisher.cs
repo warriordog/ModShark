@@ -25,7 +25,7 @@ public class DiscordPublisher(ILogger<DiscordPublisher> logger, IHttpService htt
         }
         
         var message = renderService
-            .RenderReport(report, DocumentFormat.Markdown)
+            .RenderReport(report, DocumentFormat.Markdown, includeFlags: webHook.IncludeFlags)
             .ToStrings(webHook.MaxLength)
             .ToList();
 

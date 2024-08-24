@@ -14,6 +14,7 @@ public abstract class BuilderBase<TBuilder>
         return Append(text);
     }
 
+    // TODO rename this to avoid confusion
     public TBuilder AppendText(string prefix, string contents, string suffix)
     {
         var text = Format.Text(contents);

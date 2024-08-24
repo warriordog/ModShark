@@ -34,8 +34,8 @@ public class SendGridReporterTests
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
         MockRenderService = new Mock<IRenderService>();
         MockRenderService
-            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>()))
-            .Returns((Report _, DocumentFormat f) => new DocumentBuilder(f));
+            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<bool>()))
+            .Returns((Report _, DocumentFormat f, bool _) => new DocumentBuilder(f));
 
         FakeReporterConfig = new SendGridReporterConfig
         {
@@ -49,7 +49,6 @@ public class SendGridReporterTests
         };
         ServiceUnderTest = new SendGridReporter(MockLogger.Object, FakeReporterConfig, MockHttpService.Object, MockRenderService.Object);
     }
-    
     
     [Test]
     public async Task MakeReport_ShouldBail_WhenDisabled()

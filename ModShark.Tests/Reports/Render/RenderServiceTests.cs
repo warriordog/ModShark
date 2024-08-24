@@ -64,7 +64,15 @@ public class RenderServiceTests
             {
                 new InstanceReport
                 {
-                    Instance = instance
+                    Instance = instance,
+                    Flags =
+                    {
+                        Text =
+                        {
+                            "soapbox 1.2.3",
+                            "free speech community"
+                        }
+                    }
                 }
             },
             UserReports =
@@ -72,11 +80,25 @@ public class RenderServiceTests
                 new UserReport
                 {
                     User = remoteUser,
-                    Instance = instance
+                    Instance = instance,
+                    Flags =
+                    {
+                        Text =
+                        {
+                            "slur"
+                        }
+                    }
                 },
                 new UserReport
                 {
-                    User = localUser
+                    User = localUser,
+                    Flags =
+                    {
+                        Text =
+                        {
+                            "Age: 12"
+                        }
+                    }
                 }
             },
             NoteReports =
@@ -85,12 +107,26 @@ public class RenderServiceTests
                 {
                     Note = remoteNote,
                     User = remoteUser,
-                    Instance = instance
+                    Instance = instance,
+                    Flags =
+                    {
+                        Text =
+                        {
+                            "kys"
+                        }
+                    }
                 },
                 new NoteReport
                 {
                     Note = localNote,
-                    User = localUser
+                    User = localUser,
+                    Flags =
+                    {
+                        Text =
+                        {
+                            "https://forbidden-domain.example.com"
+                        }
+                    }
                 }
             }
         };
@@ -103,7 +139,7 @@ public class RenderServiceTests
             .RenderReport(FakeReport, DocumentFormat.HTML)
             .ToString();
 
-        document.Should().Contain("<h1>ModShark Report</h1>");
+        document.Should().Contain("ModShark Report");
     }
 
     [Test]
@@ -113,7 +149,10 @@ public class RenderServiceTests
             .RenderReport(FakeReport, DocumentFormat.HTML)
             .ToString();
 
-        document.Should().Contain("<h2>Flagged 1 instance:</h2>");
+        document.Should()
+            .Contain("Flagged 1 instance:")
+            .And.Contain("instance1")
+            .And.Contain("example.com");
     }
 
     [Test]
@@ -123,7 +162,10 @@ public class RenderServiceTests
             .RenderReport(FakeReport, DocumentFormat.HTML)
             .ToString();
 
-        document.Should().Contain("<h2>Flagged 2 users:</h2>");
+        document.Should()
+            .Contain("Flagged 2 users:")
+            .And.Contain("user1")
+            .And.Contain("user2");
     }
 
     [Test]
@@ -133,6 +175,25 @@ public class RenderServiceTests
             .RenderReport(FakeReport, DocumentFormat.HTML)
             .ToString();
 
-        document.Should().Contain("<h2>Flagged 2 notes:</h2>");
+        document.Should()
+            .Contain("Flagged 2 notes:")
+            .And.Contain("note1")
+            .And.Contain("note2");
+    }
+
+    [Test]
+    public void RenderReport_ShouldIncludeFlaggedText()
+    {
+        var document = ServiceUnderTest
+            .RenderReport(FakeReport, DocumentFormat.HTML)
+            .ToString();
+
+        document.Should()
+            .Contain("soapbox 1.2.3")
+            .And.Contain("free speech community")
+            .And.Contain("slur")
+            .And.Contain("Age: 12")
+            .And.Contain("kys")
+            .And.Contain("https://forbidden-domain.example.com");
     }
 }

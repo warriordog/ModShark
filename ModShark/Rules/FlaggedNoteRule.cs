@@ -119,14 +119,15 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!HasMatchedText(note) && !HasMatchedEmoji(note))
+            if (!IsFlagged(note, out var flags))
                 continue;
             
             report.NoteReports.Add(new NoteReport
             {
                 Instance = note.Instance,
                 User = note.User!, // Guaranteed to be non-null by the Include() statement
-                Note = note
+                Note = note,
+                Flags = flags
             });
 
             db.MSFlaggedNotes.Add(new MSFlaggedNote
@@ -137,23 +138,25 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         }
     }
 
-    private bool HasMatchedText(Note note)
+    private bool IsFlagged(Note note, out ReportFlags flags)
+    {
+        flags = new ReportFlags();
+        return MatchText(note, flags) 
+            || MatchEmoji(note, flags);
+    }
+
+    private bool MatchText(Note note, ReportFlags flags)
     {
         if (!HasTextPatterns)
             return false;
-        
-        // Check "text" field
-        if (note.Text != null && TextPattern.IsMatch(note.Text))
-            return true;
 
-        // Check "cw" field if enabled
-        if (config.IncludeCW && note.CW != null && TextPattern.IsMatch(note.CW))
-            return true;
+        var textMatched = note.Text != null && flags.TryAddPattern(TextPattern, note.Text);
+        var cwMatched = note.CW != null && flags.TryAddPattern(TextPattern, note.CW);
 
-        return false;
+        return textMatched || cwMatched;
     }
 
-    private bool HasMatchedEmoji(Note note)
+    private bool MatchEmoji(Note note, ReportFlags flags)
     {
         if (!HasEmojiPatterns)
             return false;
@@ -163,6 +166,6 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
 
         return note
             .GetEmojiLongcodes()
-            .Any(e => EmojiPattern.IsMatch(e));
+            .Any(code => flags.TryAddPattern(EmojiPattern, code));
     }
 }
