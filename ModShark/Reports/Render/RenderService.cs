@@ -352,7 +352,6 @@ public class RenderService(ILinkService linkService) : IRenderService
                 item.AppendText(", ");
             first = false;
 
-            item.AppendText("age ");
             item.AppendCode(ageRange.ToString());
         }
 
