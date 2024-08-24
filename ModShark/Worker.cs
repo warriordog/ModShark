@@ -1,7 +1,14 @@
+using JetBrains.Annotations;
 using ModShark.Reports;
 using ModShark.Services;
 
 namespace ModShark;
+
+[PublicAPI]
+public class WorkerConfig
+{
+    public int PollInterval { get; set; }
+}
 
 public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFactory scopeFactory) : BackgroundService
 {
@@ -37,9 +44,4 @@ public class Worker(ILogger<Worker> logger, WorkerConfig config, IServiceScopeFa
             .GetRequiredService<IReportService>()
             .MakeReports(report, stoppingToken);
     }
-}
-
-public class WorkerConfig
-{
-    public int PollInterval { get; set; }
 }
