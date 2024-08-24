@@ -42,7 +42,16 @@ public partial record AgeRange(Age? Start, Age? End)
 
         return start <= now && end > now;
     }
-    
+
+    public override string ToString()
+    {
+        var start = Start?.ToString() ?? "0y";
+
+        return End != null
+            ? $"{start} - {End}"
+            : start;
+    }
+
     public static AgeRange Parse(string input)
     {
         var match = AgeRangeRegex().Match(input);

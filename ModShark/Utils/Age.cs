@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ModShark.Utils;
@@ -72,6 +73,31 @@ public partial record Age(int Years = 0, int Months = 0, int Days = 0) : ICompar
         if (ReferenceEquals(null, obj)) return 1;
         if (ReferenceEquals(this, obj)) return 0;
         return obj is Age other ? CompareTo(other) : throw new ArgumentException($"Object must be of type {nameof(Age)}");
+    }
+
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+
+        if (Years != 0)
+        {
+            builder.Append(Years);
+            builder.Append('y');
+        }
+
+        if (Months != 0)
+        {
+            builder.Append(Months);
+            builder.Append('m');
+        }
+
+        if (Days != 0)
+        {
+            builder.Append(Days);
+            builder.Append('d');
+        }
+
+        return builder.ToString();
     }
 
     public static bool operator <(Age? left, Age? right)
