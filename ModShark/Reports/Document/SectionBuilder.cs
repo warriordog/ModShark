@@ -29,7 +29,7 @@ public class SectionBuilder<TBuilder> : SectionBase<SectionBuilder<TBuilder>>
     }
     
     public SectionBuilder<TBuilder> AppendHeader(string contents)  =>
-        Append(
+        AppendText(
             Format.HeaderStart(),
             contents,
             Format.HeaderEnd()

@@ -30,7 +30,7 @@ public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilde
     }
     
     public DocumentBuilder AppendTitle(string contents)  =>
-        Append(
+        AppendText(
             Format.TitleStart(),
             contents,
             Format.TitleEnd()
@@ -44,7 +44,7 @@ public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilde
         );
     
     public DocumentBuilder AppendSection(string contents)  =>
-        Append(
+        AppendText(
             Format.SectionStart(),
             contents,
             Format.SectionEnd()

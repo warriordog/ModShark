@@ -4,7 +4,7 @@ public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
     where TBuilder : BuilderBase<TBuilder>
 {
     public TBuilder AppendLink(string href, string contents) =>
-        Append(
+        AppendText(
             Format.LinkStart(href),
             contents,
             Format.LinkEnd(href)
@@ -18,7 +18,7 @@ public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
         );
     
     public TBuilder AppendItalics(string contents) =>
-        Append(
+        AppendText(
             Format.ItalicsStart(),
             contents,
             Format.ItalicsEnd()
@@ -32,7 +32,7 @@ public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
         );
     
     public TBuilder AppendBold(string contents) =>
-        Append(
+        AppendText(
             Format.BoldStart(),
             contents,
             Format.BoldEnd()
@@ -46,7 +46,7 @@ public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
         );
     
     public TBuilder AppendCode(string contents) =>
-        Append(
+        AppendText(
             Format.CodeStart(),
             contents,
             Format.CodeEnd()

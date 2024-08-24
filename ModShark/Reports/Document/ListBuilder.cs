@@ -38,7 +38,7 @@ public class ListBuilder<TBuilder> : BuilderBase<ListBuilder<TBuilder>>
         );
     
     public ListBuilder<TBuilder> AppendListItem(string contents)  =>
-        Append(
+        AppendText(
             Format.ListItemStart(Level),
             contents,
             Format.ListItemEnd(Level)

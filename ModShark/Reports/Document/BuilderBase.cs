@@ -14,11 +14,9 @@ public abstract class BuilderBase<TBuilder>
         return Append(text);
     }
 
-    public TBuilder AppendText(params string[] contents)
+    public TBuilder AppendText(string prefix, string contents, string suffix)
     {
-        var texts = contents
-            .Select(c => Format.Text(c))
-            .ToArray();
-        return Append(texts);
+        var text = Format.Text(contents);
+        return Append(prefix, text, suffix);
     }
 }
