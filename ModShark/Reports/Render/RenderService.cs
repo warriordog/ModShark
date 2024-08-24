@@ -51,14 +51,14 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginListItem()
                 // Instance remote link
-                .Append("Remote instance ")
+                .AppendText("Remote instance ")
                 .BeginLink(instanceLink)
                     .AppendCode(instanceReport.Instance.Id)
-                    .Append(" (", instanceReport.Instance.Host, ")")
+                    .AppendText(" (", instanceReport.Instance.Host, ")")
                 .End()
 
                 // instance local link
-                .Append(" ")
+                .AppendText(" ")
                 .BeginLink(localInstanceLink)
                     .AppendItalics("[local mirror]")
                 .End()
@@ -101,10 +101,10 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginListItem()
                 .BeginBold()
-                    .Append("Local user ")
+                    .AppendText("Local user ")
                     .BeginLink(userLink)
                         .AppendCode(userReport.User.Id)
-                        .Append($" ({userReport.User.Username})")
+                        .AppendText($" ({userReport.User.Username})")
                     .End()
                 .End()
             .End();
@@ -126,14 +126,14 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginListItem()
                 // User remote link
-                .Append("Remote user ")
+                .AppendText("Remote user ")
                     .BeginLink(userLink)
                         .AppendCode(userReport.User.Id)
-                    .Append($" ({userReport.User.Username}@{userReport.Instance.Host})")
+                    .AppendText($" ({userReport.User.Username}@{userReport.Instance.Host})")
                 .End()
                         
                 // User local link
-                .Append(" ")
+                .AppendText(" ")
                     .BeginLink(localUserLink)
                     .AppendItalics("[local mirror]")
                 .End()
@@ -144,14 +144,14 @@ public class RenderService(ILinkService linkService) : IRenderService
             .BeginList()
                 .BeginListItem()
                     // Instance remote link
-                    .Append("from instance ")
+                    .AppendText("from instance ")
                     .BeginLink(instanceLink)
                         .AppendCode(userReport.Instance.Id)
-                        .Append($" ({userReport.Instance.Host})")
+                        .AppendText($" ({userReport.Instance.Host})")
                     .End()
 
                     // instance local link
-                    .Append(" ")
+                    .AppendText(" ")
                     .BeginLink(localInstanceLink)
                         .AppendItalics("[local mirror]")
                     .End()
@@ -195,7 +195,7 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginListItem()
                 .BeginBold()
-                    .Append("Local note ")
+                    .AppendText("Local note ")
                         .BeginLink(noteLink)
                         .AppendCode(noteReport.Note.Id)
                     .End()
@@ -206,10 +206,10 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginList()
                 .BeginListItem()
-                    .Append("by user ")
+                    .AppendText("by user ")
                     .BeginLink(userLink)
                         .AppendCode(noteReport.User.Id)
-                        .Append($" ({noteReport.User.Username})")
+                        .AppendText($" ({noteReport.User.Username})")
                     .End()
                 .End()
             .End();
@@ -233,13 +233,13 @@ public class RenderService(ILinkService linkService) : IRenderService
         list
             .BeginListItem()
                 // Note remote link
-                .Append("Remote note ")
+                .AppendText("Remote note ")
                 .BeginLink(noteLink)
                     .AppendCode(noteReport.Note.Id)
                 .End()
                     
                 // Note local link
-                .Append(" ")
+                .AppendText(" ")
                 .BeginLink(localNoteLink)
                     .AppendItalics("[local mirror]")
                 .End()
@@ -250,14 +250,14 @@ public class RenderService(ILinkService linkService) : IRenderService
             .BeginList()
                 .BeginListItem()
                     // User remote link
-                    .Append("by user ")
+                    .AppendText("by user ")
                     .BeginLink(userLink)
                         .AppendCode(noteReport.User.Id)
-                        .Append($" ({noteReport.User.Username}@{noteReport.User.Host})")
+                        .AppendText($" ({noteReport.User.Username}@{noteReport.User.Host})")
                     .End()
                         
                     // User local link
-                    .Append(" ")
+                    .AppendText(" ")
                     .BeginLink(localUserLink)
                         .AppendItalics("[local mirror]")
                     .End()
@@ -269,14 +269,14 @@ public class RenderService(ILinkService linkService) : IRenderService
             .BeginList()
                 .BeginListItem()
                     // Instance remote link
-                    .Append("from instance ")
+                    .AppendText("from instance ")
                     .BeginLink(instanceLink)
                         .AppendCode(noteReport.Instance.Id)
-                        .Append($" ({noteReport.Instance.Host})")
+                        .AppendText($" ({noteReport.Instance.Host})")
                     .End()
 
                     // instance local link
-                    .Append(" ")
+                    .AppendText(" ")
                     .BeginLink(localInstanceLink)
                         .AppendItalics("[local mirror]")
                     .End()

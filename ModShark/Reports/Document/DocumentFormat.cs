@@ -12,6 +12,8 @@ public abstract class DocumentFormat
     public static DocumentFormat MFM { get; } = new MFMFormat();
     public static DocumentFormat HTML { get; } = new HTMLFormat();
     public static DocumentFormat HTML5 { get; } = new HTML5Format();
+
+    public abstract string Text(string text);
     
     public abstract string LinkStart(string href);
     public abstract string LinkEnd(string href);

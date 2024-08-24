@@ -1,9 +1,11 @@
-﻿namespace ModShark.Reports.Document.Format;
+﻿using System.Text.RegularExpressions;
+
+namespace ModShark.Reports.Document.Format;
 
 /// <summary>
 /// Basic HTML formatting.
 /// </summary>
-public class HTMLFormat : DocumentFormat
+public partial class HTMLFormat : DocumentFormat
 {
     /// <summary>
     /// Value of the anchor's "rel" property.
@@ -16,7 +18,15 @@ public class HTMLFormat : DocumentFormat
     /// If null, then target will be excluded from the output.
     /// </summary>
     public string? LinkTarget { get; init; }
-    
+
+    // https://stackoverflow.com/a/7382028
+    public override string Text(string text) => text
+        .Replace("&", "&amp;")
+        .Replace("<", "&lt;")
+        .Replace(">", "&gt;")
+        .Replace("\"", "&quot;")
+        .Replace("'", "&#39;");
+
     public override string LinkStart(string href) =>
         LinkRel != null
             ? LinkTarget != null
@@ -55,4 +65,7 @@ public class HTMLFormat : DocumentFormat
     public override string TitleEnd() => "</h1>";
 
     public override string LineBreak() => "<br>";
+    
+    [GeneratedRegex("[<>&'\"]", RegexOptions.Compiled)]
+    private static partial Regex SensitiveHTMLTags();
 }

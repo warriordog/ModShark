@@ -1,12 +1,17 @@
-﻿using ModShark.Utils;
+﻿using System.Text.RegularExpressions;
+using ModShark.Utils;
 
 namespace ModShark.Reports.Document.Format;
 
 /// <summary>
 /// Standard Markdown formatting.
 /// </summary>
-public class MarkdownFormat : DocumentFormat
+public partial class MarkdownFormat : DocumentFormat
 {
+    // https://www.markdownguide.org/basic-syntax/#escaping-characters
+    public override string Text(string text)
+        => EscapableCharacters().Replace(text, m => @$"\{m.Value}");
+
     public override string LinkStart(string href) => "[";
     public override string LinkEnd(string href) => $"]({href})";
 
@@ -38,4 +43,8 @@ public class MarkdownFormat : DocumentFormat
     public override string TitleEnd() => LineBreak();
 
     public override string LineBreak() => "\n";
+    
+    
+    [GeneratedRegex(@"[#()<>\[\]\\*\-]", RegexOptions.Compiled)]
+    private static partial Regex EscapableCharacters();
 }

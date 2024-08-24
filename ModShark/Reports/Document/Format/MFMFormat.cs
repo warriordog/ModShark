@@ -8,6 +8,9 @@ namespace ModShark.Reports.Document.Format;
 /// </summary>
 public class MFMFormat : MarkdownFormat
 {
+    // MFM can't be escaped :|
+    public override string Text(string text) => text;
+
     public override string ItalicsStart() => "<i>";
     public override string ItalicsEnd() => "</i>";
 
