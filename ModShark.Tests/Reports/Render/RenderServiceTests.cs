@@ -18,6 +18,25 @@ public class RenderServiceTests
     public void Setup()
     {
         MockLinkService = new Mock<ILinkService>();
+        MockLinkService
+            .Setup(s => s.GetLinkToInstance(It.IsAny<Instance>()))
+            .Returns((Instance i) => $"https://example.com/instance/{i.Id}");
+        MockLinkService
+            .Setup(s => s.GetLocalLinkToInstance(It.IsAny<Instance>()))
+            .Returns((Instance i) => $"https://example.com/local/instance/{i.Id}");
+        MockLinkService
+            .Setup(s => s.GetLinkToUser(It.IsAny<User>()))
+            .Returns((User u) => $"https://example.com/user/{u.Id}");
+        MockLinkService
+            .Setup(s => s.GetLocalLinkToUser(It.IsAny<User>()))
+            .Returns((User u) => $"https://example.com/local/user/{u.Id}");
+        MockLinkService
+            .Setup(s => s.GetLinkToNote(It.IsAny<Note>()))
+            .Returns((Note n) => $"https://example.com/note/{n.Id}");
+        MockLinkService
+            .Setup(s => s.GetLocalLinkToNote(It.IsAny<Note>()))
+            .Returns((Note n) => $"https://example.com/local/note/{n.Id}");
+        
         ServiceUnderTest = new RenderService(MockLinkService.Object);
 
         var instance = new Instance

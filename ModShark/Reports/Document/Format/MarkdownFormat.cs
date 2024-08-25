@@ -13,7 +13,7 @@ public partial class MarkdownFormat : DocumentFormat
         => EscapableCharacters().Replace(text, m => @$"\{m.Value}");
 
     public override string LinkStart(string href) => "[";
-    public override string LinkEnd(string href) => $"]({href})";
+    public override string LinkEnd(string href) => $"]({Text(href)})";
 
     public override string ItalicsStart() => "*";
     public override string ItalicsEnd() => "*";

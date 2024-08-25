@@ -28,11 +28,11 @@ public class HTMLFormat : DocumentFormat
     public override string LinkStart(string href) =>
         LinkRel != null
             ? LinkTarget != null
-                ? $"<a href=\"{href}\" rel=\"{LinkRel}\" target=\"{LinkTarget}\">"
-                : $"<a href=\"{href}\" rel=\"{LinkRel}\">"
+                ? $"<a href=\"{Text(href)}\" rel=\"{Text(LinkRel)}\" target=\"{Text(LinkTarget)}\">"
+                : $"<a href=\"{Text(href)}\" rel=\"{Text(LinkRel)}\">"
             : LinkTarget != null
-                ? $"<a href=\"{href}\" target=\"{LinkTarget}\">"
-                : $"<a href=\"{href}\">";
+                ? $"<a href=\"{Text(href)}\" target=\"{Text(LinkTarget)}\">"
+                : $"<a href=\"{Text(href)}\">";
     public override string LinkEnd(string href) => "</a>";
 
     public override string ItalicsStart() => "<span style=\"font-style: italic\">";
