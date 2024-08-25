@@ -1,11 +1,9 @@
-﻿using System.Text.RegularExpressions;
-
-namespace ModShark.Reports.Document.Format;
+﻿namespace ModShark.Reports.Document.Format;
 
 /// <summary>
 /// Basic HTML formatting.
 /// </summary>
-public partial class HTMLFormat : DocumentFormat
+public class HTMLFormat : DocumentFormat
 {
     /// <summary>
     /// Value of the anchor's "rel" property.
@@ -65,7 +63,4 @@ public partial class HTMLFormat : DocumentFormat
     public override string TitleEnd() => "</h1>";
 
     public override string LineBreak() => "<br>";
-    
-    [GeneratedRegex("[<>&'\"]", RegexOptions.Compiled)]
-    private static partial Regex SensitiveHTMLTags();
 }
