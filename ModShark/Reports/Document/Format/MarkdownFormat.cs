@@ -45,6 +45,6 @@ public partial class MarkdownFormat : DocumentFormat
     public override string LineBreak() => "\n";
     
     
-    [GeneratedRegex(@"[|#()<>\[\]\\*\-]", RegexOptions.Compiled)]
+    [GeneratedRegex(@"\\|(?<=^\s*)[|#]|</?\w+/?>|]\(|(?<=^\s*)[*\-]\s", RegexOptions.Compiled)]
     private static partial Regex EscapableCharacters();
 }
