@@ -58,4 +58,18 @@ public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
             this,
             Format.CodeEnd()
         );
+    
+    public TBuilder AppendSpoiler(string contents, string placeholder = "spoiler") =>
+        AppendText(
+            Format.SpoilerStart(placeholder),
+            contents,
+            Format.SpoilerEnd(placeholder)
+        );
+    
+    public SegmentBuilder<TBuilder> BeginSpoiler(string placeholder = "spoiler") =>
+        new(
+            Format.SpoilerStart(placeholder),
+            this,
+            Format.SpoilerEnd(placeholder)
+        );
 }

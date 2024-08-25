@@ -45,5 +45,8 @@ public abstract class DocumentFormat
     public abstract string TitleStart();
     public abstract string TitleEnd();
 
+    public abstract string SpoilerStart(string placeholder);
+    public abstract string SpoilerEnd(string placeholder);
+
     public abstract string LineBreak();
 }

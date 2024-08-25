@@ -61,6 +61,10 @@ public class HTMLFormat : DocumentFormat
 
     public override string TitleStart() => "<h1>";
     public override string TitleEnd() => "</h1>";
+    
+    // HTML3 (as used in email) does not support any kind of spoiler effect
+    public override string SpoilerStart(string placeholder) => "";
+    public override string SpoilerEnd(string placeholder) => "";
 
     public override string LineBreak() => "<br>";
 }

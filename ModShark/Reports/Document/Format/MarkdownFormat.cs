@@ -42,6 +42,9 @@ public partial class MarkdownFormat : DocumentFormat
     public override string TitleStart() => "# ";
     public override string TitleEnd() => LineBreak();
 
+    public override string SpoilerStart(string placeholder) => "||";
+    public override string SpoilerEnd(string placeholder) => "||";
+
     public override string LineBreak() => "\n";
     
     

@@ -24,4 +24,7 @@ public class MFMFormat : MarkdownFormat
 
     public override string TitleStart() => HeaderStart();
     public override string TitleEnd() => HeaderEnd();
+
+    public override string SpoilerStart(string placeholder) => "$[blur ";
+    public override string SpoilerEnd(string placeholder) => "]";
 }

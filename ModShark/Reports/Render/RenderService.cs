@@ -357,7 +357,10 @@ public class RenderService(ILinkService linkService) : IRenderService
                 item.AppendText(", ");
             first = false;
 
-            item.AppendCode(text);
+            item
+                .BeginSpoiler("hidden")
+                    .AppendCode(text)
+                .End();
         }
 
         item.End();

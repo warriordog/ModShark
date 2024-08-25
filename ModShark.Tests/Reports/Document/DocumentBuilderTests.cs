@@ -13,7 +13,7 @@ public class DocumentBuilderTests
         RenderDocument(builder);
         var document = builder.ToString();
         
-        document.Should().Be("# Title1\n# Title2\n\nSection1\n\n## Header1\n## Header2\n**Bold1** **Bold2** *Italics1* *Italics2* `Code1` `Code2`\n[Link1](https://example.com) [Link2](https://example.com)\n* Item1\n* Item2\n  * Item3\n\n");
+        document.Should().Be("# Title1\n# Title2\n\nSection1\n\n## Header1\n## Header2\n**Bold1** **Bold2** *Italics1* *Italics2* `Code1` `Code2`\n[Link1](https://example.com) [Link2](https://example.com)\n* Item1\n* Item2\n  * Item3\n||Spoiler1||||Spoiler2||\n");
     }
     
     [Test]
@@ -24,7 +24,7 @@ public class DocumentBuilderTests
         RenderDocument(builder);
         var document = builder.ToString();
         
-        document.Should().Be("<b>Title1</b>\n<b>Title2</b>\n\nSection1\n\n<b>Header1</b>\n<b>Header2</b>\n<b>Bold1</b> <b>Bold2</b> <i>Italics1</i> <i>Italics2</i> `Code1` `Code2`\n[Link1](https://example.com) [Link2](https://example.com)\n- Item1\n- Item2\n  - Item3\n\n"); 
+        document.Should().Be("<b>Title1</b>\n<b>Title2</b>\n\nSection1\n\n<b>Header1</b>\n<b>Header2</b>\n<b>Bold1</b> <b>Bold2</b> <i>Italics1</i> <i>Italics2</i> `Code1` `Code2`\n[Link1](https://example.com) [Link2](https://example.com)\n- Item1\n- Item2\n  - Item3\n$[blur Spoiler1]$[blur Spoiler2]\n"); 
     }
     
     [Test]
@@ -35,7 +35,7 @@ public class DocumentBuilderTests
         RenderDocument(builder);
         var document = builder.ToString();
         
-        document.Should().Be("<h1>Title1</h1><h1>Title2</h1><div>Section1</div><div><h2>Header1</h2><h2>Header2</h2><span style=\"font-weight: bold\">Bold1</span> <span style=\"font-weight: bold\">Bold2</span> <span style=\"font-style: italic\">Italics1</span> <span style=\"font-style: italic\">Italics2</span> <code>Code1</code> <code>Code2</code><br><a href=\"https://example.com\">Link1</a> <a href=\"https://example.com\">Link2</a><ul><li>Item1</li><li>Item2</li><li><ul><li>Item3</li></ul></li></ul></div>");
+        document.Should().Be("<h1>Title1</h1><h1>Title2</h1><div>Section1</div><div><h2>Header1</h2><h2>Header2</h2><span style=\"font-weight: bold\">Bold1</span> <span style=\"font-weight: bold\">Bold2</span> <span style=\"font-style: italic\">Italics1</span> <span style=\"font-style: italic\">Italics2</span> <code>Code1</code> <code>Code2</code><br><a href=\"https://example.com\">Link1</a> <a href=\"https://example.com\">Link2</a><ul><li>Item1</li><li>Item2</li><li><ul><li>Item3</li></ul></li></ul>Spoiler1Spoiler2</div>");
     }
     
     [Test]
@@ -46,7 +46,7 @@ public class DocumentBuilderTests
         RenderDocument(builder);
         var document = builder.ToString();
         
-        document.Should().Be("<h1>Title1</h1><h1>Title2</h1><section>Section1</section><section><h2>Header1</h2><h2>Header2</h2><span style=\"font-weight: bold\">Bold1</span> <span style=\"font-weight: bold\">Bold2</span> <span style=\"font-style: italic\">Italics1</span> <span style=\"font-style: italic\">Italics2</span> <code>Code1</code> <code>Code2</code><br><a href=\"https://example.com\">Link1</a> <a href=\"https://example.com\">Link2</a><ul><li>Item1</li><li>Item2</li><li><ul><li>Item3</li></ul></li></ul></section>");
+        document.Should().Be("<h1>Title1</h1><h1>Title2</h1><section>Section1</section><section><h2>Header1</h2><h2>Header2</h2><span style=\"font-weight: bold\">Bold1</span> <span style=\"font-weight: bold\">Bold2</span> <span style=\"font-style: italic\">Italics1</span> <span style=\"font-style: italic\">Italics2</span> <code>Code1</code> <code>Code2</code><br><a href=\"https://example.com\">Link1</a> <a href=\"https://example.com\">Link2</a><ul><li>Item1</li><li>Item2</li><li><ul><li>Item3</li></ul></li></ul><details style=\"display: inline\"><summary>spoiler</summary>Spoiler1</details><details style=\"display: inline\"><summary>hidden</summary>Spoiler2</details></section>");
     }
 
     [TestCase(0)]
@@ -135,6 +135,10 @@ public class DocumentBuilderTests
                     .BeginList()
                         .AppendListItem("Item3")
                     .End()
+                .End()
+                .AppendSpoiler("Spoiler1", "spoiler")
+                .BeginSpoiler("hidden")
+                    .AppendText("Spoiler2")
                 .End()
             .End();
     }
