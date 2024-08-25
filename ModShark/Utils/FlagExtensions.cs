@@ -9,7 +9,7 @@ public static class FlagExtensions
     /// Executes a pattern and adds all matches to the ReportFlags collection.
     /// Returns true if any patterns were matched.
     /// </summary>
-    public static bool TryAddPattern(this ReportFlags flags, Regex pattern, string input)
+    public static bool TryAddPattern(this ReportFlags flags, Regex pattern, string input, string category = "text")
     {
         var matches = pattern
             .Matches(input)
@@ -18,7 +18,7 @@ public static class FlagExtensions
         
         foreach (var text in matches)
         {
-            flags.Text.Add(text);
+            flags.Text.Add(category, text);
         }
         
         return matches.Count != 0;

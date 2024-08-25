@@ -119,7 +119,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!instance.HasName)
             return false;
 
-        return flags.TryAddPattern(NamePattern, instance.Name);
+        return flags.TryAddPattern(NamePattern, instance.Name, "name");
     }
 
     private bool FlagHostname(Instance instance, ReportFlags flags)
@@ -128,7 +128,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             return false;
 
 
-        return flags.TryAddPattern(HostnamePattern, instance.Host);
+        return flags.TryAddPattern(HostnamePattern, instance.Host, "host");
     }
 
     private bool FlagDescription(Instance instance, ReportFlags flags)
@@ -139,7 +139,7 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!instance.HasDescription)
             return false;
         
-        return flags.TryAddPattern(DescriptionPattern, instance.Description);
+        return flags.TryAddPattern(DescriptionPattern, instance.Description, "description");
     }
 
     private bool FlagContact(Instance instance, ReportFlags flags)
@@ -147,8 +147,8 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!HasContactPatterns)
             return false;
 
-        var nameFlagged = instance.HasMaintainerName && flags.TryAddPattern(ContactPattern, instance.MaintainerName);
-        var emailFlagged = instance.HasMaintainerEmail && flags.TryAddPattern(ContactPattern, instance.MaintainerEmail);
+        var nameFlagged = instance.HasMaintainerName && flags.TryAddPattern(ContactPattern, instance.MaintainerName, "maintainer");
+        var emailFlagged = instance.HasMaintainerEmail && flags.TryAddPattern(ContactPattern, instance.MaintainerEmail, "maintainer");
         
         return nameFlagged || emailFlagged;
     }
@@ -161,6 +161,6 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         if (!instance.HasSoftwareName && !instance.HasSoftwareVersion)
             return false;
 
-        return flags.TryAddPattern(SoftwarePattern, instance.GetSoftwareString());
+        return flags.TryAddPattern(SoftwarePattern, instance.GetSoftwareString(), "software");
     }
 }

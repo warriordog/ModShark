@@ -320,39 +320,44 @@ public class RenderService(ILinkService linkService) : IRenderService
     {
         if (!flags.HasText)
             return;
-        
-        var item = subList.BeginListItem();
-        item.Append("for text: ");
 
-        var first = true;
-        foreach (var text in flags.Text)
+        foreach (var pair in flags.Text.Mappings)
         {
-            if (!first)
-                item.AppendText(", ");
-            first = false;
-
-            item.AppendCode(text);
+            AppendFlagsOfType(subList, pair.Key, pair.Value);
         }
-
-        item.End();
     }
 
     private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
     {
         if (!flags.HasAgeRanges)
             return;
+
+
+        var ageRanges = flags.AgeRanges
+            .Select(range => range.ToString())
+            .ToList();
+        
+        AppendFlagsOfType(subList, "age", ageRanges);
+    }
+
+    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, IReadOnlyCollection<string> flags) where T : BuilderBase<T>
+    {
+        if (flags.Count < 1)
+            return;
         
         var item = subList.BeginListItem();
-        item.Append("for age: ");
-            
+        item.AppendText("for ");
+        item.AppendText(category);
+        item.AppendText(": ");
+
         var first = true;
-        foreach (var ageRange in flags.AgeRanges)
+        foreach (var text in flags)
         {
             if (!first)
                 item.AppendText(", ");
             first = false;
 
-            item.AppendCode(ageRange.ToString());
+            item.AppendCode(text);
         }
 
         item.End();

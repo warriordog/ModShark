@@ -59,10 +59,16 @@ public class ReportFlags
 {
     public int Count => Text.Count + AgeRanges.Count;
     public bool HasAny => Count > 0;
-    
-    public ISet<string> Text { get; set; } = new HashSet<string>();
+
+    /// <summary>
+    /// Flagged text, keyed by category.
+    /// </summary>
+    public MultiMap<string, string> Text { get; set; } = [];
     public bool HasText => Text.Count > 0;
 
-    public ISet<AgeRange> AgeRanges { get; set; } = new HashSet<AgeRange>();
+    /// <summary>
+    /// Flagged age ranges
+    /// </summary>
+    public HashSet<AgeRange> AgeRanges { get; set; } = [];
     public bool HasAgeRanges => AgeRanges.Count > 0;
 }

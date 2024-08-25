@@ -167,7 +167,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!HasUsernamePatterns)
             return false;
         
-        return flags.TryAddPattern(UsernamePattern, user.UsernameLower);
+        return flags.TryAddPattern(UsernamePattern, user.Username, "username");
     }
 
     private bool FlagDisplayName(User user, ReportFlags flags)
@@ -178,7 +178,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!user.HasName)
             return false;
 
-        return flags.TryAddPattern(DisplayNamePattern, user.Name);
+        return flags.TryAddPattern(DisplayNamePattern, user.Name, "name");
     }
 
     private bool FlagBio(User user, ReportFlags flags)
@@ -192,7 +192,7 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         if (!user.Profile.HasDescription)
             return false;
 
-        return flags.TryAddPattern(BioPattern, user.Profile.Description);
+        return flags.TryAddPattern(BioPattern, user.Profile.Description, "bio");
     }
 
     private static List<AgeRange> ParseAgeRanges(IEnumerable<string> rangePatterns) =>

@@ -69,8 +69,8 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            "soapbox 1.2.3",
-                            "free speech community"
+                            ["software", "soapbox 1.2.3"] = true,
+                            ["description", "free speech community"] = true
                         }
                     }
                 }
@@ -85,7 +85,7 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            "slur"
+                            ["text", "slur"] = true
                         }
                     }
                 },
@@ -96,7 +96,7 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            "Age: 12"
+                            ["bio", "Age: 12"] = true
                         }
                     }
                 }
@@ -112,7 +112,7 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            "kys"
+                            ["text", "kys"] = true
                         }
                     }
                 },
@@ -124,7 +124,8 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            "https://forbidden-domain.example.com"
+                            ["text", "https://forbidden-domain.example.com"] = true,
+                            ["emoji", "nsfw_emoji"] = true
                         }
                     }
                 }

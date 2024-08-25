@@ -150,8 +150,8 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         if (!HasTextPatterns)
             return false;
 
-        var textMatched = note.Text != null && flags.TryAddPattern(TextPattern, note.Text);
-        var cwMatched = note.CW != null && flags.TryAddPattern(TextPattern, note.CW);
+        var textMatched = note.Text != null && flags.TryAddPattern(TextPattern, note.Text, "text");
+        var cwMatched = note.CW != null && flags.TryAddPattern(TextPattern, note.CW, "cw");
 
         return textMatched || cwMatched;
     }
@@ -166,6 +166,6 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
 
         return note
             .GetEmojiLongcodes()
-            .Any(code => flags.TryAddPattern(EmojiPattern, code));
+            .Any(code => flags.TryAddPattern(EmojiPattern, code, "emoji"));
     }
 }
