@@ -14,6 +14,7 @@ public abstract class DocumentFormat
     public static DocumentFormat HTML5 { get; } = new HTML5Format();
 
     public abstract string Text(string text);
+    public abstract string TextInline(string line);
     
     public abstract string LinkStart(string href);
     public abstract string LinkEnd(string href);

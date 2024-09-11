@@ -25,6 +25,8 @@ public class HTMLFormat : DocumentFormat
         .Replace("\"", "&quot;")
         .Replace("'", "&#39;");
 
+    public override string TextInline(string line) => Text(line);
+
     public override string LinkStart(string href) =>
         LinkRel != null
             ? LinkTarget != null

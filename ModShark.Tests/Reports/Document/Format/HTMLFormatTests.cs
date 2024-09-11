@@ -39,4 +39,22 @@ public class HTMLFormatTests
 
         actual.Should().Be(expected);
     }
+
+    [TestCase("", "")]
+    [TestCase("hello, world", "hello, world")]
+    [TestCase("<", "&lt;")]
+    [TestCase(">", "&gt;")]
+    [TestCase("&", "&amp;")]
+    [TestCase("\"", "&quot;")]
+    [TestCase("'", "&#39;")]
+    [TestCase("<span class=\"foo\">'&amp;'</span>", "&lt;span class=&quot;foo&quot;&gt;&#39;&amp;amp;&#39;&lt;/span&gt;")]
+    [TestCase(">", "&gt;")]
+    public void TextInline_ShouldEscapeHTML(string input, string expected)
+    {
+        var format = new HTMLFormat();
+
+        var actual = format.TextInline(input);
+
+        actual.Should().Be(expected);
+    }
 }

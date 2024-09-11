@@ -14,6 +14,12 @@ public abstract class BuilderBase<TBuilder>
         return Append(text);
     }
 
+    public TBuilder AppendInline(string contents)
+    {
+        var line = Format.TextInline(contents);
+        return Append(line);
+    }
+
     // TODO rename this to avoid confusion
     public TBuilder AppendText(string prefix, string contents, string suffix)
     {
