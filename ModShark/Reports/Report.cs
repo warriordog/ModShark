@@ -61,9 +61,9 @@ public class ReportFlags
     public bool HasAny => Count > 0;
 
     /// <summary>
-    /// Flagged text, keyed by category.
+    /// Flagged text
     /// </summary>
-    public MultiMap<string, string> Text { get; set; } = [];
+    public Dictionary<string, MultiMap<string, Range>> Text { get; set; } = [];
     public bool HasText => Text.Count > 0;
 
     /// <summary>
@@ -71,4 +71,18 @@ public class ReportFlags
     /// </summary>
     public HashSet<AgeRange> AgeRanges { get; set; } = [];
     public bool HasAgeRanges => AgeRanges.Count > 0;
+
+    /// <summary>
+    /// Adds text with a category and flagged sub-range.
+    /// </summary>
+    public void AddText(string text, string category, Range range)
+    {
+        if (!Text.TryGetValue(category, out var categoryMap))
+        {
+            categoryMap = [];
+            Text.Add(category, categoryMap);
+        }
+
+        categoryMap.Add(text, range);
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using ModShark.Reports.Document;
 using ModShark.Services;
+using ModShark.Utils;
 
 namespace ModShark.Reports.Render;
 
@@ -303,7 +304,8 @@ public class RenderService(ILinkService linkService) : IRenderService
         document.AppendHeader(header);
     }
 
-    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags) where T : BuilderBase<T>
+    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags)
+        where T : BuilderBase<T>
     {
         if (!flags.HasAny)
             return;
@@ -316,31 +318,36 @@ public class RenderService(ILinkService linkService) : IRenderService
         subList.End();
     }
 
-    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList)
+        where T : BuilderBase<T>
     {
         if (!flags.HasText)
             return;
 
-        foreach (var pair in flags.Text.Mappings)
+        foreach (var pair in flags.Text)
         {
             AppendFlagsOfType(subList, pair.Key, pair.Value);
         }
     }
 
-    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList)
+        where T : BuilderBase<T>
     {
         if (!flags.HasAgeRanges)
             return;
 
 
-        var ageRanges = flags.AgeRanges
-            .Select(range => range.ToString())
-            .ToList();
+        var rangeFlags = new MultiMap<string, Range>();
+        foreach (var ageRange in flags.AgeRanges)
+        {
+            rangeFlags.Add(ageRange.ToString(), Range.All);
+        }
         
-        AppendFlagsOfType(subList, "age", ageRanges);
+        AppendFlagsOfType(subList, "age", rangeFlags);
     }
 
-    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, IReadOnlyCollection<string> flags) where T : BuilderBase<T>
+    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, MultiMap<string, Range> flags)
+        where T : BuilderBase<T>
     {
         if (flags.Count < 1)
             return;
@@ -351,7 +358,7 @@ public class RenderService(ILinkService linkService) : IRenderService
         item.AppendText(": ");
 
         var first = true;
-        foreach (var text in flags)
+        foreach (var flag in flags.Mappings)
         {
             if (!first)
                 item.AppendText(", ");
@@ -359,7 +366,7 @@ public class RenderService(ILinkService linkService) : IRenderService
 
             item
                 .BeginSpoiler("hidden")
-                    .AppendCode(text)
+                    .AppendFlaggedText(flag.Key, flag.Value)
                 .End();
         }
 

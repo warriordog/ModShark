@@ -13,12 +13,15 @@ public static class FlagExtensions
     {
         var matches = pattern
             .Matches(input)
-            .Select(m => m.Value)
             .ToList();
         
-        foreach (var text in matches)
+        foreach (var match in matches)
         {
-            flags.Text.Add(category, text);
+            var start = match.Index;
+            var end = match.Index + match.Length;
+            var range = new Range(start, end);
+            
+            flags.AddText(input, category, range);
         }
         
         return matches.Count != 0;
