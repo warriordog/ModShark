@@ -52,7 +52,7 @@ public class DiscordPublisher(ILogger<DiscordPublisher> logger, IHttpService htt
             if (response.StatusCode != HttpStatusCode.NoContent)
             {
                 var details = await response.Content.ReadAsStringAsync(stoppingToken);
-                logger.LogError("Failed to send WebHook: got HTTP/{code} {details}", response.StatusCode, details);
+                logger.LogError("Failed to send WebHook: got HTTP/{code} {status} - {details}", (int)response.StatusCode, response.StatusCode, details);
                 break;
             }
         }
