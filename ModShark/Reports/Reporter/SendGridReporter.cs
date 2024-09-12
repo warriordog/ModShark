@@ -14,7 +14,9 @@ public interface ISendGridReporter : IReporter;
 public class SendGridReporterConfig
 {
     public bool Enabled { get; set; }
-    public bool IncludeFlags { get; set; } = true;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<FlagInclusion>))]
+    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.None;
     public string ApiKey { get; set; } = "";
     public string FromAddress { get; set; } = "";
     public string FromName { get; set; } = "";
@@ -63,7 +65,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
         }
         
         var message = renderService
-            .RenderReport(report, _documentFormat, includeFlags: reporterConfig.IncludeFlags)
+            .RenderReport(report, _documentFormat, includeFlags: reporterConfig.FlagInclusion)
             .ToString();
         var body = CreateSend("ModShark auto-moderator", message);
         

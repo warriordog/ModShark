@@ -4,14 +4,32 @@ using ModShark.Utils;
 
 namespace ModShark.Reports.Render;
 
+public enum FlagInclusion
+{
+    /// <summary>
+    /// Flagged content is not included.
+    /// </summary>
+    None,
+    
+    /// <summary>
+    /// Only the exact fragment of matched content is included.
+    /// </summary>
+    Minimal,
+    
+    /// <summary>
+    /// The entire block of flagged content is included.
+    /// </summary>
+    Full
+}
+
 public interface IRenderService
 {
-    DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true);
+    DocumentBuilder RenderReport(Report report, DocumentFormat format, FlagInclusion includeFlags = FlagInclusion.None);
 }
 
 public class RenderService(ILinkService linkService) : IRenderService
 {
-    public DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true)
+    public DocumentBuilder RenderReport(Report report, DocumentFormat format, FlagInclusion includeFlags = FlagInclusion.None)
     {
         var document = new DocumentBuilder(format);
         document.AppendTitle("ModShark Report");
@@ -23,7 +41,7 @@ public class RenderService(ILinkService linkService) : IRenderService
         return document;
     }
 
-    private void RenderInstanceReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderInstanceReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasInstanceReports)
             return;
@@ -37,10 +55,9 @@ public class RenderService(ILinkService linkService) : IRenderService
         foreach (var instanceReport in report.InstanceReports)
         {
             var group = list.BeginGroup();
-            AppendInstanceReport(group, instanceReport);
             
-            if (includeFlags)
-                AppendFlags(group, instanceReport.Flags);
+            AppendInstanceReport(group, instanceReport);
+            AppendFlags(group, instanceReport.Flags, includeFlags);
             
             group.End();
         }
@@ -72,7 +89,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderUserReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderUserReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasUserReports)
             return;
@@ -92,8 +109,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             else
                 AppendRemoteUserReport(group, userReport);
 
-            if (includeFlags)
-                AppendFlags(group, userReport.Flags);
+            AppendFlags(group, userReport.Flags, includeFlags);
 
             group.End();
         }
@@ -172,7 +188,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderNoteReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderNoteReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasNoteReports)
             return;
@@ -192,8 +208,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             else
                 AppendRemoteNoteReport(group, noteReport);
 
-            if (includeFlags)
-                AppendFlags(group, noteReport.Flags);
+            AppendFlags(group, noteReport.Flags, includeFlags);
 
             group.End();
         }
@@ -314,21 +329,24 @@ public class RenderService(ILinkService linkService) : IRenderService
         document.AppendHeader(header);
     }
 
-    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags)
+    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags, FlagInclusion includeFlags)
         where T : BuilderBase<T>
     {
+        if (includeFlags == FlagInclusion.None)
+            return;
+        
         if (!flags.HasAny)
             return;
         
         var subList = list.BeginList();
 
-        AppendTextFlags(flags, subList);
-        AppendAgeRangeFlags(flags, subList);
+        AppendTextFlags(flags, subList, includeFlags);
+        AppendAgeRangeFlags(flags, subList, includeFlags);
         
         subList.End();
     }
 
-    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList)
+    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList, FlagInclusion includeFlags)
         where T : BuilderBase<T>
     {
         if (!flags.HasText)
@@ -336,11 +354,11 @@ public class RenderService(ILinkService linkService) : IRenderService
 
         foreach (var pair in flags.Text)
         {
-            AppendFlagsOfType(subList, pair.Key, pair.Value);
+            AppendFlagsOfType(subList, pair.Key, pair.Value, includeFlags);
         }
     }
 
-    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList)
+    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList, FlagInclusion includeFlags)
         where T : BuilderBase<T>
     {
         if (!flags.HasAgeRanges)
@@ -353,10 +371,10 @@ public class RenderService(ILinkService linkService) : IRenderService
             rangeFlags.Add(ageRange.ToString(), Range.All);
         }
         
-        AppendFlagsOfType(subList, "age", rangeFlags);
+        AppendFlagsOfType(subList, "age", rangeFlags, includeFlags);
     }
 
-    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, MultiMap<string, Range> flags)
+    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, MultiMap<string, Range> flags, FlagInclusion includeFlags)
         where T : BuilderBase<T>
     {
         if (flags.Count < 1)
@@ -374,10 +392,10 @@ public class RenderService(ILinkService linkService) : IRenderService
                 item.AppendText(", ");
             first = false;
 
-            item
-                .BeginSpoiler("hidden")
-                    .AppendFlaggedText(flag.Key, flag.Value)
-                .End();
+            if (includeFlags == FlagInclusion.Full)
+                item.AppendFullFlaggedText(flag.Key, flag.Value);
+            else
+                item.AppendMinimalFlaggedText(flag.Key, flag.Value);
         }
 
         item.End();

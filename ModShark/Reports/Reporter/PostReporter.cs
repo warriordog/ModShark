@@ -27,7 +27,8 @@ public class PostReporterConfig
     
     public string Template { get; set; } = "$report_body";
 
-    public bool IncludeFlags { get; set; }
+    [JsonConverter(typeof(JsonStringEnumConverter<FlagInclusion>))]
+    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.None;
 }
 
 public enum PostVisibility
@@ -166,14 +167,12 @@ public partial class PostReporter(ILogger<PostReporter> logger, SharkeyConfig sh
         
         // Chunk the report and generate posts.
         // We have to re-render the template each time, to ensure that the audience is carried over.
-        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM, includeFlags: reporterConfig.IncludeFlags);
+        var postBuilder = renderService.RenderReport(report, DocumentFormat.MFM, includeFlags: reporterConfig.FlagInclusion);
         return postBuilder
             .ToStrings(reportChunkSize)
             .Select(chunk => finalTemplate.Replace("$report_body", chunk))
             .ToList();
     }
-
-    
 
     // Can be simplified once this is implemented: https://github.com/dotnet/efcore/issues/11799
     private async Task<List<string>?> GetAudienceIds(CancellationToken stoppingToken)

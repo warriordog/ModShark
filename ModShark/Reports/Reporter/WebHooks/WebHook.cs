@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 using JetBrains.Annotations;
+using ModShark.Reports.Render;
 
 namespace ModShark.Reports.Reporter.WebHooks;
 
@@ -12,7 +13,9 @@ public class WebHook
     public WebHookType Type { get; set; } = WebHookType.Discord;
 
     public int MaxLength { get; set; } = 2000;
-    public bool IncludeFlags { get; set; } = true;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<FlagInclusion>))]
+    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.None;
 }
 
 public enum WebHookType

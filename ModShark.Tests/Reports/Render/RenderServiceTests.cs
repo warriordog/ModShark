@@ -162,7 +162,7 @@ public class RenderServiceTests
                         {
                             ["text"] = new MultiMap<string, Range>
                             {
-                                { "https://forbidden-domain.example.com", Range.StartAt(9) }
+                                { "https://forbidden-domain.example.com", Range.StartAt(8) }
                             },
                             ["emoji"] = new MultiMap<string, Range>
                             {
@@ -225,15 +225,53 @@ public class RenderServiceTests
     }
 
     [Test]
-    public void RenderReport_ShouldIncludeFlaggedText()
+    public void RenderReport_ShouldNotIncludeAnyContent_WhenFlagInclusionIsNone()
     {
         var document = ServiceUnderTest
-            .RenderReport(FakeReport, DocumentFormat.HTML)
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.None)
+            .ToString();
+
+        document.Should()
+            .NotContain("soapbox")
+            .And.NotContain("1.2.3")
+            .And.NotContain("free speech")
+            .And.NotContain("community")
+            .And.NotContain("slur")
+            .And.NotContain("Age: 12")
+            .And.NotContain("kys")
+            .And.NotContain("forbidden-domain.example.com");
+    }
+
+    [Test]
+    public void RenderReport_ShouldIncludeFlaggedContent_WhenFlagInclusionIsMinimal()
+    {
+        var document = ServiceUnderTest
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.Minimal)
             .ToString();
 
         document.Should()
             .Contain("soapbox")
+            .And.NotContain("1.2.3")
             .And.Contain("free speech")
+            .And.NotContain("community")
+            .And.Contain("slur")
+            .And.Contain("Age: 12")
+            .And.Contain("kys")
+            .And.Contain("forbidden-domain.example.com");
+    }
+
+    [Test]
+    public void RenderReport_ShouldIncludeAllContent_WhenFlagInclusionIsFull()
+    {
+        var document = ServiceUnderTest
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.Full)
+            .ToString();
+
+        document.Should()
+            .Contain("soapbox")
+            .And.Contain("1.2.3")
+            .And.Contain("free speech")
+            .And.Contain("community")
             .And.Contain("slur")
             .And.Contain("Age: 12")
             .And.Contain("kys")
