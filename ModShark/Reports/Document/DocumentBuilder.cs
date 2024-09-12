@@ -10,12 +10,9 @@ namespace ModShark.Reports.Document;
 /// This implementation does not attempt to sanitize or filter the input.
 /// Ensure that all string values are trusted or externally validated!
 /// </remarks>
-public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilder>
+public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilder>(null, null)
 {
     public override DocumentFormat Format { get; } = format;
-    
-    public override string? Prefix => null;
-    public override string? Suffix => null;
     protected override DocumentBuilder Self => this;
     
     public DocumentBuilder AppendTitle(string contents)  =>
@@ -48,6 +45,15 @@ public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilde
                 this,
                 Format.SectionEnd()
             )
+        );
+    
+    /// <summary>
+    /// Creates a logical group of related elements that should be rendered together.
+    /// This does not change the generated output, but will ensure that grouped lines wrap together.
+    /// </summary>    
+    public SectionBuilder<DocumentBuilder> BeginGroup() =>
+        Append(
+            new SectionBuilder<DocumentBuilder>(null, Self, null)
         );
 
     public override string ToString()

@@ -1,6 +1,6 @@
 ﻿namespace ModShark.Reports.Document;
 
-public abstract class SectionBase<TThis> : SegmentBase<TThis>
+public abstract class SectionBase<TThis>(string? prefix, string? suffix) : SegmentBase<TThis>(prefix, suffix)
     where TThis : SectionBase<TThis>
 {
     public ListBuilder<TThis> BeginList() =>

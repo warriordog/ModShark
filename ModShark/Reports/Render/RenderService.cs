@@ -36,10 +36,13 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var instanceReport in report.InstanceReports)
         {
-            AppendInstanceReport(list, instanceReport);
+            var group = list.BeginGroup();
+            AppendInstanceReport(group, instanceReport);
             
             if (includeFlags)
-                AppendFlags(list, instanceReport.Flags);
+                AppendFlags(group, instanceReport.Flags);
+            
+            group.End();
         }
         list.End();
 
@@ -82,14 +85,17 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var userReport in report.UserReports)
         {
+            var group = list.BeginGroup();
             
             if (userReport.IsLocal)
-                AppendLocalUserReport(list, userReport);
+                AppendLocalUserReport(group, userReport);
             else
-                AppendRemoteUserReport(list, userReport);
+                AppendRemoteUserReport(group, userReport);
 
             if (includeFlags)
-                AppendFlags(list, userReport.Flags);
+                AppendFlags(group, userReport.Flags);
+
+            group.End();
         }
         list.End();
 
@@ -179,13 +185,17 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var noteReport in report.NoteReports)
         {
+            var group = list.BeginGroup();
+            
             if (noteReport.IsLocal)
-                AppendLocalNoteReport(list, noteReport);
+                AppendLocalNoteReport(group, noteReport);
             else
-                AppendRemoteNoteReport(list, noteReport);
+                AppendRemoteNoteReport(group, noteReport);
 
             if (includeFlags)
-                AppendFlags(list, noteReport.Flags);
+                AppendFlags(group, noteReport.Flags);
+
+            group.End();
         }
         list.End();
 

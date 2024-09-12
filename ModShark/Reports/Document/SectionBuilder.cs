@@ -1,12 +1,9 @@
 ﻿namespace ModShark.Reports.Document;
 
-public class SectionBuilder<TParent>(string prefix, TParent parent, string suffix) : SectionBase<SectionBuilder<TParent>>
+public class SectionBuilder<TParent>(string? prefix, TParent parent, string? suffix) : SectionBase<SectionBuilder<TParent>>(prefix, suffix)
     where TParent : BuilderBase<TParent>
 {
     protected override SectionBuilder<TParent> Self => this;
-    
-    public override string Prefix { get; } = prefix;
-    public override string Suffix { get; } = suffix;
 
     public override DocumentFormat Format => parent.Format;
     
@@ -27,4 +24,13 @@ public class SectionBuilder<TParent>(string prefix, TParent parent, string suffi
         );
     
     public TParent End() => parent;
+    
+    /// <summary>
+    /// Creates a logical group of related elements that should be rendered together.
+    /// This does not change the generated output, but will ensure that grouped lines wrap together.
+    /// </summary>    
+    public SectionBuilder<SectionBuilder<TParent>> BeginGroup() =>
+        Append(
+            new SectionBuilder<SectionBuilder<TParent>>(null, Self, null)
+        );
 }

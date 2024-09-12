@@ -1,10 +1,8 @@
 ﻿namespace ModShark.Reports.Document;
 
-public class ListBuilder<TParent>(string prefix, TParent parent, string suffix, int level) : BuilderBase<ListBuilder<TParent>>
+public class ListBuilder<TParent>(string? prefix, TParent parent, string? suffix, int level) : BuilderBase<ListBuilder<TParent>>(prefix, suffix)
     where TParent : BuilderBase<TParent>
 {
-    public override string Prefix { get; } = prefix;
-    public override string Suffix { get; } = suffix;
     protected override ListBuilder<TParent> Self => this;
 
     private int Level { get; } = level;
@@ -38,4 +36,13 @@ public class ListBuilder<TParent>(string prefix, TParent parent, string suffix, 
         );
 
     public TParent End() => parent;
+    
+    /// <summary>
+    /// Creates a logical group of related elements that should be rendered together.
+    /// This does not change the generated output, but will ensure that grouped lines wrap together.
+    /// </summary>    
+    public ListBuilder<ListBuilder<TParent>> BeginGroup() => 
+        Append(
+            new ListBuilder<ListBuilder<TParent>>(null, Self, null, Level)
+        );
 }

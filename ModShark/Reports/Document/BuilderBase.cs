@@ -2,7 +2,7 @@
 
 namespace ModShark.Reports.Document;
 
-public abstract class BuilderBase
+public abstract class BuilderBase(string? prefix, string? suffix)
 {
     /// <summary>
     /// The format of text produced from this builder.
@@ -25,16 +25,16 @@ public abstract class BuilderBase
 
         return total;
     }
-    
+
     /// <summary>
     /// String to prepend before the contents and children.
     /// </summary>
-    public abstract string? Prefix { get; }
-    
+    public string? Prefix { get; } = prefix;
+
     /// <summary>
     /// String to append after the contents and children.
     /// </summary>
-    public abstract string? Suffix { get; }
+    public string? Suffix { get; } = suffix;
 
     /// <summary>
     /// Returns the content of this builder as a list of strings and child builders.
@@ -43,7 +43,7 @@ public abstract class BuilderBase
     protected readonly List<Element> Elements = [];
 }
 
-public abstract class BuilderBase<TThis> : BuilderBase
+public abstract class BuilderBase<TThis>(string? prefix, string? suffix) : BuilderBase(prefix, suffix)
     where TThis : BuilderBase<TThis>
 {
     protected abstract TThis Self { get; }

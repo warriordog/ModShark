@@ -1,6 +1,6 @@
 ﻿namespace ModShark.Reports.Document;
 
-public abstract class SegmentBase<TThis> : BuilderBase<TThis>
+public abstract class SegmentBase<TThis>(string? prefix, string? suffix) : BuilderBase<TThis>(prefix, suffix)
     where TThis : BuilderBase<TThis>
 {
     public TThis AppendLink(string href, string contents) =>
