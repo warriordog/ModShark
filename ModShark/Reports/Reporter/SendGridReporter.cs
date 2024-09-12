@@ -16,7 +16,7 @@ public class SendGridReporterConfig
     public bool Enabled { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter<FlagInclusion>))]
-    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.None;
+    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.Full;
     public string ApiKey { get; set; } = "";
     public string FromAddress { get; set; } = "";
     public string FromName { get; set; } = "";

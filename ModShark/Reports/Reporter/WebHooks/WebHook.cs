@@ -15,7 +15,7 @@ public class WebHook
     public int MaxLength { get; set; } = 2000;
 
     [JsonConverter(typeof(JsonStringEnumConverter<FlagInclusion>))]
-    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.None;
+    public FlagInclusion FlagInclusion { get; set; } = FlagInclusion.Full;
 }
 
 public enum WebHookType
