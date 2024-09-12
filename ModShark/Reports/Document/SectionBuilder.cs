@@ -1,47 +1,30 @@
 ﻿namespace ModShark.Reports.Document;
 
-public class SectionBuilder<TBuilder> : SectionBase<SectionBuilder<TBuilder>>
-    where TBuilder : BuilderBase<TBuilder>
+public class SectionBuilder<TParent>(string prefix, TParent parent, string suffix) : SectionBase<SectionBuilder<TParent>>
+    where TParent : BuilderBase<TParent>
 {
-    private SectionBase<TBuilder> Builder { get; }
-    private string Suffix { get; }
-
-    public override DocumentFormat Format => Builder.Format;
+    protected override SectionBuilder<TParent> Self => this;
     
-    public SectionBuilder(string prefix, SectionBase<TBuilder> builder, string suffix)
-    {
-        Builder = builder;
-        Suffix = suffix;
-        
-        Builder.Append(prefix);
-    }
+    public override string Prefix { get; } = prefix;
+    public override string Suffix { get; } = suffix;
 
-    public override SectionBuilder<TBuilder> Append(string contents)
-    {
-        Builder.Append(contents);
-        return this;
-    }
-
-    public override SectionBuilder<TBuilder> Append(params string[] contents)
-    {
-        Builder.Append(contents);
-        return this;
-    }
+    public override DocumentFormat Format => parent.Format;
     
-    public SectionBuilder<TBuilder> AppendHeader(string contents)  =>
-        AppendText(
+    public SectionBuilder<TParent> AppendHeader(string contents)  =>
+        Append(
             Format.HeaderStart(),
             contents,
             Format.HeaderEnd()
         );
     
-    public SegmentBuilder<SectionBuilder<TBuilder>> BeginHeader() =>
-        new(
-            Format.HeaderStart(),
-            this,
-            Format.HeaderEnd()
+    public SegmentBuilder<SectionBuilder<TParent>> BeginHeader() =>
+        Append(
+            new SegmentBuilder<SectionBuilder<TParent>>(
+                Format.HeaderStart(),
+                this,
+                Format.HeaderEnd()
+            )
         );
     
-    public TBuilder End()
-        => Builder.Append(Suffix);
+    public TParent End() => parent;
 }

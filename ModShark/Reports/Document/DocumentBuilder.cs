@@ -12,78 +12,116 @@ namespace ModShark.Reports.Document;
 /// </remarks>
 public class DocumentBuilder(DocumentFormat format) : SectionBase<DocumentBuilder>
 {
-    private List<string> Document { get; } = [];
     public override DocumentFormat Format { get; } = format;
-
-
-    public override DocumentBuilder Append(string contents)
-    {
-        Document.Add(contents);
-        return this;
-    }
     
-    public override DocumentBuilder Append(params string[] contents)
-    {
-        var segment = string.Join("", contents);
-        Document.Add(segment);
-        return this;
-    }
+    public override string? Prefix => null;
+    public override string? Suffix => null;
+    protected override DocumentBuilder Self => this;
     
     public DocumentBuilder AppendTitle(string contents)  =>
-        AppendText(
+        Append(
             Format.TitleStart(),
             contents,
             Format.TitleEnd()
         );
     
     public SegmentBuilder<DocumentBuilder> BeginTitle() =>
-        new(
-            Format.TitleStart(),
-            this,
-            Format.TitleEnd()
+        Append(
+            new SegmentBuilder<DocumentBuilder>(
+                Format.TitleStart(),
+                this,
+                Format.TitleEnd()
+            )
         );
     
     public DocumentBuilder AppendSection(string contents)  =>
-        AppendText(
+        Append(
             Format.SectionStart(),
             contents,
             Format.SectionEnd()
         );
     
     public SectionBuilder<DocumentBuilder> BeginSection() =>
-        new(
-            Format.SectionStart(),
-            this,
-            Format.SectionEnd()
+        Append(
+            new SectionBuilder<DocumentBuilder>(
+                Format.SectionStart(),
+                this,
+                Format.SectionEnd()
+            )
         );
 
-    public override string ToString() =>
-        string.Join("", Document);
+    public override string ToString()
+    {
+        var stringBuilder = new StringBuilder();
+        ToStrings(int.MaxValue, [], this, ref stringBuilder);
+        return stringBuilder.ToString();
+    }
 
-    public IEnumerable<string> ToStrings(int maxLength)
+    public List<string> ToStrings(int maxLength)
     {
         if (maxLength < 1)
             throw new ArgumentOutOfRangeException(nameof(maxLength), maxLength, "max length must be a positive integer");
+
+        var blocks = new List<string>();
+        var stringBuilder = new StringBuilder();
+
+        // Serialize into blocks
+        ToStrings(maxLength, blocks, this, ref stringBuilder);
         
-        var builder = new StringBuilder();
-
-        // Append each segment, yielding each time we reach the max length
-        foreach (var segment in Document)
-        {
-            var nextLength = builder.Length + segment.Length;
-            if (nextLength > maxLength)
-            {
-                yield return builder.ToString();
-                builder = new StringBuilder();
-            }
-
-            builder.Append(segment);
-        }
-
         // Make sure we get the last partial segment
-        if (builder.Length > 0)
+        if (stringBuilder.Length > 0)
+            blocks.Add(stringBuilder.ToString());
+
+        return blocks;
+    }
+    
+    private static void ToStrings(int maxLength, List<string> blocks, BuilderBase docBuilder, ref StringBuilder stringBuilder)
+    {
+        // 1. If the builder doesn't fit in the remaining space, but *could* fit in an empty block, then break.
+        var docLength = docBuilder.GetLength();
+        var nextLength = stringBuilder.Length + docLength;
+        if (nextLength > maxLength && docLength <= maxLength)
         {
-            yield return builder.ToString();
+            var block = stringBuilder.ToString();
+            blocks.Add(block);
+            
+            stringBuilder = new StringBuilder();
         }
+        
+        // 2. Write prefix
+        if (docBuilder.Prefix != null)
+            AppendString(maxLength, blocks, docBuilder.Prefix, ref stringBuilder);
+        
+        // 3. Write contents.
+        foreach (var child in docBuilder.GetElements())
+        {
+            // Append text directly
+            if (child.IsText)
+                AppendString(maxLength, blocks, child.Text, ref stringBuilder);
+            
+            // Recursively append other builders
+            else
+                ToStrings(maxLength, blocks, child.Builder, ref stringBuilder);
+        }
+        
+        // 4. Write suffix
+        if (docBuilder.Suffix != null)
+            AppendString(maxLength, blocks, docBuilder.Suffix, ref stringBuilder);
+    }
+
+    private static void AppendString(int maxLength, List<string> blocks, string text, ref StringBuilder stringBuilder)
+    {
+        // Wrap if the string won't fit
+        var nextLength = stringBuilder.Length + text.Length;
+        if (nextLength > maxLength)
+        {
+            var block = stringBuilder.ToString();
+            blocks.Add(block);
+            
+            stringBuilder = new StringBuilder();
+        }
+
+        // Append to whichever builder is up
+        stringBuilder.Append(text);
     }
 }

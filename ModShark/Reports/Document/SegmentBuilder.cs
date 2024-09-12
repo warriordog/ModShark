@@ -1,42 +1,14 @@
-﻿using System.Text;
+﻿namespace ModShark.Reports.Document;
 
-namespace ModShark.Reports.Document;
-
-public class SegmentBuilder<TBuilder> : SegmentBase<SegmentBuilder<TBuilder>>
-    where TBuilder : BuilderBase<TBuilder>
+public class SegmentBuilder<TParent>(string prefix, TParent builder, string suffix) : SegmentBase<SegmentBuilder<TParent>>
+    where TParent : BuilderBase<TParent>
 {
-
-    private StringBuilder Segment { get; } = new();
-    private BuilderBase<TBuilder> Builder { get; }
-    private string Suffix { get; }
-
-    public override DocumentFormat Format => Builder.Format;
+    protected override SegmentBuilder<TParent> Self => this;
     
-    public SegmentBuilder(string prefix, BuilderBase<TBuilder> builder, string suffix)
-    {
-        Builder = builder;
-        Suffix = suffix;
-        
-        Segment.Append(prefix);
-    }
-    
-    public override SegmentBuilder<TBuilder> Append(string contents)
-    {
-        Segment.Append(contents);
-        return this;
-    }
+    public override string Prefix { get; } = prefix;
+    public override string Suffix { get; } = suffix;
 
-    public override SegmentBuilder<TBuilder> Append(params string[] contents)
-    {
-        Segment.AppendJoin("", contents);
-        return this;
-    }
-    
-    public TBuilder End()
-    {
-        Segment.Append(Suffix);
+    public override DocumentFormat Format => builder.Format;
 
-        var segmentContents = Segment.ToString();
-        return Builder.Append(segmentContents);
-    }
+    public TParent End() => builder;
 }

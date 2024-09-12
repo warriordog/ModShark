@@ -1,75 +1,85 @@
 ﻿namespace ModShark.Reports.Document;
 
-public abstract class SegmentBase<TBuilder> : BuilderBase<TBuilder>
-    where TBuilder : BuilderBase<TBuilder>
+public abstract class SegmentBase<TThis> : BuilderBase<TThis>
+    where TThis : BuilderBase<TThis>
 {
-    public TBuilder AppendLink(string href, string contents) =>
-        AppendText(
+    public TThis AppendLink(string href, string contents) =>
+        Append(
             Format.LinkStart(href),
             contents,
             Format.LinkEnd(href)
         );
     
-    public SegmentBuilder<TBuilder> BeginLink(string href) =>
-        new(
-            Format.LinkStart(href),
-            this,
-            Format.LinkEnd(href)
+    public SegmentBuilder<TThis> BeginLink(string href) =>
+        Append(
+            new SegmentBuilder<TThis>(
+                Format.LinkStart(href),
+                Self,
+                Format.LinkEnd(href)
+            )
         );
     
-    public TBuilder AppendItalics(string contents) =>
-        AppendText(
+    public TThis AppendItalics(string contents) =>
+        Append(
             Format.ItalicsStart(),
             contents,
             Format.ItalicsEnd()
         );
     
-    public SegmentBuilder<TBuilder> BeginItalics() =>
-        new(
-            Format.ItalicsStart(),
-            this,
-            Format.ItalicsEnd()
+    public SegmentBuilder<TThis> BeginItalics() =>
+        Append(
+            new SegmentBuilder<TThis>(
+                Format.ItalicsStart(),
+                Self,
+                Format.ItalicsEnd()
+            )
         );
     
-    public TBuilder AppendBold(string contents) =>
-        AppendText(
+    public TThis AppendBold(string contents) =>
+        Append(
             Format.BoldStart(),
             contents,
             Format.BoldEnd()
         );
 
-    public SegmentBuilder<TBuilder> BeginBold() =>
-        new(
-            Format.BoldStart(),
-            this,
-            Format.BoldEnd()
+    public SegmentBuilder<TThis> BeginBold() =>
+        Append(
+            new SegmentBuilder<TThis>(
+                Format.BoldStart(),
+                Self,
+                Format.BoldEnd()
+            )
         );
     
-    public TBuilder AppendCode(string contents) =>
-        AppendText(
+    public TThis AppendCode(string contents) =>
+        Append(
             Format.CodeStart(),
             contents,
             Format.CodeEnd()
         );
     
-    public SegmentBuilder<TBuilder> BeginCode() =>
-        new(
-            Format.CodeStart(),
-            this,
-            Format.CodeEnd()
+    public SegmentBuilder<TThis> BeginCode() =>
+        Append(
+            new SegmentBuilder<TThis> (
+                Format.CodeStart(),
+                Self,
+                Format.CodeEnd()
+            )
         );
     
-    public TBuilder AppendSpoiler(string contents, string placeholder = "spoiler") =>
-        AppendText(
+    public TThis AppendSpoiler(string contents, string placeholder = "spoiler") =>
+        Append(
             Format.SpoilerStart(placeholder),
             contents,
             Format.SpoilerEnd(placeholder)
         );
     
-    public SegmentBuilder<TBuilder> BeginSpoiler(string placeholder = "spoiler") =>
-        new(
-            Format.SpoilerStart(placeholder),
-            this,
-            Format.SpoilerEnd(placeholder)
+    public SegmentBuilder<TThis> BeginSpoiler(string placeholder = "spoiler") =>
+        Append(
+            new SegmentBuilder<TThis> (
+                Format.SpoilerStart(placeholder),
+                Self,
+                Format.SpoilerEnd(placeholder)
+            )
         );
 }
