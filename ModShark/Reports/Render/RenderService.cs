@@ -1,16 +1,35 @@
 ﻿using ModShark.Reports.Document;
 using ModShark.Services;
+using ModShark.Utils;
 
 namespace ModShark.Reports.Render;
 
+public enum FlagInclusion
+{
+    /// <summary>
+    /// Flagged content is not included.
+    /// </summary>
+    None,
+    
+    /// <summary>
+    /// Only the exact fragment of matched content is included.
+    /// </summary>
+    Minimal,
+    
+    /// <summary>
+    /// The entire block of flagged content is included.
+    /// </summary>
+    Full
+}
+
 public interface IRenderService
 {
-    DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true);
+    DocumentBuilder RenderReport(Report report, DocumentFormat format, FlagInclusion includeFlags = FlagInclusion.None);
 }
 
 public class RenderService(ILinkService linkService) : IRenderService
 {
-    public DocumentBuilder RenderReport(Report report, DocumentFormat format, bool includeFlags = true)
+    public DocumentBuilder RenderReport(Report report, DocumentFormat format, FlagInclusion includeFlags = FlagInclusion.None)
     {
         var document = new DocumentBuilder(format);
         document.AppendTitle("ModShark Report");
@@ -22,7 +41,7 @@ public class RenderService(ILinkService linkService) : IRenderService
         return document;
     }
 
-    private void RenderInstanceReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderInstanceReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasInstanceReports)
             return;
@@ -35,10 +54,12 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var instanceReport in report.InstanceReports)
         {
-            AppendInstanceReport(list, instanceReport);
+            var group = list.BeginGroup();
             
-            if (includeFlags)
-                AppendFlags(list, instanceReport.Flags);
+            AppendInstanceReport(group, instanceReport);
+            AppendFlags(group, instanceReport.Flags, includeFlags);
+            
+            group.End();
         }
         list.End();
 
@@ -68,7 +89,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderUserReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderUserReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasUserReports)
             return;
@@ -81,14 +102,16 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var userReport in report.UserReports)
         {
+            var group = list.BeginGroup();
             
             if (userReport.IsLocal)
-                AppendLocalUserReport(list, userReport);
+                AppendLocalUserReport(group, userReport);
             else
-                AppendRemoteUserReport(list, userReport);
+                AppendRemoteUserReport(group, userReport);
 
-            if (includeFlags)
-                AppendFlags(list, userReport.Flags);
+            AppendFlags(group, userReport.Flags, includeFlags);
+
+            group.End();
         }
         list.End();
 
@@ -165,7 +188,7 @@ public class RenderService(ILinkService linkService) : IRenderService
             .End();
     }
 
-    private void RenderNoteReports(DocumentBuilder document, Report report, bool includeFlags)
+    private void RenderNoteReports(DocumentBuilder document, Report report, FlagInclusion includeFlags)
     {
         if (!report.HasNoteReports)
             return;
@@ -178,13 +201,16 @@ public class RenderService(ILinkService linkService) : IRenderService
         var list = section.BeginList();
         foreach (var noteReport in report.NoteReports)
         {
+            var group = list.BeginGroup();
+            
             if (noteReport.IsLocal)
-                AppendLocalNoteReport(list, noteReport);
+                AppendLocalNoteReport(group, noteReport);
             else
-                AppendRemoteNoteReport(list, noteReport);
+                AppendRemoteNoteReport(group, noteReport);
 
-            if (includeFlags)
-                AppendFlags(list, noteReport.Flags);
+            AppendFlags(group, noteReport.Flags, includeFlags);
+
+            group.End();
         }
         list.End();
 
@@ -303,44 +329,53 @@ public class RenderService(ILinkService linkService) : IRenderService
         document.AppendHeader(header);
     }
 
-    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags) where T : BuilderBase<T>
+    private static void AppendFlags<T>(ListBuilder<T> list, ReportFlags flags, FlagInclusion includeFlags)
+        where T : BuilderBase<T>
     {
+        if (includeFlags == FlagInclusion.None)
+            return;
+        
         if (!flags.HasAny)
             return;
         
         var subList = list.BeginList();
 
-        AppendTextFlags(flags, subList);
-        AppendAgeRangeFlags(flags, subList);
+        AppendTextFlags(flags, subList, includeFlags);
+        AppendAgeRangeFlags(flags, subList, includeFlags);
         
         subList.End();
     }
 
-    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    private static void AppendTextFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList, FlagInclusion includeFlags)
+        where T : BuilderBase<T>
     {
         if (!flags.HasText)
             return;
 
-        foreach (var pair in flags.Text.Mappings)
+        foreach (var pair in flags.Text)
         {
-            AppendFlagsOfType(subList, pair.Key, pair.Value);
+            AppendFlagsOfType(subList, pair.Key, pair.Value, includeFlags);
         }
     }
 
-    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList) where T : BuilderBase<T>
+    private static void AppendAgeRangeFlags<T>(ReportFlags flags, ListBuilder<ListBuilder<T>> subList, FlagInclusion includeFlags)
+        where T : BuilderBase<T>
     {
         if (!flags.HasAgeRanges)
             return;
 
 
-        var ageRanges = flags.AgeRanges
-            .Select(range => range.ToString())
-            .ToList();
+        var rangeFlags = new MultiMap<string, Range>();
+        foreach (var ageRange in flags.AgeRanges)
+        {
+            rangeFlags.Add(ageRange.ToString(), Range.All);
+        }
         
-        AppendFlagsOfType(subList, "age", ageRanges);
+        AppendFlagsOfType(subList, "age", rangeFlags, includeFlags);
     }
 
-    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, IReadOnlyCollection<string> flags) where T : BuilderBase<T>
+    private static void AppendFlagsOfType<T>(ListBuilder<ListBuilder<T>> subList, string category, MultiMap<string, Range> flags, FlagInclusion includeFlags)
+        where T : BuilderBase<T>
     {
         if (flags.Count < 1)
             return;
@@ -351,16 +386,16 @@ public class RenderService(ILinkService linkService) : IRenderService
         item.AppendText(": ");
 
         var first = true;
-        foreach (var text in flags)
+        foreach (var flag in flags.Mappings)
         {
             if (!first)
                 item.AppendText(", ");
             first = false;
 
-            item
-                .BeginSpoiler("hidden")
-                    .AppendCode(text)
-                .End();
+            if (includeFlags == FlagInclusion.Full)
+                item.AppendFullFlaggedText(flag.Key, flag.Value);
+            else
+                item.AppendMinimalFlaggedText(flag.Key, flag.Value);
         }
 
         item.End();

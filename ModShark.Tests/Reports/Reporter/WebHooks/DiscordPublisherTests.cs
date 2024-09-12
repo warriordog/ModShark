@@ -62,8 +62,8 @@ public class DiscordPublisherTests
         
         MockRenderService = new Mock<IRenderService>();
         MockRenderService
-            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<bool>()))
-            .Returns((Report r, DocumentFormat f, bool _) =>
+            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<FlagInclusion>()))
+            .Returns((Report r, DocumentFormat f, FlagInclusion _) =>
             {
                 var doc = new DocumentBuilder(f);
                 r.InstanceReports.ForEach(i => doc.Append(i.Instance.Host));

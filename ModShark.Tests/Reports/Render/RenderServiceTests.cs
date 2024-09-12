@@ -3,8 +3,10 @@ using ModShark.Reports;
 using ModShark.Reports.Document;
 using ModShark.Reports.Render;
 using ModShark.Services;
+using ModShark.Utils;
 using Moq;
 using SharkeyDB.Entities;
+using Range = System.Range;
 
 namespace ModShark.Tests.Reports.Render;
 
@@ -88,8 +90,14 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            ["software", "soapbox 1.2.3"] = true,
-                            ["description", "free speech community"] = true
+                            ["software"] = new MultiMap<string, Range>
+                            {
+                                { "soapbox 1.2.3", Range.EndAt(7) }
+                            },
+                            ["description"] = new MultiMap<string, Range>
+                            {
+                                { "free speech community", Range.EndAt(12) }
+                            }
                         }
                     }
                 }
@@ -104,7 +112,10 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            ["text", "slur"] = true
+                            ["text"] = new MultiMap<string, Range>
+                            {
+                                { "slur", Range.All }
+                            }
                         }
                     }
                 },
@@ -115,7 +126,10 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            ["bio", "Age: 12"] = true
+                            ["bio"] = new MultiMap<string, Range>
+                            {
+                                { "Age: 12", Range.All }
+                            }
                         }
                     }
                 }
@@ -131,7 +145,10 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            ["text", "kys"] = true
+                            ["text"] = new MultiMap<string, Range>
+                            {
+                                { "kys", Range.All }
+                            }
                         }
                     }
                 },
@@ -143,8 +160,14 @@ public class RenderServiceTests
                     {
                         Text =
                         {
-                            ["text", "https://forbidden-domain.example.com"] = true,
-                            ["emoji", "nsfw_emoji"] = true
+                            ["text"] = new MultiMap<string, Range>
+                            {
+                                { "https://forbidden-domain.example.com", Range.StartAt(8) }
+                            },
+                            ["emoji"] = new MultiMap<string, Range>
+                            {
+                                { "nsfw_emoji", Range.All }
+                            }
                         }
                     }
                 }
@@ -202,18 +225,56 @@ public class RenderServiceTests
     }
 
     [Test]
-    public void RenderReport_ShouldIncludeFlaggedText()
+    public void RenderReport_ShouldNotIncludeAnyContent_WhenFlagInclusionIsNone()
     {
         var document = ServiceUnderTest
-            .RenderReport(FakeReport, DocumentFormat.HTML)
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.None)
             .ToString();
 
         document.Should()
-            .Contain("soapbox 1.2.3")
-            .And.Contain("free speech community")
+            .NotContain("soapbox")
+            .And.NotContain("1.2.3")
+            .And.NotContain("free speech")
+            .And.NotContain("community")
+            .And.NotContain("slur")
+            .And.NotContain("Age: 12")
+            .And.NotContain("kys")
+            .And.NotContain("forbidden-domain.example.com");
+    }
+
+    [Test]
+    public void RenderReport_ShouldIncludeFlaggedContent_WhenFlagInclusionIsMinimal()
+    {
+        var document = ServiceUnderTest
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.Minimal)
+            .ToString();
+
+        document.Should()
+            .Contain("soapbox")
+            .And.NotContain("1.2.3")
+            .And.Contain("free speech")
+            .And.NotContain("community")
             .And.Contain("slur")
             .And.Contain("Age: 12")
             .And.Contain("kys")
-            .And.Contain("https://forbidden-domain.example.com");
+            .And.Contain("forbidden-domain.example.com");
+    }
+
+    [Test]
+    public void RenderReport_ShouldIncludeAllContent_WhenFlagInclusionIsFull()
+    {
+        var document = ServiceUnderTest
+            .RenderReport(FakeReport, DocumentFormat.HTML, includeFlags: FlagInclusion.Full)
+            .ToString();
+
+        document.Should()
+            .Contain("soapbox")
+            .And.Contain("1.2.3")
+            .And.Contain("free speech")
+            .And.Contain("community")
+            .And.Contain("slur")
+            .And.Contain("Age: 12")
+            .And.Contain("kys")
+            .And.Contain("forbidden-domain.example.com");
     }
 }

@@ -1,16 +1,18 @@
 ﻿namespace ModShark.Reports.Document;
 
-public abstract class SectionBase<TBuilder> : SegmentBase<TBuilder>
-    where TBuilder : BuilderBase<TBuilder>
+public abstract class SectionBase<TThis>(string? prefix, string? suffix) : SegmentBase<TThis>(prefix, suffix)
+    where TThis : SectionBase<TThis>
 {
-    public ListBuilder<TBuilder> BeginList() =>
-        new(
-            Format.ListStart(),
-            this,
-            Format.ListEnd(),
-            0
+    public ListBuilder<TThis> BeginList() =>
+        Append(
+            new ListBuilder<TThis>(
+                Format.ListStart(),
+                Self,
+                Format.ListEnd(),
+                0
+            )
         );
 
-    public TBuilder AppendLineBreak() =>
+    public TThis AppendLineBreak() =>
         Append(Format.LineBreak());
 }

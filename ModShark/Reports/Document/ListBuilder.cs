@@ -1,57 +1,48 @@
 ﻿namespace ModShark.Reports.Document;
 
-public class ListBuilder<TBuilder> : BuilderBase<ListBuilder<TBuilder>>
-    where TBuilder : BuilderBase<TBuilder>
+public class ListBuilder<TParent>(string? prefix, TParent parent, string? suffix, int level) : BuilderBase<ListBuilder<TParent>>(prefix, suffix)
+    where TParent : BuilderBase<TParent>
 {
-    private BuilderBase<TBuilder> Builder { get; }
-    private string Suffix { get; }
-    private int Level { get; }
+    protected override ListBuilder<TParent> Self => this;
 
-    public override DocumentFormat Format => Builder.Format;
+    private int Level { get; } = level;
+
+    public override DocumentFormat Format => parent.Format;
     
-    public ListBuilder(string prefix, BuilderBase<TBuilder> builder, string suffix, int level)
-    {
-        Builder = builder;
-        Suffix = suffix;
-        Level = level;
-        
-        Builder.Append(prefix);
-    }
-
-    public override ListBuilder<TBuilder> Append(string contents)
-    {
-        Builder.Append(contents);
-        return this;
-    }
-
-    public override ListBuilder<TBuilder> Append(params string[] contents)
-    {
-        Builder.Append(contents);
-        return this;
-    }
-    
-    public SegmentBuilder<ListBuilder<TBuilder>> BeginListItem() =>
-        new(
-            Format.ListItemStart(Level),
-            this,
-            Format.ListItemEnd(Level)
+    public SegmentBuilder<ListBuilder<TParent>> BeginListItem() =>
+        Append(
+            new SegmentBuilder<ListBuilder<TParent>>(
+                Format.ListItemStart(Level),
+                this,
+                Format.ListItemEnd(Level)
+            )
         );
     
-    public ListBuilder<TBuilder> AppendListItem(string contents)  =>
-        AppendText(
+    public ListBuilder<TParent> AppendListItem(string contents)  =>
+        Append(
             Format.ListItemStart(Level),
             contents,
             Format.ListItemEnd(Level)
         );
     
-    public ListBuilder<ListBuilder<TBuilder>> BeginList() =>
-        new(
-            Format.SubListStart(Level + 1),
-            this,
-            Format.SubListEnd(Level + 1),
-            Level + 1
+    public ListBuilder<ListBuilder<TParent>> BeginList() =>
+        Append(
+            new ListBuilder<ListBuilder<TParent>>(
+                Format.SubListStart(Level + 1),
+                this,
+                Format.SubListEnd(Level + 1),
+                Level + 1
+            )
         );
+
+    public TParent End() => parent;
     
-    public TBuilder End()
-        => Builder.Append(Suffix);
+    /// <summary>
+    /// Creates a logical group of related elements that should be rendered together.
+    /// This does not change the generated output, but will ensure that grouped lines wrap together.
+    /// </summary>    
+    public ListBuilder<ListBuilder<TParent>> BeginGroup() => 
+        Append(
+            new ListBuilder<ListBuilder<TParent>>(null, Self, null, Level)
+        );
 }

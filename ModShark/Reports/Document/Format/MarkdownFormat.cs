@@ -12,6 +12,9 @@ public partial class MarkdownFormat : DocumentFormat
     public override string Text(string text)
         => EscapableCharacters().Replace(text, m => @$"\{m.Value}");
 
+    public override string TextInline(string line)
+        => WhitespaceCharacters().Replace(Text(line), " ");
+
     public override string LinkStart(string href) => "[";
     public override string LinkEnd(string href) => $"]({Text(href)})";
 
@@ -50,4 +53,7 @@ public partial class MarkdownFormat : DocumentFormat
     
     [GeneratedRegex(@"\\|(?<=^\s*)[|#]|</?\w+/?>|]\(|(?<=^\s*)[*\-]\s", RegexOptions.Compiled)]
     private static partial Regex EscapableCharacters();
+
+    [GeneratedRegex(@"\s+", RegexOptions.Compiled)]
+    private static partial Regex WhitespaceCharacters();
 }

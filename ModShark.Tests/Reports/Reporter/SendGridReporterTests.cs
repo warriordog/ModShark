@@ -34,8 +34,8 @@ public class SendGridReporterTests
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Accepted));
         MockRenderService = new Mock<IRenderService>();
         MockRenderService
-            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<bool>()))
-            .Returns((Report _, DocumentFormat f, bool _) => new DocumentBuilder(f));
+            .Setup(r => r.RenderReport(It.IsAny<Report>(), It.IsAny<DocumentFormat>(), It.IsAny<FlagInclusion>()))
+            .Returns((Report _, DocumentFormat f, FlagInclusion _) => new DocumentBuilder(f));
 
         FakeReporterConfig = new SendGridReporterConfig
         {
