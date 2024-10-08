@@ -114,7 +114,8 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlagged(user, out var flags))
+            var flags = new ReportFlags();
+            if (!IsFlagged(user, flags))
                 continue;
             
             report.UserReports.Add(new UserReport
@@ -132,13 +133,14 @@ public class FlaggedUserRule(ILogger<FlaggedUserRule> logger, FlaggedUserConfig 
         }
     }
 
-    private bool IsFlagged(User user, out ReportFlags flags)
+    private bool IsFlagged(User user, ReportFlags flags)
     {
-        flags = new ReportFlags();
-        return FlagAge(user, flags)
-            || FlagUsername(user, flags)
-            || FlagDisplayName(user, flags)
-            || FlagBio(user, flags);
+        var isFlagged = false;
+        isFlagged |= FlagAge(user, flags);
+        isFlagged |= FlagUsername(user, flags);
+        isFlagged |= FlagDisplayName(user, flags);
+        isFlagged |= FlagBio(user, flags);
+        return isFlagged;
     }
 
     private bool FlagAge(User user, ReportFlags flags)

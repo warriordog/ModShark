@@ -84,7 +84,8 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
             
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlagged(instance, out var flags))
+            var flags = new ReportFlags();
+            if (!IsFlagged(instance, flags))
                 continue;
             
             report.InstanceReports.Add(new InstanceReport
@@ -101,14 +102,15 @@ public class FlaggedInstanceRule(ILogger<FlaggedInstanceRule> logger, FlaggedIns
         }
     }
 
-    private bool IsFlagged(Instance instance, out ReportFlags flags)
+    private bool IsFlagged(Instance instance, ReportFlags flags)
     {
-        flags = new ReportFlags();
-        return FlagName(instance, flags)
-            || FlagHostname(instance, flags)
-            || FlagDescription(instance, flags)
-            || FlagContact(instance, flags)
-            || FlagSoftware(instance, flags);
+        var isFlagged = false;
+        isFlagged |= FlagName(instance, flags);
+        isFlagged |= FlagHostname(instance, flags);
+        isFlagged |= FlagDescription(instance, flags);
+        isFlagged |= FlagContact(instance, flags);
+        isFlagged |= FlagSoftware(instance, flags);
+        return isFlagged;
     }
 
     private bool FlagName(Instance instance, ReportFlags flags)

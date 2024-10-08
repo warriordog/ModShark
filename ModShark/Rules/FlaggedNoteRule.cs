@@ -119,7 +119,8 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
 
             // For better use of database resources, we handle pattern matching in application code.
             // This also gives us .NET's faster and more powerful regex engine.
-            if (!IsFlagged(note, out var flags))
+            var flags = new ReportFlags();
+            if (!IsFlagged(note, flags))
                 continue;
             
             report.NoteReports.Add(new NoteReport
@@ -138,11 +139,12 @@ public class FlaggedNoteRule(ILogger<FlaggedNoteRule> logger, FlaggedNoteConfig 
         }
     }
 
-    private bool IsFlagged(Note note, out ReportFlags flags)
+    private bool IsFlagged(Note note, ReportFlags flags)
     {
-        flags = new ReportFlags();
-        return MatchText(note, flags) 
-            || MatchEmoji(note, flags);
+        var isFlagged = false;
+        isFlagged |= MatchText(note, flags);
+        isFlagged |= MatchEmoji(note, flags);
+        return isFlagged;
     }
 
     private bool MatchText(Note note, ReportFlags flags)
