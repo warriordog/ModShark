@@ -163,6 +163,14 @@ This reporter is designed to support mass and cross-server notification use case
 
 The webhook reporter is disabled by default.
 
+## System Requirements
+
+* [.NET 8 (or later) Runtime](https://dotnet.microsoft.com/en-us/download)
+* [A supported version of Windows, Linux, or macOS](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (Linux is recommended)
+* At least 128 MB available RAM (256 MB recommended)
+* A functional installation of [Sharkey](https://activitypub.software/TransFem-org/Sharkey)
+* Network or localhost connection to Sharkey's backend API
+* Network or localhost connection to Sharkey's PostgreSQL database, and a user with read/write permissions
 
 ## Installing ModShark
 
@@ -203,15 +211,6 @@ Make sure to substitute all variables for their correct values.
 4. Revert ModShark's database changes: `psql -U $postgres_user -W -d $sharkey_database -a -f uninstall-ModShark-migrations.sql`
 5. Remove ModShark files: `rm -r $modshark_directory`
 
-### System Requirements
-
-* [.NET 8 (or later) Runtime](https://dotnet.microsoft.com/en-us/download)
-* [A supported version of Windows, Linux, or macOS](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (Linux is recommended)
-* At least 128 MB available RAM (256 MB recommended)
-* A functional installation of [Sharkey](https://activitypub.software/TransFem-org/Sharkey)
-* Network or localhost connection to Sharkey's backend API
-* Network or localhost connection to Sharkey's PostgreSQL database, and a user with read/write permissions
-
 ## Configuration
 
 ModShark uses a layered configuration approach that allows for automatic updates without clobbering changes.
@@ -228,9 +227,7 @@ Some common values are `appsettings.Development.json`, `appsettings.Testing.json
 There is also a special `appsettings.Local.json`, which will be loaded as an **additional** layer on top of `appsettings.Development.json`.
 This file exists to store local secrets that should not be committed to source control.
 
-
 ### Configuration Properties
-
 
 | Property                                             | Type     | Description                                                                                                                                                                                                                                                                                                                                        |
 |------------------------------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
