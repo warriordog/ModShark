@@ -17,7 +17,7 @@ namespace SharkeyDB.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -83,11 +83,41 @@ namespace SharkeyDB.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("id");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(4096)
+                        .HasColumnType("character varying(4096)")
+                        .HasColumnName("description");
+
                     b.Property<string>("Host")
                         .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
                         .HasColumnName("host");
+
+                    b.Property<string>("MaintainerEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("maintainerEmail");
+
+                    b.Property<string>("MaintainerName")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("maintainerName");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("SoftwareName")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("softwareName");
+
+                    b.Property<string>("SoftwareVersion")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("softwareVersion");
 
                     b.Property<string>("SuspensionState")
                         .IsRequired()
@@ -289,14 +319,30 @@ namespace SharkeyDB.Migrations
                         .HasColumnType("character varying(512)")
                         .HasColumnName("cw");
 
+                    b.Property<string[]>("Emojis")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("text[]")
+                        .HasColumnName("emojis");
+
                     b.Property<string>("Text")
                         .HasColumnType("text")
                         .HasColumnName("text");
+
+                    b.Property<string>("Uri")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("uri");
 
                     b.Property<string>("Url")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)")
                         .HasColumnName("url");
+
+                    b.Property<string>("UserHost")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("userHost");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -310,6 +356,8 @@ namespace SharkeyDB.Migrations
                         .HasColumnName("visibility");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserHost");
 
                     b.HasIndex("UserId");
 
@@ -343,6 +391,11 @@ namespace SharkeyDB.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("isSuspended");
 
+                    b.Property<string>("Name")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("name");
+
                     b.Property<string>("Token")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)")
@@ -370,6 +423,31 @@ namespace SharkeyDB.Migrations
                     b.HasIndex("Host");
 
                     b.ToTable("user", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
+                });
+
+            modelBuilder.Entity("SharkeyDB.Entities.UserProfile", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("userId");
+
+                    b.Property<string>("Birthday")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("birthday");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("description");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("user_profile", t =>
                         {
                             t.ExcludeFromMigrations();
                         });
@@ -489,11 +567,18 @@ namespace SharkeyDB.Migrations
 
             modelBuilder.Entity("SharkeyDB.Entities.Note", b =>
                 {
+                    b.HasOne("SharkeyDB.Entities.Instance", "Instance")
+                        .WithMany("Notes")
+                        .HasForeignKey("UserHost")
+                        .HasPrincipalKey("Host");
+
                     b.HasOne("SharkeyDB.Entities.User", "User")
                         .WithMany("Notes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Instance");
 
                     b.Navigation("User");
                 });
@@ -508,9 +593,21 @@ namespace SharkeyDB.Migrations
                     b.Navigation("Instance");
                 });
 
+            modelBuilder.Entity("SharkeyDB.Entities.UserProfile", b =>
+                {
+                    b.HasOne("SharkeyDB.Entities.User", "User")
+                        .WithOne("Profile")
+                        .HasForeignKey("SharkeyDB.Entities.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SharkeyDB.Entities.Instance", b =>
                 {
                     b.Navigation("FlaggedInstance");
+
+                    b.Navigation("Notes");
 
                     b.Navigation("QueuedInstance");
 
@@ -544,6 +641,8 @@ namespace SharkeyDB.Migrations
                     b.Navigation("FlaggedUser");
 
                     b.Navigation("Notes");
+
+                    b.Navigation("Profile");
 
                     b.Navigation("QueuedUser");
 
