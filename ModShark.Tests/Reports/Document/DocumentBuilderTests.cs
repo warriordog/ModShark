@@ -75,7 +75,7 @@ public class DocumentBuilderTests
 
         chunks.Should().AllSatisfy(c =>
         {
-            c.Length.Should().BeLessOrEqualTo(32);
+            c.Length.Should().BeLessThanOrEqualTo(32);
         });
     }
 
