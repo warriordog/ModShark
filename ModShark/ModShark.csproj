@@ -25,6 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\QR\QR.csproj" />
       <ProjectReference Include="..\SharkeyDB\SharkeyDB.csproj" />
     </ItemGroup>
 

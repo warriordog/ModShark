@@ -38,6 +38,34 @@ public class HttpServiceTests
     }
     
     [Test]
+    public async Task GetAsync_ShouldAttachDefaultUserAgent_WhenNotSet()
+    {
+        const string expected = "ModShark (https://github.com/warriordog/ModShark)";
+        
+        await ServiceUnderTest.GetAsync("https://example.com", CancellationToken.None);
+        
+        MockHttpMessageHandler
+            .Protected()
+            .Verify<Task<HttpResponseMessage>>("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(m => string.Join(" ", m.Headers.GetValues("User-Agent")) == expected), ItExpr.IsAny<CancellationToken>());
+    }
+    
+    [Test]
+    public async Task GetAsync_ShouldNotAttachUserAgent_WhenAlreadySet()
+    {
+        const string expected = "Custom Agent";
+        var headers = new Dictionary<string, string?>
+        {
+            ["User-Agent"] = expected
+        };
+        
+        await ServiceUnderTest.GetAsync("https://example.com", CancellationToken.None, headers: headers);
+        
+        MockHttpMessageHandler
+            .Protected()
+            .Verify<Task<HttpResponseMessage>>("SendAsync", Times.Once(), ItExpr.Is<HttpRequestMessage>(m => string.Join(" ", m.Headers.GetValues("User-Agent")) == expected), ItExpr.IsAny<CancellationToken>());
+    }
+    
+    [Test]
     public async Task PostAsync_ShouldAttachDefaultUserAgent_WhenNotSet()
     {
         const string expected = "ModShark (https://github.com/warriordog/ModShark)";
@@ -53,7 +81,7 @@ public class HttpServiceTests
     public async Task PostAsync_ShouldNotAttachUserAgent_WhenAlreadySet()
     {
         const string expected = "Custom Agent";
-        var headers = new Dictionary<string, string>
+        var headers = new Dictionary<string, string?>
         {
             ["User-Agent"] = expected
         };

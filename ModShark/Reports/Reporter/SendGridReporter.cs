@@ -107,7 +107,7 @@ public class SendGridReporter(ILogger<SendGridReporter> logger, SendGridReporter
 
     private async Task SendEmail(SendGridSend send, CancellationToken stoppingToken)
     {
-        var headers = new Dictionary<string, string>
+        var headers = new Dictionary<string, string?>
         {
             ["Authorization"] = $"Bearer {reporterConfig.ApiKey}"
         };
