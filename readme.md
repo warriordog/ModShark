@@ -1,3 +1,10 @@
+# Project has moved!
+
+ModShark has moved to https://activitypub.software/campfire/ModShark.
+This repository has been archived and will be deleted at a later date.
+
+---
+
 # ModShark - AutoMod for Sharkey instances
 
 ModShark is an automated moderation tool for servers running the [Sharkey Fediverse server](https://activitypub.software/TransFem-org/Sharkey).
